@@ -1,42 +1,46 @@
-import React,{useRef, useEffect} from 'react'
+import React, { useRef, useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
-import reel1 from '../../../public/saat.mp4';
-import reel2 from '../../../public/tristlav.mp4';
-import reel3 from '../../../public/KimJong.mp4';
-import reel4 from '../../../public/tateDum.mp4';
-import reel5 from '../../../public/tateJail.mp4';
-import reel6 from '../../../public/tateWorkout.mp4';
-import reel7 from '../../../public/TateDepre.mp4';
-import "./Reels.css"; 
-
-const reels = [
-  reel1, reel2, reel3, reel4, reel5, reel6, reel7
-];
+import "./Reels.css";
 
 export default function Reels() {
   const vidRef = useRef(null);
   const [ref, inView] = useInView({
     threshold: 0.5,
   });
+  const [videoUrl, setVideoUrl] = useState(null);
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('https://localhost:7294/api/Reel');
+        console.log(response); // Add this line to log the response
+        if (response.ok) {
+          // Set the response directly as the video URL
+          setVideoUrl(URL.createObjectURL(await response.blob()));
+        } else {
+          console.error('Failed to fetch video URL');
+        }
+      } catch (error) {
+        console.error('Error fetching video URL', error);
+      }
+    };
+    
+    if (inView && !videoUrl) {
+      fetchData();
+    }
+
     if (inView) {
       vidRef.current?.play();
     } else {
       vidRef.current?.pause();
     }
-  }, [inView]);
-
-  const getRandomReel = () => {
-      const randomIndex = Math.floor(Math.random() * reels.length);
-      return reels[randomIndex];
-  };
-
-  const randomReel = getRandomReel();
+  }, [inView, videoUrl]);
 
   return (
     <div ref={ref} className='reel-card'>
-        <video className="reel-player" ref={vidRef} src={randomReel} loop muted={false} controls></video>
+      {videoUrl && (
+        <video className="reel-player" ref={vidRef} src={videoUrl} loop muted={false} controls preload="auto"></video>
+      )}
     </div>
-  ); 
+  );
 }
