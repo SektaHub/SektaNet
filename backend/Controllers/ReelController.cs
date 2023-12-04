@@ -9,10 +9,10 @@ namespace backend.Controllers
     public class ReelController : ControllerBase
     {
 
-        private readonly ILogger<WeatherForecastController> _logger;
+        private readonly ILogger<ReelController> _logger;
         private readonly ReelService _reelService;
 
-        public ReelController(ILogger<WeatherForecastController> logger, ReelService reelService)
+        public ReelController(ILogger<ReelController> logger, ReelService reelService)
         {
             _logger = logger;
             _reelService = reelService;
