@@ -5,15 +5,20 @@ import Reels from "./components/Reels/Reels.jsx";
 import { useInView } from 'react-intersection-observer';
 
 function App() {
-  const [reelList, setReelList] = useState([{ id: 0, component: <Reels key={0} /> }]);
+
+  const [reelList, setReelList] = useState([{ id: 0, component: <Reels key={0} videoId={getRandomVideoId()} /> }]);
   const [loading, setLoading] = useState(false);
   const { ref: loaderRef, inView: loaderInView } = useInView();
+
+  function getRandomVideoId() {
+    return Math.floor(Math.random() * 20 + 1);
+  }
 
   const loadMoreReels = () => {
     setLoading(true);
     setReelList((prevReels) => [
       ...prevReels,
-      { id: prevReels.length, component: <Reels key={prevReels.length} /> },
+      { id: prevReels.length, component: <Reels key={prevReels.length} videoId={getRandomVideoId()} /> },
     ]);
     setLoading(false);
   };
