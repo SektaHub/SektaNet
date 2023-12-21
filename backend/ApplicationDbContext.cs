@@ -1,5 +1,6 @@
 ﻿using backend.Models.Entity;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using System;
 
 namespace backend
@@ -10,7 +11,7 @@ namespace backend
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
-            optionsBuilder.UseInMemoryDatabase("YourInMemoryDatabaseName");
+            //optionsBuilder.UseInMemoryDatabase("YourInMemoryDatabaseName");
         }
         public DbSet<Reel> Reels { get; set; }
     }

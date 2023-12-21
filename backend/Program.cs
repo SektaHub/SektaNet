@@ -1,6 +1,8 @@
 using backend;
 using backend.Models;
 using backend.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,11 +23,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<ApplicationDbContext>();
+
+//builder.Services.AddDbContext<ApplicationDbContext>();
+
+var configuration = builder.Configuration;
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<ReelService>();
 
 builder.Services.AddAutoMapper(typeof(MyMappingProfile));
+
 
 var app = builder.Build();
 
