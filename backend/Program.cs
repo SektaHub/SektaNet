@@ -1,3 +1,5 @@
+using backend;
+using backend.Models;
 using backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,7 +21,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddDbContext<ApplicationDbContext>();
+
 builder.Services.AddScoped<ReelService>();
+
+builder.Services.AddAutoMapper(typeof(MyMappingProfile));
 
 var app = builder.Build();
 

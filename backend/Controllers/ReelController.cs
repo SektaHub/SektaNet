@@ -1,4 +1,7 @@
-﻿using backend.Services;
+﻿using AutoMapper;
+using backend.Models.Dto;
+using backend.Models.Entity;
+using backend.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,41 +14,27 @@ namespace backend.Controllers
 
         private readonly ILogger<ReelController> _logger;
         private readonly ReelService _reelService;
+        private readonly ApplicationDbContext _dbContext;
+        private readonly IMapper _mapper;
 
-        public ReelController(ILogger<ReelController> logger, ReelService reelService)
+        public ReelController(ILogger<ReelController> logger, ReelService reelService, ApplicationDbContext dbContext, IMapper mapper)
         {
             _logger = logger;
             _reelService = reelService;
+            _dbContext = dbContext;
+            _mapper = mapper;
         }
 
-        [HttpGet(Name = "GetRandomReel")]
-        public IActionResult Get()
+        [HttpGet(Name = "Get")]
+        public IEnumerable<ReelDto> Get()
         {
-            // Replace the path with the actual path to your video file
-            var videoPath = _reelService.GetRandomReel();
-            //var videoPath = "C:\\Users\\Borjan\\Documents\\GitHub\\SektaGram\\backend\\wwwroot\\Reels\\tateWorkout.mp4";
-            var videoStream = new FileStream(videoPath, FileMode.Open);
-
-            return File(videoStream, "video/mp4", enableRangeProcessing: true);
+            var entities = _dbContext.Set<Reel>().ToList();
+            var dtoList = _mapper.Map<List<ReelDto>>(entities);
+            return dtoList;
         }
-
-        //[HttpGet("{videoId}", Name = "GetReel")]
-        //public IActionResult GetReel(int videoId)
-        //{
-        //    // Generate a dynamic path or use a lookup mechanism to get the actual video path based on the videoId
-        //    var videoPath = _reelService.GetReelPath(videoId);
-
-        //    if (string.IsNullOrEmpty(videoPath))
-        //    {
-        //        return NotFound(); // Handle the case when the video is not found
-        //    }
-
-        //    var videoStream = new FileStream(videoPath, FileMode.Open);
-        //    return File(videoStream, "video/mp4", enableRangeProcessing: true);
-        //}
 
         [HttpGet("{videoId}", Name = "GetReel")]
-        public IActionResult GetReel(int videoId)
+        public IActionResult GetReel(Guid videoId)
         {
             var videoPath = _reelService.GetReelPath(videoId);
 
@@ -62,6 +51,55 @@ namespace backend.Controllers
             catch (IOException)
             {
                 return StatusCode(500, "An error occurred while attempting to read the video file.");
+            }
+        }
+
+        [HttpGet("Test/{videoId}", Name = "GetReelTest")]
+        public IActionResult GetReelTest(int videoId)
+        {
+            var videoPath = _reelService.GetReelPathTest(videoId);
+
+            if (string.IsNullOrEmpty(videoPath))
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                var videoStream = new FileStream(videoPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                return File(videoStream, "video/mp4", enableRangeProcessing: true);
+            }
+            catch (IOException)
+            {
+                return StatusCode(500, "An error occurred while attempting to read the video file.");
+            }
+        }
+
+        [HttpPost("upload")]
+        public IActionResult UploadReel(IFormFile videoFile)
+        {
+            ReelDto reelDto = new ReelDto { 
+            Id = Guid.NewGuid(),
+                AudioTranscription = null,
+                Duration = null,
+            };
+
+            if (videoFile == null || videoFile.Length == 0)
+            {
+                return BadRequest("No video file provided");
+            }
+
+            // Validate other properties in the ReelDto if needed
+
+            try
+            {
+                _reelService.SaveVideo(reelDto, videoFile);
+                return Ok("Video uploaded and saved successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error uploading video: {ex.Message}");
+                return StatusCode(500, "An error occurred while uploading the video");
             }
         }
 
