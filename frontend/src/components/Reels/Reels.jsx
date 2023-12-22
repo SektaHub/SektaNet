@@ -9,7 +9,7 @@ export default function Reels({ videoId }) { // Assuming you have a unique ident
   });
 
   // Build the video URL dynamically based on the videoId
-  const videoUrl = `https://localhost:7294/api/Reel/Test/${videoId}`;
+  const videoUrl = `https://localhost:7294/api/Reel/${videoId}`;
 
   useEffect(() => {
     if (inView) {

@@ -1,34 +1,72 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import hubLogo from '/hub.png';
 import './App.css';
 import Reels from "./components/Reels/Reels.jsx";
 import { useInView } from 'react-intersection-observer';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import VideoUploader from './VideoUploader';
 
 function App() {
 
-  const [reelList, setReelList] = useState([{ id: 0, component: <Reels key={0} videoId={getRandomVideoId()} /> }]);
+  const queryParams = new URLSearchParams(window.location.search);
+  const initialVideoId = queryParams.get('videoId');
+
+  const [reelList, setReelList] = useState<{ id: number; component: JSX.Element }[]>([]);
   const [loading, setLoading] = useState(false);
   const { ref: loaderRef, inView: loaderInView } = useInView();
 
-  function getRandomVideoId() {
-    return Math.floor(Math.random() * 20 + 1);
-  }
+  const getRandomVideoIdFromBackend = async () => {
+    try {
+      const response = await fetch('https://localhost:7294/api/Reel/RandomVideoId');
+      const data = await response.json();
+  
+      if (response.ok) {
+        return data;
+      } else {
+        console.error('Error fetching random video ID:', data);
+        return null;
+      }
+    } catch (error: any) {
+      console.error('Error fetching random video ID:', error.message);
+      return null;
+    }
+  };
 
-  const loadMoreReels = () => {
+  const loadMoreReels = async () => {
     setLoading(true);
-    setReelList((prevReels) => [
-      ...prevReels,
-      { id: prevReels.length, component: <Reels key={prevReels.length} videoId={getRandomVideoId()} /> },
-    ]);
+    const randomVideoId = await getRandomVideoIdFromBackend();
+
+    if (randomVideoId !== null) {
+      setReelList((prevReels) => [
+        ...prevReels,
+        { id: prevReels.length, component: <Reels key={prevReels.length} videoId={randomVideoId} /> },
+      ]);
+    }
+
     setLoading(false);
   };
 
   useEffect(() => {
-    if (loaderInView && !loading) {
+    // If initialVideoId is present, use it for the first video
+    if (initialVideoId) {
+      setReelList([{ id: 0, component: <Reels key={0} videoId={initialVideoId} /> }]);
+    } else {
+      // Otherwise, fetch a random videoId for the first video
       loadMoreReels();
     }
+  }, []); // Empty dependency array ensures this effect runs only once on mount
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (loaderInView && !loading) {
+        await loadMoreReels();
+      }
+    };
+
+    fetchData();
   }, [loaderInView, loading]);
 
+  
   return (
     <center>
       <div className='logo-cont'>
@@ -54,6 +92,7 @@ function App() {
         <div ref={loaderRef} style={{ height: '1px' }}></div>
       </div>
     </center>
+    
   );
 }
 

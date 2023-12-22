@@ -54,6 +54,27 @@ namespace backend.Controllers
             }
         }
 
+        [HttpGet("RandomVideoId", Name = "GetRandomVideoId")]
+        public IActionResult GetRandomVideoId()
+        {
+            try
+            {
+                var randomVideo = _dbContext.Set<Reel>().OrderBy(r => Guid.NewGuid()).FirstOrDefault();
+
+                if (randomVideo == null)
+                {
+                    return NotFound("No videos found in the database.");
+                }
+
+                return Ok(randomVideo.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting random video ID: {ex.Message}");
+                return StatusCode(500, "An error occurred while getting the random video ID.");
+            }
+        }
+
         [HttpGet("Test/{videoId}", Name = "GetReelTest")]
         public IActionResult GetReelTest(int videoId)
         {
