@@ -222,6 +222,44 @@ namespace backend.Controllers
             }
         }
 
+        [HttpDelete("{videoId}")]
+        public IActionResult DeleteReel(Guid videoId)
+        {
+            try
+            {
+                // Delete video file
+                var videoPath = _reelService.GetReelPath(videoId);
+                if (System.IO.File.Exists(videoPath))
+                {
+                    System.IO.File.Delete(videoPath);
+                }
+
+                // Delete thumbnail file
+                var outputPath = Path.Combine(_env.WebRootPath, "Thumbnails");
+                var thumbnailFileName = $"{videoId}.jpg";
+                var thumbnailPath = Path.Combine(outputPath, thumbnailFileName);
+                if (System.IO.File.Exists(thumbnailPath))
+                {
+                    System.IO.File.Delete(thumbnailPath);
+                }
+
+                // Delete database entry
+                var reel = _dbContext.Set<Reel>().Find(videoId);
+                if (reel != null)
+                {
+                    _dbContext.Set<Reel>().Remove(reel);
+                    _dbContext.SaveChanges();
+                }
+
+                return Ok("Reel deleted successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error deleting reel: {ex.Message}");
+                return StatusCode(500, "An error occurred while deleting the reel");
+            }
+        }
+
 
 
     }

@@ -23,9 +23,27 @@ const VideoList: React.FC = () => {
         console.error(`Error fetching thumbnail for video ${videoId}: ${response.statusText}`);
         return ''; // Return an empty string or a default thumbnail URL
       }
-    } catch (error : any) {
+    } catch (error: any) {
       console.error(`Error fetching thumbnail for video ${videoId}: ${error.message}`);
       return ''; // Return an empty string or a default thumbnail URL
+    }
+  };
+
+  const handleDeleteClick = async (videoId: string) => {
+    try {
+      const response = await fetch(`https://localhost:7294/api/Reel/${videoId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Update the videos list after deletion
+        const updatedVideos = videos.filter((video) => video.id !== videoId);
+        setVideos(updatedVideos);
+      } else {
+        console.error(`Error deleting video ${videoId}: ${response.statusText}`);
+      }
+    } catch (error: any) {
+      console.error(`Error deleting video ${videoId}: ${error.message}`);
     }
   };
 
@@ -68,6 +86,9 @@ const VideoList: React.FC = () => {
                 <Card.Text>ID: {video.id}</Card.Text>
                 <Button variant="primary" href={`http://localhost:5173/?videoId=${video.id}`} target="_blank" rel="noopener noreferrer">
                   Watch Video
+                </Button>
+                <Button variant="danger" onClick={() => handleDeleteClick(video.id)}>
+                  Delete
                 </Button>
               </Card.Body>
             </Card>
