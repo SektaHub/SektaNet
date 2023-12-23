@@ -75,15 +75,16 @@ const VideoList: React.FC = () => {
 
   return (
     <div>
-      <h2>Video List</h2>
+      <h2 style={{ color: 'white' }}>Video List</h2>
       <Row xs={1} md={3} className="g-4">
         {videos.map((video) => (
           <Col key={video.id}>
             <Card>
               <Card.Img variant="top" src={video.thumbnail} alt={`Thumbnail for Video ${videos.indexOf(video) + 1}`} />
               <Card.Body>
-                <Card.Title>Video {videos.indexOf(video) + 1}</Card.Title>
-                <Card.Text>ID: {video.id}</Card.Text>
+                <Card.Title style={{ color: 'white' }}>Video {videos.indexOf(video) + 1}</Card.Title>
+                <Card.Text style={{ color: 'white' }}>ID: {video.id}</Card.Text>
+                <Card.Text style={{ color: 'white' }}>Duration: {video.duration} seconds</Card.Text>
                 <Button variant="primary" href={`http://localhost:5173/?videoId=${video.id}`} target="_blank" rel="noopener noreferrer">
                   Watch Video
                 </Button>

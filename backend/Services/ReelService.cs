@@ -70,8 +70,16 @@ namespace backend.Services
         }
 
 
-        public void SaveVideo(ReelDto reelDto, IFormFile videoFile)
+        public ReelDto SaveVideo(IFormFile videoFile)
         {
+            // Create a new ReelDto with default values
+            var reelDto = new ReelDto
+            {
+                Id = Guid.NewGuid(),
+                AudioTranscription = null,
+                Duration = null,
+            };
+
             // Process and save the video file to the wwwroot/Reels folder
             var reelFolderPath = Path.Combine(_env.WebRootPath, "Reels");
             var videoFileName = $"{reelDto.Id}.mp4";
@@ -85,10 +93,19 @@ namespace backend.Services
             // Map ReelDto to Reel entity
             var newReel = _mapper.Map<Reel>(reelDto);
 
+            // Set the duration of the video
+            var videoPath = GetReelPath(newReel.Id);
+            newReel.Duration = GetVideoDuration(videoPath);
+
             // Save the Reel entity to the database
             _dbContext.Reels.Add(newReel);
             _dbContext.SaveChanges();
+
+            // Return the updated ReelDto with duration
+            return _mapper.Map<ReelDto>(newReel);
         }
+
+
 
         public async Task DownloadFFmpeg()
         {
@@ -130,6 +147,21 @@ namespace backend.Services
                 // Log the exception or handle it as needed
                 Console.WriteLine($"Error extracting thumbnail: {ex.Message}");
                 return null;
+            }
+        }
+
+        public int GetVideoDuration(string videoPath)
+        {
+            try
+            {
+                var mediaInfo = FFmpeg.GetMediaInfo(videoPath).Result;
+                return (int)mediaInfo.Duration.TotalSeconds;
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                Console.WriteLine($"Error getting video duration: {ex.Message}");
+                return 0; // Return a default value or handle the error accordingly
             }
         }
 

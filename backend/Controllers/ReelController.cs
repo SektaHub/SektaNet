@@ -35,7 +35,7 @@ namespace backend.Controllers
             return dtoList;
         }
 
-        [HttpGet("{videoId}", Name = "GetReel")]
+        [HttpGet("{videoId}", Name = "GetReelStreamn")]
         public IActionResult GetReel(Guid videoId)
         {
             var videoPath = _reelService.GetReelPath(videoId);
@@ -182,12 +182,6 @@ namespace backend.Controllers
         [HttpPost("upload")]
         public IActionResult UploadReel(IFormFile videoFile)
         {
-            ReelDto reelDto = new ReelDto
-            {
-                Id = Guid.NewGuid(),
-                AudioTranscription = null,
-                Duration = null,
-            };
 
             if (videoFile == null || videoFile.Length == 0)
             {
@@ -199,12 +193,13 @@ namespace backend.Controllers
             try
             {
                 // Save the video
-                _reelService.SaveVideo(reelDto, videoFile);
+                ReelDto reelDto = _reelService.SaveVideo(videoFile);
+
+                // Get the video duration using the new method
+                var videoPath = _reelService.GetReelPath(reelDto.Id);
 
                 // Generate a thumbnail after successful video upload
-                var videoPath = _reelService.GetReelPath(reelDto.Id);
                 var outputPath = Path.Combine(_env.WebRootPath, "Thumbnails");
-
                 var thumbnailPath = _reelService.ExtractThumbnailAsync(videoPath, outputPath).Result;
 
                 if (string.IsNullOrEmpty(thumbnailPath))
@@ -213,7 +208,7 @@ namespace backend.Controllers
                     _logger.LogWarning("Thumbnail generation failed after video upload");
                 }
 
-                return Ok("Video uploaded and saved successfully");
+                return Ok(new { Message = "Video uploaded and saved successfully"});
             }
             catch (Exception ex)
             {
@@ -221,6 +216,7 @@ namespace backend.Controllers
                 return StatusCode(500, "An error occurred while uploading the video");
             }
         }
+
 
         [HttpDelete("{videoId}")]
         public IActionResult DeleteReel(Guid videoId)
