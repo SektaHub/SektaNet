@@ -7,7 +7,7 @@ const UploadImage: React.FC = () => {
     formData.append('imageFiles', file);
 
     try {
-      const response = await fetch('https://localhost:7294/api/Image/upload-multiple', {
+      const response = await fetch('https://localhost:7294/api/Image/upload', {
         method: 'POST',
         body: formData,
       });
