@@ -11,6 +11,9 @@ namespace backend.Models
         {
             CreateMap<Reel, ReelDto>();
             CreateMap<ReelDto, Reel>();
+
+            CreateMap<Image, ImageDto>();
+            CreateMap<ImageDto, Image>();
         }
     }
 

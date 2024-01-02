@@ -35,7 +35,7 @@ namespace backend.Controllers
             return dtoList;
         }
 
-        [HttpGet("{videoId}", Name = "GetReelStreamn")]
+        [HttpGet("{videoId}", Name = "GetReelStream")]
         public IActionResult GetReel(Guid videoId)
         {
             var videoPath = _reelService.GetReelPath(videoId);

@@ -32,11 +32,24 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<ReelService>();
+builder.Services.AddScoped<ImageService>();
+
 
 builder.Services.AddAutoMapper(typeof(MyMappingProfile));
 
 
 var app = builder.Build();
+
+// Resolve the service to call the method
+using (var scope = app.Services.CreateScope())
+{
+    //Initialise the services so that they create the necessary folders if they are not present in the project
+    var imageService = scope.ServiceProvider.GetRequiredService<ImageService>();
+    imageService.InitDirectories();
+
+    var reelService = scope.ServiceProvider.GetRequiredService<ReelService>();
+    reelService.InitDirectories();
+}
 
 
 // Configure the HTTP request pipeline.

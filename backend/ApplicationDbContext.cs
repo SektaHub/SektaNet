@@ -13,6 +13,9 @@ namespace backend
             base.OnConfiguring(optionsBuilder);
             //optionsBuilder.UseInMemoryDatabase("YourInMemoryDatabaseName");
         }
+
         public DbSet<Reel> Reels { get; set; }
+        public DbSet<Image> Images { get; set; }
+
     }
 }

@@ -1,3 +1,4 @@
-Reels/*.mp4
-Thumbnails/*.jpg
+Reels/*
+Thumbnails/*
+Images/
 FFmpeg/*

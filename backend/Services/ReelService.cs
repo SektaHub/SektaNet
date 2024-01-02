@@ -117,12 +117,6 @@ namespace backend.Services
         {
             try
             {
-                // Ensure the output directory exists
-                if (!Directory.Exists(outputPath))
-                {
-                    Directory.CreateDirectory(outputPath);
-                }
-
                 // Get the media info
                 var info = await FFmpeg.GetMediaInfo(videoPath);
 
@@ -162,6 +156,21 @@ namespace backend.Services
                 // Log the exception or handle it as needed
                 Console.WriteLine($"Error getting video duration: {ex.Message}");
                 return 0; // Return a default value or handle the error accordingly
+            }
+        }
+
+        public void InitDirectories()
+        {
+            //Create the reel and thumbnail directories if it they do not exist
+            var reelFolderPath = Path.Combine(_env.WebRootPath, "Reels");
+            if (!Directory.Exists(reelFolderPath))
+            {
+                Directory.CreateDirectory(reelFolderPath);
+            }
+            var thumbnailFolderPath = Path.Combine(_env.WebRootPath, "Thumbnails");
+            if (!Directory.Exists(thumbnailFolderPath))
+            {
+                Directory.CreateDirectory(thumbnailFolderPath);
             }
         }
 
