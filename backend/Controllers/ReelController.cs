@@ -217,6 +217,57 @@ namespace backend.Controllers
             }
         }
 
+        [HttpPost("upload-multiple")]
+        public IActionResult UploadMultipleReels(List<IFormFile> videoFiles)
+        {
+            if (videoFiles == null || videoFiles.Count == 0)
+            {
+                return BadRequest("No video files provided");
+            }
+
+            try
+            {
+                List<ReelDto> uploadedVideos = new List<ReelDto>();
+
+                foreach (var videoFile in videoFiles)
+                {
+
+                    if (videoFile == null || videoFile.Length == 0)
+                    {
+                        // Skip invalid files
+                        continue;
+                    }
+
+                    // Save each video
+                    ReelDto reelDto = _reelService.SaveVideo(videoFile);
+
+                    // Get the video duration using the new method
+                    var videoPath = _reelService.GetReelPath(reelDto.Id);
+
+                    // Generate a thumbnail after successful video upload
+                    var outputPath = Path.Combine(_env.WebRootPath, "Thumbnails");
+                    var thumbnailPath = _reelService.ExtractThumbnailAsync(videoPath, outputPath).Result;
+
+                    if (string.IsNullOrEmpty(thumbnailPath))
+                    {
+                        // Handle the case where thumbnail generation fails (log or handle as needed)
+                        _logger.LogWarning($"Thumbnail generation failed after uploading video {reelDto.Id}");
+                    }
+
+                    // Save each image
+                    uploadedVideos.Add(reelDto);
+                }
+
+                return Ok(new { Message = "Videos uploaded and saved successfully", UploadedFiles = uploadedVideos });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error uploading videos: {ex.Message}");
+                return StatusCode(500, "An error occurred while uploading the videos");
+            }
+        }
+
+
 
         [HttpDelete("{videoId}")]
         public IActionResult DeleteReel(Guid videoId)

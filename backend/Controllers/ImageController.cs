@@ -108,7 +108,7 @@ namespace backend.Controllers
 
                 // Additional processing or actions after successful image uploads
 
-                return Ok(new { Message = "Images uploaded and saved successfully", UploadedImages = uploadedImages });
+                return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = uploadedImages });
             }
             catch (Exception ex)
             {
