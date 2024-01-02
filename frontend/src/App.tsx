@@ -6,7 +6,7 @@ import VideoUploader from './layout/VideoUploader';
 import VideoList from './layout/VideoList';
 import ImageList from './layout/ImageList';
 import ImageView from './layout/ImageView';
-import ImageUploader from './layout/ImageUploader';
+import ImageUploader from './layout/ImageUpload';
 
 const App: React.FC = () => {
   return (

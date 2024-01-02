@@ -1,21 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
+import FileUploader from '../components/FileUpload/FileUploader';
 
 const VideoUploader: React.FC = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] || null;
-    setSelectedFile(file);
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      alert('Please select a file before uploading.');
-      return;
-    }
-
+  const handleVideoUpload = async (file: File) => {
     const formData = new FormData();
-    formData.append('videoFile', selectedFile);
+    formData.append('videoFile', file);
 
     try {
       const response = await fetch('https://localhost:7294/api/Reel/upload', {
@@ -37,8 +26,8 @@ const VideoUploader: React.FC = () => {
 
   return (
     <div>
-      <input type="file" accept="video/*" onChange={handleFileChange} />
-      <button onClick={handleUpload}>Upload Video</button>
+      <h1>Upload Video</h1>
+      <FileUploader onFileSelect={handleVideoUpload} />
     </div>
   );
 };
