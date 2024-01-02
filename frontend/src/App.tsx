@@ -1,12 +1,12 @@
 // App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import HomePage from './components/Pages/HomePage';
-import VideoUploader from './components/Pages/VideoUploader';
-import VideoList from './components/Pages/VideoList';
-import ImageList from './components/Pages/ImageList';
-import ImageView from './components/Pages/ImageView';
-import ImageUploader from './components/Pages/ImageUploader';
+import HomePage from './layout/HomePage';
+import VideoUploader from './layout/VideoUploader';
+import VideoList from './layout/VideoList';
+import ImageList from './layout/ImageList';
+import ImageView from './layout/ImageView';
+import ImageUploader from './layout/ImageUploader';
 
 const App: React.FC = () => {
   return (

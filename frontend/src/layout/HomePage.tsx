@@ -1,6 +1,6 @@
 // HomePage.tsx
 import React, { useState, useEffect } from 'react';
-import Reels from '../Reels/Reels.jsx';
+import Reels from '../components/Reels/Reels.jsx';
 import './HomePage.css';
 import hubLogo from '/hub.png';
 import { useInView } from 'react-intersection-observer';
