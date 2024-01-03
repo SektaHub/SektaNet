@@ -1,6 +1,9 @@
 ﻿using AutoMapper;
 using backend.Models.Dto;
 using backend.Models.Entity;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Net.Http;
 
 namespace backend.Services
 {
@@ -9,12 +12,15 @@ namespace backend.Services
         private readonly IWebHostEnvironment _env;
         private readonly IMapper _mapper;
         private readonly ApplicationDbContext _dbContext;
+        private readonly HttpClient _httpClient;
 
-        public ImageService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext)
+        public ImageService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, HttpClient httpClient)
         {
             _env = env;
             _mapper = mapper;
             _dbContext = dbContext;
+            _httpClient = httpClient;
+            _httpClient = httpClient;
         }
 
         public string GetImagePath(Guid imageId)
@@ -53,10 +59,10 @@ namespace backend.Services
                 imageFile.CopyTo(stream);
             }
 
+            // Set other properties or perform additional processing as needed
+
             // Map ImageDto to Image entity
             var newImage = _mapper.Map<Image>(imageDto);
-
-            // Set other properties or perform additional processing as needed
 
             // Save the Image entity to the database
             _dbContext.Images.Add(newImage);
@@ -66,6 +72,69 @@ namespace backend.Services
             return _mapper.Map<ImageDto>(newImage);
         }
 
+        public async Task<ImageDto> SaveImageAsync(IFormFile imageFile)
+        {
+            // Process and save the image file to the wwwroot/Images folder
+            var imageFolderPath = Path.Combine(_env.WebRootPath, "Images");
+            Guid imageId = Guid.NewGuid();
+            var imageFileName = $"{imageId}.jpg"; // Adjust the extension based on your image format
+            var imageFilePath = Path.Combine(imageFolderPath, imageFileName);
+
+            using (var stream = new FileStream(imageFilePath, FileMode.Create))
+            {
+                await imageFile.CopyToAsync(stream);
+            }
+
+            // Generate caption using FastAPI
+            var apiUrl = "http://127.0.0.1:8000/api/generateCaptionFromUpload/";
+            var jsonResponse = await GenerateCaptionFromFastAPIAsync(apiUrl, imageFilePath);
+
+            var caption = JObject.Parse(jsonResponse)?["caption"]?.ToString() ?? null;
+
+            // Create a new ImageDto with default values
+            var imageDto = new ImageDto
+            {
+                Id = imageId,
+                generatedCaption = caption,
+                // Add other properties as needed
+            };
+
+            // Map ImageDto to Image entity
+            var newImage = _mapper.Map<Image>(imageDto);
+
+            // Save the Image entity to the database
+            _dbContext.Images.Add(newImage);
+            await _dbContext.SaveChangesAsync();
+
+            // Return the updated ImageDto
+            return _mapper.Map<ImageDto>(newImage);
+        }
+
+        private async Task<string> GenerateCaptionFromFastAPIAsync(string apiUrl, string imagePath)
+        {
+            try
+            {
+                // Use HttpClient to send a POST request to FastAPI
+                using (var httpClient = new HttpClient())
+                using (var content = new MultipartFormDataContent())
+                using (var fileStream = File.OpenRead(imagePath))
+                {
+                    content.Add(new StreamContent(fileStream), "file", Path.GetFileName(imagePath));
+
+                    var response = await httpClient.PostAsync(apiUrl, content);
+                    response.EnsureSuccessStatusCode();
+
+                    return await response.Content.ReadAsStringAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions or log errors
+                return $"Error communicating with FastAPI: {ex.Message}";
+            }
+        }
+
+
         public void InitDirectories()
         {
             //Create the image directory if it does not exist
@@ -73,6 +142,47 @@ namespace backend.Services
             if (!Directory.Exists(imageFolderPath))
             {
                 Directory.CreateDirectory(imageFolderPath);
+            }
+        }
+
+        public async Task<string> GenerateCaptionFromUploadAsync(IFormFile imageFile)
+        {
+            // Save the image locally
+            var savedImage = SaveImage(imageFile);
+
+            // Generate caption using FastAPI
+            var apiUrl = "http://127.0.0.1:8000/api/generateCaptionFromUpload/";
+            var response = await SendImageToFastAPI(apiUrl, savedImage);
+
+            return response;
+        }
+
+        public async Task<string> GenerateCaptionFromLinkAsync(string imageLink)
+        {
+            // Generate caption using FastAPI
+            var apiUrl = "http://127.0.0.1:8000/api/generateCaptionFromLink/";
+            var response = await SendImageToFastAPI(apiUrl, new { image_link = imageLink });
+
+            return response;
+        }
+
+        private async Task<string> SendImageToFastAPI(string apiUrl, object payload)
+        {
+            try
+            {
+                // Use HttpClient to send a POST request to FastAPI
+                var response = await _httpClient.PostAsJsonAsync(apiUrl, payload);
+
+                // Check if the request was successful
+                response.EnsureSuccessStatusCode();
+
+                // Read the response content (captions generated by FastAPI)
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions or log errors
+                return $"Error communicating with FastAPI: {ex.Message}";
             }
         }
 

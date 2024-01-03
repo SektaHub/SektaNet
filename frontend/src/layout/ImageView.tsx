@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 
 interface Image {
   id: string;
-  // Add other image properties as needed
+  generatedCaption: string | null; // Add other image properties as needed
 }
 
 const ImageView: React.FC = () => {
@@ -11,22 +11,11 @@ const ImageView: React.FC = () => {
   const [image, setImage] = useState<Image | null>(null);
 
   useEffect(() => {
-    // Fetch the specific image by ID from your API or backend
-    if (imageId) {
-      fetch(`https://localhost:7294/api/Image/${imageId}`)
-        .then(response => response.blob())
-        .then(blob => {
-          const objectURL = URL.createObjectURL(blob);
-          setImage({ id: imageId }); // Set other image properties if needed
-          const img = new Image();
-          img.src = objectURL;
-          img.onload = () => {
-            // Clean up the object URL after the image has loaded
-            URL.revokeObjectURL(objectURL);
-          };
-        })
-        .catch(error => console.error('Error fetching image:', error));
-    }
+    // Fetch image data including the caption
+    fetch(`https://localhost:7294/api/Image/${imageId}/Data`)
+      .then(response => response.json())
+      .then(data => setImage(data))
+      .catch(error => console.error('Error fetching image data:', error));
   }, [imageId]);
 
   if (!image) {
@@ -34,12 +23,20 @@ const ImageView: React.FC = () => {
   }
 
   return (
-    <div>
-      <h1>Image View</h1>
-      <div>
+    <div style={{ display: 'flex' }}>
+      <div style={{ flex: 1 }}>
         {/* Display image */}
-        <img src={`https://localhost:7294/api/Image/${image.id}`} alt={`Image ${image.id}`} style={{ maxWidth: '100%' }} />
-        <p>{/* Display other image properties */}</p>
+        <img
+          src={`https://localhost:7294/api/Image/${image.id}`}
+          alt={`Image ${image.id}`}
+          style={{ width: '100%', height: 'auto', maxHeight: '100vh' }}
+        />
+      </div>
+      <div style={{ flex: 1, marginLeft: '20px' }}>
+        {/* Display other image properties */}
+        <h1>Image View</h1>
+        <p>{`Caption: ${image.generatedCaption || 'No caption available'}`}</p>
+        {/* Add more properties as needed */}
       </div>
     </div>
   );

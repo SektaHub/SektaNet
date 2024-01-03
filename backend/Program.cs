@@ -12,7 +12,10 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy.WithOrigins("http://example.com",
-                                "http://localhost:5173");
+                                "http://localhost:5173",
+                                "http://localhost:8000"
+                                ).AllowAnyHeader()
+                                .AllowAnyMethod(); // Allow any HTTP method
         });
 });
 
@@ -23,6 +26,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Register HttpClient
+builder.Services.AddHttpClient();
 
 //builder.Services.AddDbContext<ApplicationDbContext>();
 

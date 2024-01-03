@@ -32,6 +32,20 @@ namespace backend.Controllers
             return dtoList;
         }
 
+        [HttpGet("{imageId}/Data", Name = "GetImageData")]
+        public ActionResult<ImageDto> GetImageData(Guid imageId)
+        {
+            var entity = _dbContext.Set<Image>().Find(imageId);
+
+            if (entity == null)
+            {
+                return NotFound();
+            }
+
+            var imageDto = _mapper.Map<ImageDto>(entity);
+            return imageDto;
+        }
+
         [HttpGet("{imageId}", Name = "GetImageStream")]
         public IActionResult GetImage(Guid imageId)
         {
@@ -80,7 +94,7 @@ namespace backend.Controllers
         }
 
         [HttpPost("upload-multiple")]
-        public IActionResult UploadMultipleImages(List<IFormFile> imageFiles)
+        public async Task<IActionResult> UploadMultipleImages(List<IFormFile> imageFiles)
         {
             if (imageFiles == null || imageFiles.Count == 0)
             {
@@ -89,22 +103,18 @@ namespace backend.Controllers
 
             try
             {
-                List<ImageDto> uploadedImages = new List<ImageDto>();
-
-                foreach (var imageFile in imageFiles)
-                {
-                    if (imageFile == null || imageFile.Length == 0)
+                var uploadTasks = imageFiles
+                    .Where(imageFile => imageFile != null && imageFile.Length > 0)
+                    .Select(async imageFile =>
                     {
-                        // Skip invalid files
-                        continue;
-                    }
+                        // Validate other properties in the ImageDto if needed
+                        // Save each image asynchronously
+                        ImageDto imageDto = await _imageService.SaveImageAsync(imageFile);
+                        return imageDto;
+                    });
 
-                    // Validate other properties in the ImageDto if needed
-
-                    // Save each image
-                    ImageDto imageDto = _imageService.SaveImage(imageFile);
-                    uploadedImages.Add(imageDto);
-                }
+                // Wait for all upload tasks to complete
+                var uploadedImages = await Task.WhenAll(uploadTasks);
 
                 // Additional processing or actions after successful image uploads
 
@@ -116,6 +126,44 @@ namespace backend.Controllers
                 return StatusCode(500, "An error occurred while uploading the images");
             }
         }
+
+        //[HttpPost("upload-multiple")]
+        //public IActionResult UploadMultipleImages(List<IFormFile> imageFiles)
+        //{
+        //    if (imageFiles == null || imageFiles.Count == 0)
+        //    {
+        //        return BadRequest("No image files provided");
+        //    }
+
+        //    try
+        //    {
+        //        List<ImageDto> uploadedImages = new List<ImageDto>();
+
+        //        foreach (var imageFile in imageFiles)
+        //        {
+        //            if (imageFile == null || imageFile.Length == 0)
+        //            {
+        //                // Skip invalid files
+        //                continue;
+        //            }
+
+        //            // Validate other properties in the ImageDto if needed
+
+        //            // Save each image
+        //            ImageDto imageDto = _imageService.SaveImage(imageFile);
+        //            uploadedImages.Add(imageDto);
+        //        }
+
+        //        // Additional processing or actions after successful image uploads
+
+        //        return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = uploadedImages });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Error uploading images: {ex.Message}");
+        //        return StatusCode(500, "An error occurred while uploading the images");
+        //    }
+        //}
 
         [HttpDelete("{imageId}")]
         public IActionResult DeleteImage(Guid imageId)

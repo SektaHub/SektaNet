@@ -18,14 +18,41 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
     setSelectedFiles(Array.from(files));
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (selectedFiles.length === 0) {
       alert('Please select files before uploading.');
       return;
     }
-
-    selectedFiles.forEach((file) => onFileSelect(file));
-    setSelectedFiles([]);
+  
+    try {
+      const formData = new FormData();
+  
+      // Append each selected file to the FormData
+      selectedFiles.forEach((file) => {
+        // Modify this part to match the expected format on the server side
+        formData.append('imageFiles', file);
+      });
+  
+      const response = await fetch('https://localhost:7294/api/Image/upload-multiple', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      if (response.ok) {
+        alert('Images uploaded successfully!');
+      } else {
+        const data = await response.json();
+        const responseText = await response.text(); // Add this line
+        console.log('Response content:', responseText); // Add this line
+        alert(`Error uploading images: ${data.message}`);
+      }
+    } catch (error: any) {
+      console.error('Error uploading images:', error.message);
+      alert('An unexpected error occurred while uploading the images.');
+      
+    } finally {
+      setSelectedFiles([]); // Clear selected files after upload
+    };
   };
 
   return (
