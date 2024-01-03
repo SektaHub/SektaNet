@@ -8,28 +8,35 @@ interface Image {
 
 const ImageList: React.FC = () => {
   const [images, setImages] = useState<Image[]>([]);
+  const [searchCaption, setSearchCaption] = useState<string>('');
 
   useEffect(() => {
-    // Fetch images from your API or backend
-    fetch('https://localhost:7294/api/Image').then(response => response.json()).then(data => setImages(data));
-  }, []);
+    // Fetch images from your API or backend based on the search caption
+    const url = searchCaption
+      ? `https://localhost:7294/api/Image/GetImagesByCaption?caption=${encodeURIComponent(searchCaption)}`
+      : 'https://localhost:7294/api/Image';
+
+    fetch(url)
+      .then(response => response.json())
+      .then(data => setImages(data));
+  }, [searchCaption]);
 
   const handleDeleteAll = async () => {
     try {
       // Fetch all images
       const response = await fetch('https://localhost:7294/api/Image');
       const fetchedImages = await response.json();
-  
+
       // Delete each image individually
       for (const image of fetchedImages) {
         await fetch(`https://localhost:7294/api/Image/${image.id}`, {
           method: 'DELETE',
         });
       }
-  
+
       // Refresh the image list after deletion
       fetch('https://localhost:7294/api/Image').then(response => response.json()).then(data => setImages(data));
-  
+
       alert('All images deleted successfully');
     } catch (error : any) {
       console.error('Error deleting images:', error.message);
@@ -40,7 +47,38 @@ const ImageList: React.FC = () => {
   return (
     <div>
       <h1>Image List</h1>
-      <button onClick={handleDeleteAll} style={{ marginBottom: '10px', background: "red"}}>
+      <div style={{ marginBottom: '10px', position: 'relative' }}>
+        <input
+          type="text"
+          placeholder="Search by caption"
+          value={searchCaption}
+          onChange={(e) => setSearchCaption(e.target.value)}
+          style={{
+            padding: '10px',
+            fontSize: '16px',
+            width: '30%',
+            boxSizing: 'border-box',
+            borderRadius: '5px',
+            border: '1px solid #ccc',
+            marginBottom: '10px',
+          }}
+        />
+        {searchCaption && (
+          <span
+            style={{
+              position: 'absolute',
+              top: '50%',
+              right: '10px',
+              transform: 'translateY(-50%)',
+              cursor: 'pointer',
+            }}
+            onClick={() => setSearchCaption('')}
+          >
+            &times;
+          </span>
+        )}
+      </div>
+      <button onClick={handleDeleteAll} style={{ marginBottom: '10px', background: 'red' }}>
         Delete All
       </button>
       <div style={{ display: 'flex', flexWrap: 'wrap' }}>

@@ -32,6 +32,18 @@ namespace backend.Controllers
             return dtoList;
         }
 
+        [HttpGet("GetImagesByCaption")]
+        public IEnumerable<ImageDto> GetImagesByCaption(string caption)
+        {
+            // Filter images based on the provided caption (case-insensitive)
+            var filteredEntities = _dbContext.Set<Image>()
+                .Where(image => image.generatedCaption != null && image.generatedCaption.ToLower().Contains(caption.ToLower()))
+                .ToList();
+
+            var filteredDtoList = _mapper.Map<List<ImageDto>>(filteredEntities);
+            return filteredDtoList;
+        }
+
         [HttpGet("{imageId}/Data", Name = "GetImageData")]
         public ActionResult<ImageDto> GetImageData(Guid imageId)
         {
