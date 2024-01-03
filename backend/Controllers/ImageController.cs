@@ -170,19 +170,19 @@ namespace backend.Controllers
         {
             try
             {
-                // Delete image file
-                var imagePath = _imageService.GetImagePath(imageId);
-                if (System.IO.File.Exists(imagePath))
-                {
-                    System.IO.File.Delete(imagePath);
-                }
-
                 // Delete database entry
                 var image = _dbContext.Set<Image>().Find(imageId);
                 if (image != null)
                 {
                     _dbContext.Set<Image>().Remove(image);
                     _dbContext.SaveChanges();
+                }
+
+                // Delete image file
+                var imagePath = _imageService.GetImagePath(imageId);
+                if (System.IO.File.Exists(imagePath))
+                {
+                    System.IO.File.Delete(imagePath);
                 }
 
                 return Ok("Image deleted successfully");
