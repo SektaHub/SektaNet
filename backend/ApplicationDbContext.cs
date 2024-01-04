@@ -2,16 +2,23 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using System;
+using Pgvector.EntityFrameworkCore;
 
 namespace backend
 {
     public class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
+            optionsBuilder.UseNpgsql("Server=localhost;Port=5433;Database=baza;User Id=postgres;Password=sektaadmin;Trust Server Certificate=True;", o => o.UseVector());
             base.OnConfiguring(optionsBuilder);
-            //optionsBuilder.UseInMemoryDatabase("YourInMemoryDatabaseName");
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.HasPostgresExtension("vector");
         }
 
         public DbSet<Reel> Reels { get; set; }
