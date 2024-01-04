@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 
 interface Image {
   id: string;
-  generatedCaption: string | null; // Add other image properties as needed
+  generatedCaption: string | null;
 }
 
 const ImageView: React.FC = () => {
   const { imageId } = useParams<{ imageId?: string }>();
   const [image, setImage] = useState<Image | null>(null);
+  const [similarImages, setSimilarImages] = useState<Image[]>([]);
 
   useEffect(() => {
     // Fetch image data including the caption
@@ -18,6 +19,16 @@ const ImageView: React.FC = () => {
       .catch(error => console.error('Error fetching image data:', error));
   }, [imageId]);
 
+  useEffect(() => {
+    if (image) {
+      // Fetch top 5 conceptually similar images
+      fetch(`https://localhost:7294/api/Image/GetConceptuallySimmilarImages/${image.id}`)
+        .then(response => response.json())
+        .then(data => setSimilarImages(data))
+        .catch(error => console.error('Error fetching similar images:', error));
+    }
+  }, [image]);
+
   if (!image) {
     return <div>Loading...</div>;
   }
@@ -25,7 +36,7 @@ const ImageView: React.FC = () => {
   return (
     <div style={{ display: 'flex' }}>
       <div style={{ flex: 1 }}>
-        {/* Display image */}
+        {/* Display main image */}
         <img
           src={`https://localhost:7294/api/Image/${image.id}`}
           alt={`Image ${image.id}`}
@@ -33,10 +44,27 @@ const ImageView: React.FC = () => {
         />
       </div>
       <div style={{ flex: 1, marginLeft: '20px' }}>
-        {/* Display other image properties */}
+        {/* Display main image properties */}
         <h1>Image View</h1>
         <p>{`Caption: ${image.generatedCaption || 'No caption available'}`}</p>
         {/* Add more properties as needed */}
+        
+        {/* Display top 5 conceptually similar images in a 1x5 grid */}
+        <h2>Conceptually Similar Images</h2>
+        <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+          {similarImages.map(similarImage => (
+            <Link key={similarImage.id} to={`/images/${similarImage.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <div style={{ border: '1px solid #ccc', margin: '10px', padding: '10px', cursor: 'pointer', width: '100px', height: '100px', overflow: 'hidden' }}>
+                {/* Display image thumbnail */}
+                <img
+                  src={`https://localhost:7294/api/Image/${similarImage.id}`}
+                  alt={`Image ${similarImage.id}`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );

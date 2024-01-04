@@ -8,5 +8,6 @@ namespace backend.Models.Dto
         public string? generatedCaption { get; set; }
 
         public Vector? CaptionEmbedding { get; set; }
+
     }
 }

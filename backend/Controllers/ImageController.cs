@@ -4,6 +4,8 @@ using backend.Models.Entity;
 using backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
+using Pgvector;
 
 namespace backend.Controllers
 {
@@ -28,6 +30,29 @@ namespace backend.Controllers
         public IEnumerable<ImageDto> Get()
         {
             var entities = _dbContext.Set<Image>().ToList();
+            var dtoList = _mapper.Map<List<ImageDto>>(entities);
+            return dtoList;
+        }
+
+        [HttpGet("GetConceptuallySimmilarImages/{imageId}")]
+        public async Task<IEnumerable<ImageDto>> GetConceptuallySimmilarImages(Guid imageId)
+        {
+
+            var entity = _dbContext.Set<Image>().Find(imageId);
+
+            if (entity == null)
+            {
+                return (IEnumerable<ImageDto>)NotFound();
+            }
+
+            var imageDto = _mapper.Map<ImageDto>(entity);
+
+            var entities = await _dbContext.Set<Image>()
+                .Where(x => x.Id != imageId)
+                .OrderBy(x => x.CaptionEmbedding!.L2Distance(imageDto.CaptionEmbedding))
+                .Take(4)
+                .ToListAsync();
+
             var dtoList = _mapper.Map<List<ImageDto>>(entities);
             return dtoList;
         }

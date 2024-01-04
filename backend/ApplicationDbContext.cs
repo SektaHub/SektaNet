@@ -19,6 +19,12 @@ namespace backend
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasPostgresExtension("vector");
+
+            modelBuilder.Entity<Image>()
+                .HasIndex(i => i.CaptionEmbedding)
+                .HasMethod("ivfflat")
+                .HasOperators("vector_l2_ops")
+                .HasStorageParameter("lists", 100);
         }
 
         public DbSet<Reel> Reels { get; set; }

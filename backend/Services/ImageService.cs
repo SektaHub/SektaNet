@@ -4,6 +4,8 @@ using backend.Models.Entity;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.Http;
+using System.Text;
+using System.Web;
 
 namespace backend.Services
 {
@@ -87,16 +89,26 @@ namespace backend.Services
 
             // Generate caption using FastAPI
             var apiUrl = "http://127.0.0.1:8000/api/generateCaptionFromUpload/";
+            var apiUrl2 = "http://localhost:8000/api/embed_sentence";
+
             var jsonResponse = await GenerateCaptionFromFastAPIAsync(apiUrl, imageFilePath);
 
+            //Console.WriteLine(jsonResponse.ToString());
+
             var caption = JObject.Parse(jsonResponse)?["caption"]?.ToString() ?? null;
+
+            var jsonResponse2 = await EmbedSentenceUsingFastAPIAsync(apiUrl2, caption);
+
+            //Console.WriteLine(jsonResponse2.ToString());
+
+            var captionEmbedding = JObject.Parse(jsonResponse2)?["embedding"]?.ToObject<List<float>>() ?? null;
 
             // Create a new ImageDto with default values
             var imageDto = new ImageDto
             {
                 Id = imageId,
                 generatedCaption = caption,
-                // Add other properties as needed
+                CaptionEmbedding = new Pgvector.Vector(captionEmbedding.ToArray())
             };
 
             // Map ImageDto to Image entity
@@ -108,6 +120,30 @@ namespace backend.Services
 
             // Return the updated ImageDto
             return _mapper.Map<ImageDto>(newImage);
+        }
+
+        private async Task<string> EmbedSentenceUsingFastAPIAsync(string apiUrl, string sentence)
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    // Prepare the content with the sentence
+                    var content = new StringContent($"{{\"sentence\": \"{sentence}\"}}", Encoding.UTF8, "application/json");
+
+                    // Send a POST request to the FastAPI endpoint
+                    var response = await httpClient.PostAsync(apiUrl, content);
+                    response.EnsureSuccessStatusCode();
+
+                    // Read and return the response content
+                    return await response.Content.ReadAsStringAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions or log errors
+                return $"Error communicating with FastAPI: {ex.Message}";
+            }
         }
 
         private async Task<string> GenerateCaptionFromFastAPIAsync(string apiUrl, string imagePath)
@@ -133,6 +169,31 @@ namespace backend.Services
                 return $"Error communicating with FastAPI: {ex.Message}";
             }
         }
+
+        private async Task<string> GenerateCaptionEmbeddingFromFastAPIAsync(string apiUrl, string caption)
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                using (var content = new MultipartFormDataContent())
+                {
+                    // Add the caption to the request
+                    content.Add(new StringContent(caption), "caption");
+
+                    var response = await httpClient.PostAsync(apiUrl, content);
+                    response.EnsureSuccessStatusCode();
+
+                    return await response.Content.ReadAsStringAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions or log errors
+                return $"Error communicating with FastAPI: {ex.Message}";
+            }
+        }
+
+
 
 
         public void InitDirectories()
