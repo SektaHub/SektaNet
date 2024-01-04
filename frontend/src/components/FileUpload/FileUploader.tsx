@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 
 interface FileUploaderProps {
-  onFileSelect: (file: File) => void;
+  uploadEndpoint: string;
+  fileFormDataKey: string; // New prop to specify the FormData key
 }
 
-const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
+const FileUploader: React.FC<FileUploaderProps> = ({ uploadEndpoint, fileFormDataKey }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,36 +24,45 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
       alert('Please select files before uploading.');
       return;
     }
-  
+
     try {
       const formData = new FormData();
-  
-      // Append each selected file to the FormData
       selectedFiles.forEach((file) => {
-        // Modify this part to match the expected format on the server side
-        formData.append('imageFiles', file);
+        formData.append(fileFormDataKey, file); // Use the passed in key for form data
       });
-  
-      const response = await fetch('https://localhost:7294/api/Image/upload-multiple', {
+
+      const response = await fetch(uploadEndpoint, {
         method: 'POST',
         body: formData,
       });
-  
-      if (response.ok) {
-        alert('Images uploaded successfully!');
+
+      if (!response.ok) {
+        let errorMessage = 'Error uploading files.';
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const data = await response.json();
+            errorMessage += ` ${data.message}`; // Assuming the error message is in the `message` property
+          } catch (err) {
+            errorMessage += ' Could not parse JSON error message.';
+          }
+        } else {
+          try {
+            const responseText = await response.text();
+            errorMessage += ` Response: ${responseText}`;
+          } catch (err) {
+            errorMessage += ' Could not retrieve the error message.';
+          }
+        }
+        alert(errorMessage);
       } else {
-        const data = await response.json();
-        const responseText = await response.text(); // Add this line
-        console.log('Response content:', responseText); // Add this line
-        alert(`Error uploading images: ${data.message}`);
+        alert('Files uploaded successfully!');
+        setSelectedFiles([]); // Clear selected files after upload
       }
     } catch (error: any) {
-      console.error('Error uploading images:', error.message);
-      alert('An unexpected error occurred while uploading the images.');
-      
-    } finally {
-      setSelectedFiles([]); // Clear selected files after upload
-    };
+      console.error('Error uploading files:', error);
+      alert('An unexpected error occurred while uploading the files.');
+    }
   };
 
   return (

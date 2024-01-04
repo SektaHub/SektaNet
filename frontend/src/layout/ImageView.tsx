@@ -40,7 +40,7 @@ const ImageView: React.FC = () => {
         <img
           src={`https://localhost:7294/api/Image/${image.id}`}
           alt={`Image ${image.id}`}
-          style={{ width: '100%', height: 'auto', maxHeight: '100vh' }}
+          style={{ width: '80%', height: 'auto', maxHeight: '100vh' }}
         />
       </div>
       <div style={{ flex: 1, marginLeft: '20px' }}>
