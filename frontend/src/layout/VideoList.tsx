@@ -3,6 +3,8 @@ import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import { API_URL } from '../config';
+import { BASE_URL } from '../config';
 
 const VideoList: React.FC = () => {
   const [videos, setVideos] = useState<{
@@ -14,7 +16,7 @@ const VideoList: React.FC = () => {
 
   const fetchThumbnail = async (videoId: string) => {
     try {
-      const response = await fetch(`https://localhost:7294/api/Reel/${videoId}/thumbnail`);
+      const response = await fetch(`${API_URL}/Reel/${videoId}/thumbnail`);
       if (response.ok) {
         const blob = await response.blob();
         const thumbnailUrl = URL.createObjectURL(blob);
@@ -31,7 +33,7 @@ const VideoList: React.FC = () => {
 
   const handleDeleteClick = async (videoId: string) => {
     try {
-      const response = await fetch(`https://localhost:7294/api/Reel/${videoId}`, {
+      const response = await fetch(`${API_URL}/Reel/${videoId}`, {
         method: 'DELETE',
       });
 
@@ -50,7 +52,7 @@ const VideoList: React.FC = () => {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const response = await fetch('https://localhost:7294/api/Reel');
+        const response = await fetch('${API_URL}/Reel');
         const data = await response.json();
 
         if (response.ok) {
@@ -85,7 +87,7 @@ const VideoList: React.FC = () => {
                 <Card.Title style={{ color: 'white' }}>Video {videos.indexOf(video) + 1}</Card.Title>
                 <Card.Text style={{ color: 'white' }}>ID: {video.id}</Card.Text>
                 <Card.Text style={{ color: 'white' }}>Duration: {video.duration} seconds</Card.Text>
-                <Button variant="primary" href={`http://localhost:5173/?videoId=${video.id}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="primary" href={`${BASE_URL}/?videoId=${video.id}`} target="_blank" rel="noopener noreferrer">
                   Watch Video
                 </Button>
                 <Button variant="danger" onClick={() => handleDeleteClick(video.id)}>

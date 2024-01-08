@@ -1,8 +1,10 @@
 import React from 'react';
 import FileUploader from '../components/FileUpload/FileUploader';
+import { API_URL } from '../config';
 
 const ImageUpload: React.FC = () => {
-  const uploadEndpoint = 'https://localhost:7294/api/Image/upload-multiple';
+  //const uploadEndpoint = `${API_URL}/Image/upload-multiple`;
+  const uploadEndpoint = `${API_URL}/Image/upload`;
   const fileFormDataKey = 'imageFiles'; // Key for images
 
   return (

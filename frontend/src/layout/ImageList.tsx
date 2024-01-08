@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { API_URL } from '../config';
 
 interface Image {
   id: string;
@@ -13,8 +14,8 @@ const ImageList: React.FC = () => {
   useEffect(() => {
     // Fetch images from your API or backend based on the search caption
     const url = searchCaption
-      ? `https://localhost:7294/api/Image/GetImagesByCaption?caption=${encodeURIComponent(searchCaption)}`
-      : 'https://localhost:7294/api/Image';
+      ? `${API_URL}/Image/GetImagesByCaption?caption=${encodeURIComponent(searchCaption)}`
+      : `${API_URL}/Image`;
 
     fetch(url)
       .then(response => response.json())
@@ -24,18 +25,18 @@ const ImageList: React.FC = () => {
   const handleDeleteAll = async () => {
     try {
       // Fetch all images
-      const response = await fetch('https://localhost:7294/api/Image');
+      const response = await fetch(`${API_URL}/Image`);
       const fetchedImages = await response.json();
 
       // Delete each image individually
       for (const image of fetchedImages) {
-        await fetch(`https://localhost:7294/api/Image/${image.id}`, {
+        await fetch(`${API_URL}/Image/${image.id}`, {
           method: 'DELETE',
         });
       }
 
       // Refresh the image list after deletion
-      fetch('https://localhost:7294/api/Image').then(response => response.json()).then(data => setImages(data));
+      fetch('${API_URL}/Image').then(response => response.json()).then(data => setImages(data));
 
       alert('All images deleted successfully');
     } catch (error : any) {
@@ -87,7 +88,7 @@ const ImageList: React.FC = () => {
             <div style={{ border: '1px solid #ccc', margin: '10px', padding: '10px', cursor: 'pointer', width: '200px', height: '250px', overflow: 'hidden' }}>
               {/* Display image properties or thumbnail */}
               <img
-                src={`https://localhost:7294/api/Image/${image.id}`}
+                src={`${API_URL}/Image/${image.id}`}
                 alt={`Image ${image.id}`}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />

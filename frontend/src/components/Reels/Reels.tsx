@@ -1,6 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import './Reels.css';
+import { API_URL } from '../../config';
+
 
 interface ReelsProps {
   videoId: string; // Assuming videoId is a string, adjust the type accordingly
@@ -13,7 +15,7 @@ const Reels: React.FC<ReelsProps> = ({ videoId }) => {
   });
 
   // Build the video URL dynamically based on the videoId
-  const videoUrl = `https://localhost:7294/api/Reel/${videoId}`;
+  const videoUrl = `${API_URL}/Reel/${videoId}`;
 
   useEffect(() => {
     if (inView) {

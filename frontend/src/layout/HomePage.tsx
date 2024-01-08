@@ -3,6 +3,7 @@ import Reels from '../components/Reels/Reels';
 import './HomePage.css';
 import hubLogo from '/hub.png';
 import { useInView } from 'react-intersection-observer';
+import { API_URL } from '../config';
 
 const HomePage: React.FC = () => {
   const queryParams = new URLSearchParams(window.location.search);
@@ -14,7 +15,7 @@ const HomePage: React.FC = () => {
 
   const getRandomVideoIdFromBackend = async () => {
     try {
-      const response = await fetch('https://localhost:7294/api/Reel/RandomVideoId');
+      const response = await fetch(`${API_URL}/api/Reel/RandomVideoId`);
       const data = await response.json();
 
       if (response.ok) {
