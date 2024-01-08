@@ -1,0 +1,1 @@
+version: '1'services:  backend:    image: 'sektahub-backend'    ports:      - "8080:8080"    networks:       - sektanetwork  frontend:    image: 'sekta-frontend'    ports:        - "3000:3000"    networks:       - sektanetworknetworks:  sektanetwork:    
