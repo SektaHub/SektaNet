@@ -1,9 +1,13 @@
 import React, { useRef, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
-import "./Reels.css";
+import './Reels.css';
 
-export default function Reels({ videoId }) { // Assuming you have a unique identifier for each video
-  const vidRef = useRef(null);
+interface ReelsProps {
+  videoId: string; // Assuming videoId is a string, adjust the type accordingly
+}
+
+const Reels: React.FC<ReelsProps> = ({ videoId }) => {
+  const vidRef = useRef<HTMLVideoElement | null>(null);
   const [ref, inView] = useInView({
     threshold: 0.5,
   });
@@ -20,7 +24,7 @@ export default function Reels({ videoId }) { // Assuming you have a unique ident
   }, [inView]);
 
   return (
-    <div ref={ref} className='reel-card'>
+    <div ref={ref} className="reel-card">
       <video
         className="reel-player"
         ref={vidRef}
@@ -32,4 +36,6 @@ export default function Reels({ videoId }) { // Assuming you have a unique ident
       ></video>
     </div>
   );
-}
+};
+
+export default Reels;
