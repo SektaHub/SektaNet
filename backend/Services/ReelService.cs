@@ -143,7 +143,6 @@ namespace backend.Services
             string FFMpegDownloadPath = Path.Combine(_env.WebRootPath, "FFmpeg");
             FFmpeg.SetExecutablesPath(FFMpegDownloadPath);
             await FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official, FFMpegDownloadPath).ConfigureAwait(false);
-            Console.WriteLine(FFmpeg.ExecutablesPath);
         }
 
         public async Task<string> ExtractThumbnailAsync(string videoPath, string outputPath)
@@ -220,6 +219,43 @@ namespace backend.Services
             if (!Directory.Exists(thumbnailFolderPath))
             {
                 Directory.CreateDirectory(thumbnailFolderPath);
+            }
+        }
+
+        public void SetFFmpegPermissions()
+        {
+            // Use the appropriate paths based on your application structure
+            string ffprobePath = "/app/wwwroot/FFmpeg/ffprobe";
+            string ffmpegPath = "/app/wwwroot/FFmpeg/ffmpeg";
+
+            // Set execute permissions for FFmpeg binaries
+            ExecuteCommand($"chmod +x {ffprobePath}");
+            ExecuteCommand($"chmod +x {ffmpegPath}");
+        }
+
+        private static void ExecuteCommand(string command)
+        {
+            try
+            {
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = "/bin/bash",
+                    Arguments = $"-c \"{command}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using (var process = new Process { StartInfo = processInfo })
+                {
+                    process.Start();
+                    process.WaitForExit();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error executing command: {ex.Message}");
             }
         }
 

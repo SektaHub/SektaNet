@@ -16,4 +16,8 @@ RUN dotnet publish "backend.csproj" -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
+# Ensure execute permissions for the entire wwwroot folder
+RUN chmod -R +x /app/wwwroot
+
 ENTRYPOINT ["dotnet", "backend.dll"]

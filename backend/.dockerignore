@@ -8,5 +8,7 @@ node_modules/
 *.vscode
 *.idea
 
-wwwroot/*
-!wwwroot
+wwwroot/Reels/*
+wwwroot/Thumbnails/*
+wwwroot/Images/
+wwwroot/FFmpeg/*
