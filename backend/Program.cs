@@ -55,6 +55,7 @@ using (var scope = app.Services.CreateScope())
 
     var reelService = scope.ServiceProvider.GetRequiredService<ReelService>();
     reelService.InitDirectories();
+    await reelService.DownloadFFmpeg();
 }
 
 

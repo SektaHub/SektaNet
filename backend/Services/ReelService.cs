@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Resources;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Downloader;
@@ -82,16 +83,67 @@ namespace backend.Services
                 await stream.FlushAsync();
             }
 
-            // After this the file should be fully written to disk
+            await WaitForFileReady(videoFilePath);
+
+            // After this, the file should be fully written to disk
             return videoFilePath;
         }
+
+        private async Task WaitForFileReady(string filename)
+        {
+            const int maxAttempts = 40;
+            const int delayBetweenAttemptsMs = 100;
+
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                if (IsFileReady(filename))
+                {
+                    Console.WriteLine("FILEFound");
+                    return;
+                }
+
+                if (attempt < maxAttempts)
+                {
+                    // Wait for a short duration before the next attempt
+                    await Task.Delay(delayBetweenAttemptsMs);
+                }
+            }
+
+            // Handle the case where the file is not ready after all attempts
+            Console.WriteLine("File not ready after all attempts");
+        }
+
+        private bool IsFileReady(string filename)
+        {
+            try
+            {
+                var fileInfo = new FileInfo(filename);
+
+                // Check if the file has not been modified for the last second
+                return (DateTime.UtcNow - fileInfo.LastWriteTimeUtc).TotalSeconds > 1;
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine("FileNotFoundException");
+                return false;
+            }
+            catch (IOException)
+            {
+                Console.WriteLine("IOException");
+                // Handle accordingly or wait for the next attempt
+                return false;
+            }
+        }
+
 
 
 
         public async Task DownloadFFmpeg()
         {
             string FFMpegDownloadPath = Path.Combine(_env.WebRootPath, "FFmpeg");
+            FFmpeg.SetExecutablesPath(FFMpegDownloadPath);
             await FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official, FFMpegDownloadPath).ConfigureAwait(false);
+            Console.WriteLine(FFmpeg.ExecutablesPath);
         }
 
         public async Task<string> ExtractThumbnailAsync(string videoPath, string outputPath)

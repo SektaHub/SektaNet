@@ -7,3 +7,6 @@ node_modules/
 *.user
 *.vscode
 *.idea
+
+wwwroot/*
+!wwwroot

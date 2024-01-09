@@ -29,7 +29,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\FFmpeg\" />
     <Folder Include="wwwroot\Images\" />
     <Folder Include="wwwroot\Thumbnails\" />
   </ItemGroup>
