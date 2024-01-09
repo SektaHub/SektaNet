@@ -35,7 +35,7 @@ builder.Services.AddHttpClient();
 var configuration = builder.Configuration;
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),  o => o.UseVector()));
 
 builder.Services.AddScoped<ReelService>();
 builder.Services.AddScoped<ImageService>();
