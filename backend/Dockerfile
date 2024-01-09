@@ -28,13 +28,4 @@ WORKDIR /app
 
 # Copy the published files from the publish stage
 COPY --from=publish /app/publish .
-
-# Copy the entrypoint script (assuming it's in the backend directory)
-COPY entrypoint.sh .
-COPY install-pgvector.sh .
-
-# Set permissions for the entrypoint script
-#RUN chmod +x ./entrypoint.sh
-
-# Define the entrypoint script to run during container startup
-ENTRYPOINT ["sh", "./entrypoint.sh"]
+ENTRYPOINT ["dotnet", "backend.dll"]
