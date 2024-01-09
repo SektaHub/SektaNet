@@ -179,46 +179,46 @@ namespace backend.Controllers
             }
         }
 
-        [HttpPost("upload")]
-        public IActionResult UploadReel(IFormFile videoFile)
-        {
+        //[HttpPost("upload")]
+        //public IActionResult UploadReel(IFormFile videoFile)
+        //{
 
-            if (videoFile == null || videoFile.Length == 0)
-            {
-                return BadRequest("No video file provided");
-            }
+        //    if (videoFile == null || videoFile.Length == 0)
+        //    {
+        //        return BadRequest("No video file provided");
+        //    }
 
-            // Validate other properties in the ReelDto if needed
+        //    // Validate other properties in the ReelDto if needed
 
-            try
-            {
-                // Save the video
-                ReelDto reelDto = _reelService.SaveVideo(videoFile);
+        //    try
+        //    {
+        //        // Save the video
+        //        ReelDto reelDto = _reelService.SaveVideo(videoFile);
 
-                // Get the video duration using the new method
-                var videoPath = _reelService.GetReelPath(reelDto.Id);
+        //        // Get the video duration using the new method
+        //        var videoPath = _reelService.GetReelPath(reelDto.Id);
 
-                // Generate a thumbnail after successful video upload
-                var outputPath = Path.Combine(_env.WebRootPath, "Thumbnails");
-                var thumbnailPath = _reelService.ExtractThumbnailAsync(videoPath, outputPath).Result;
+        //        // Generate a thumbnail after successful video upload
+        //        var outputPath = Path.Combine(_env.WebRootPath, "Thumbnails");
+        //        var thumbnailPath = _reelService.ExtractThumbnailAsync(videoPath, outputPath).Result;
 
-                if (string.IsNullOrEmpty(thumbnailPath))
-                {
-                    // Handle the case where thumbnail generation fails (log or handle as needed)
-                    _logger.LogWarning("Thumbnail generation failed after video upload");
-                }
+        //        if (string.IsNullOrEmpty(thumbnailPath))
+        //        {
+        //            // Handle the case where thumbnail generation fails (log or handle as needed)
+        //            _logger.LogWarning("Thumbnail generation failed after video upload");
+        //        }
 
-                return Ok(new { Message = "Video uploaded and saved successfully"});
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error uploading video: {ex.Message}");
-                return StatusCode(500, "An error occurred while uploading the video");
-            }
-        }
+        //        return Ok(new { Message = "Video uploaded and saved successfully"});
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Error uploading video: {ex.Message}");
+        //        return StatusCode(500, "An error occurred while uploading the video");
+        //    }
+        //}
 
         [HttpPost("upload-multiple")]
-        public IActionResult UploadMultipleReels(List<IFormFile> videoFiles)
+        public async Task<IActionResult> UploadMultipleReels(List<IFormFile> videoFiles)
         {
             if (videoFiles == null || videoFiles.Count == 0)
             {
@@ -227,36 +227,30 @@ namespace backend.Controllers
 
             try
             {
-                List<ReelDto> uploadedVideos = new List<ReelDto>();
+                List<Task<ReelDto>> uploadTasks = new List<Task<ReelDto>>();
 
                 foreach (var videoFile in videoFiles)
                 {
-
                     if (videoFile == null || videoFile.Length == 0)
                     {
                         // Skip invalid files
                         continue;
                     }
 
-                    // Save each video
-                    ReelDto reelDto = _reelService.SaveVideo(videoFile);
-
-                    // Get the video duration using the new method
-                    var videoPath = _reelService.GetReelPath(reelDto.Id);
-
-                    // Generate a thumbnail after successful video upload
-                    var outputPath = Path.Combine(_env.WebRootPath, "Thumbnails");
-                    var thumbnailPath = _reelService.ExtractThumbnailAsync(videoPath, outputPath).Result;
-
-                    if (string.IsNullOrEmpty(thumbnailPath))
-                    {
-                        // Handle the case where thumbnail generation fails (log or handle as needed)
-                        _logger.LogWarning($"Thumbnail generation failed after uploading video {reelDto.Id}");
-                    }
-
-                    // Save each image
-                    uploadedVideos.Add(reelDto);
+                    // Save each video asynchronously
+                    uploadTasks.Add(_reelService.SaveVideo(videoFile));
                 }
+
+                // Wait for all video uploads to complete
+                var uploadedVideos = await Task.WhenAll(uploadTasks);
+
+                // Generate thumbnails asynchronously
+                var thumbnailTasks = uploadedVideos.Select(reelDto =>
+                    _reelService.ExtractThumbnailAsync(_reelService.GetReelPath(reelDto.Id), Path.Combine(_env.WebRootPath, "Thumbnails"))
+                ).ToList();
+
+                // Wait for all thumbnail generation tasks to complete
+                await Task.WhenAll(thumbnailTasks);
 
                 return Ok(new { Message = "Videos uploaded and saved successfully", UploadedFiles = uploadedVideos });
             }

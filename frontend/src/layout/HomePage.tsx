@@ -15,7 +15,7 @@ const HomePage: React.FC = () => {
 
   const getRandomVideoIdFromBackend = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/Reel/RandomVideoId`);
+      const response = await fetch(`${API_URL}/Reel/RandomVideoId`);
       const data = await response.json();
 
       if (response.ok) {

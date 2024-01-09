@@ -70,7 +70,7 @@ namespace backend.Services
         }
 
 
-        public ReelDto SaveVideo(IFormFile videoFile)
+        public async Task<ReelDto> SaveVideo(IFormFile videoFile)
         {
             // Create a new ReelDto with default values
             var reelDto = new ReelDto
@@ -87,7 +87,7 @@ namespace backend.Services
 
             using (var stream = new FileStream(videoFilePath, FileMode.Create))
             {
-                videoFile.CopyTo(stream);
+                await videoFile.CopyToAsync(stream);
             }
 
             // Map ReelDto to Reel entity
@@ -95,7 +95,7 @@ namespace backend.Services
 
             // Set the duration of the video
             var videoPath = GetReelPath(newReel.Id);
-            newReel.Duration = GetVideoDuration(videoPath);
+            newReel.Duration = await GetVideoDurationAsync(videoPath);
 
             // Save the Reel entity to the database
             _dbContext.Reels.Add(newReel);
@@ -158,6 +158,22 @@ namespace backend.Services
                 return 0; // Return a default value or handle the error accordingly
             }
         }
+
+        public async Task<int> GetVideoDurationAsync(string videoPath)
+        {
+            try
+            {
+                var mediaInfo = await FFmpeg.GetMediaInfo(videoPath);
+                return (int)mediaInfo.Duration.TotalSeconds;
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                Console.WriteLine($"Error getting video duration: {ex.Message}");
+                return 0; // Return a default value or handle the error accordingly
+            }
+        }
+
 
         public void InitDirectories()
         {

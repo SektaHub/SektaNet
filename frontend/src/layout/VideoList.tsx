@@ -52,7 +52,7 @@ const VideoList: React.FC = () => {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const response = await fetch('${API_URL}/Reel');
+        const response = await fetch(`${API_URL}/Reel`);
         const data = await response.json();
 
         if (response.ok) {
