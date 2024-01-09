@@ -70,39 +70,20 @@ namespace backend.Services
         }
 
 
-        public async Task<ReelDto> SaveVideo(IFormFile videoFile)
+        public async Task<string> SaveVideo(IFormFile videoFile, Guid reelId)
         {
-            // Create a new ReelDto with default values
-            var reelDto = new ReelDto
-            {
-                Id = Guid.NewGuid(),
-                AudioTranscription = null,
-                Duration = null,
-            };
-
-            // Process and save the video file to the wwwroot/Reels folder
             var reelFolderPath = Path.Combine(_env.WebRootPath, "Reels");
-            var videoFileName = $"{reelDto.Id}.mp4";
+            var videoFileName = $"{reelId}.mp4";
             var videoFilePath = Path.Combine(reelFolderPath, videoFileName);
 
             using (var stream = new FileStream(videoFilePath, FileMode.Create))
             {
                 await videoFile.CopyToAsync(stream);
+                await stream.FlushAsync();
             }
 
-            // Map ReelDto to Reel entity
-            var newReel = _mapper.Map<Reel>(reelDto);
-
-            // Set the duration of the video
-            var videoPath = GetReelPath(newReel.Id);
-            newReel.Duration = await GetVideoDurationAsync(videoPath);
-
-            // Save the Reel entity to the database
-            _dbContext.Reels.Add(newReel);
-            _dbContext.SaveChanges();
-
-            // Return the updated ReelDto with duration
-            return _mapper.Map<ReelDto>(newReel);
+            // After this the file should be fully written to disk
+            return videoFilePath;
         }
 
 

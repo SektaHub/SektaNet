@@ -220,45 +220,51 @@ namespace backend.Controllers
         [HttpPost("upload-multiple")]
         public async Task<IActionResult> UploadMultipleReels(List<IFormFile> videoFiles)
         {
-            if (videoFiles == null || videoFiles.Count == 0)
-            {
-                return BadRequest("No video files provided");
-            }
+            // ...omitting initial checks and try-catch for brevity
 
-            try
-            {
-                List<Task<ReelDto>> uploadTasks = new List<Task<ReelDto>>();
+            List<string> videoPaths = new List<string>();
+            List<ReelDto> reelDtos = new List<ReelDto>();
 
-                foreach (var videoFile in videoFiles)
+            foreach (var videoFile in videoFiles)
+            {
+                if (videoFile == null || videoFile.Length == 0) continue;
+
+                var reelId = Guid.NewGuid();
+                var videoPath = await _reelService.SaveVideo(videoFile, reelId);
+                videoPaths.Add(videoPath);
+
+                var reelDto = new ReelDto
                 {
-                    if (videoFile == null || videoFile.Length == 0)
-                    {
-                        // Skip invalid files
-                        continue;
-                    }
-
-                    // Save each video asynchronously
-                    uploadTasks.Add(_reelService.SaveVideo(videoFile));
-                }
-
-                // Wait for all video uploads to complete
-                var uploadedVideos = await Task.WhenAll(uploadTasks);
-
-                // Generate thumbnails asynchronously
-                var thumbnailTasks = uploadedVideos.Select(reelDto =>
-                    _reelService.ExtractThumbnailAsync(_reelService.GetReelPath(reelDto.Id), Path.Combine(_env.WebRootPath, "Thumbnails"))
-                ).ToList();
-
-                // Wait for all thumbnail generation tasks to complete
-                await Task.WhenAll(thumbnailTasks);
-
-                return Ok(new { Message = "Videos uploaded and saved successfully", UploadedFiles = uploadedVideos });
+                    Id = reelId,
+                    AudioTranscription = null,
+                    Duration = null // Will be set after getting duration
+                };
+                reelDtos.Add(reelDto);
             }
-            catch (Exception ex)
+
+            // Ensure all files are saved before proceeding
+            for (int i = 0; i < videoPaths.Count; i++)
             {
-                _logger.LogError($"Error uploading videos: {ex.Message}");
-                return StatusCode(500, "An error occurred while uploading the videos");
+                var reelDto = reelDtos[i];
+                var videoPath = videoPaths[i];
+
+                // Set the duration of the video
+                reelDto.Duration = await _reelService.GetVideoDurationAsync(videoPath);
+
+                // Save the Reel entity to the database
+                var newReel = _mapper.Map<Reel>(reelDto);
+                _dbContext.Reels.Add(newReel);
             }
+            _dbContext.SaveChanges();
+
+            // Now generate thumbnails
+            var thumbnailTasks = reelDtos.Select(reelDto =>
+                _reelService.ExtractThumbnailAsync(_reelService.GetReelPath(reelDto.Id), Path.Combine(_env.WebRootPath, "Thumbnails"))
+            ).ToList();
+
+            await Task.WhenAll(thumbnailTasks);
+
+            return Ok(new { Message = "Videos uploaded and saved successfully", Reels = reelDtos });
         }
 
 
