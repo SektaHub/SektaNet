@@ -41,7 +41,7 @@ namespace backend.Services
             }
         }
 
-        public async Task<ImageDto> SaveImage(IFormFile imageFile, Guid imageId)
+        public async Task<string> SaveImage(IFormFile imageFile, Guid imageId)
         {
             // Process and save the image file to the wwwroot/Images folder
             var imageFolderPath = Path.Combine(_env.WebRootPath, "Images");
@@ -54,23 +54,7 @@ namespace backend.Services
                 await stream.FlushAsync();
             }
 
-            // Create a new ImageDto with default values
-            var imageDto = new ImageDto
-            {
-                Id = imageId,
-                generatedCaption = null,
-                CaptionEmbedding = null
-            };
-
-            // Map ImageDto to Image entity
-            var newImage = _mapper.Map<Image>(imageDto);
-
-            // Save the Image entity to the database
-            _dbContext.Images.Add(newImage);
-            await _dbContext.SaveChangesAsync();
-
-            // Return the updated ImageDto
-            return _mapper.Map<ImageDto>(newImage);
+            return imageFilePath;
         }
 
         //Old shit

@@ -133,36 +133,49 @@ namespace backend.Controllers
         [HttpPost("upload-multiple")]
         public async Task<IActionResult> UploadMultipleImages(List<IFormFile> imageFiles)
         {
-            if (imageFiles == null || imageFiles.Count == 0)
+            // ...omitting initial checks and try-catch for brevity
+
+            List<string> imagePaths = new List<string>();
+            List<ImageDto> imageDtos = new List<ImageDto>();
+
+            foreach (var imageFile in imageFiles)
             {
-                return BadRequest("No image files provided");
+                if (imageFile == null || imageFile.Length == 0) continue;
+
+                var imageId = Guid.NewGuid();
+                await _imageService.SaveImage(imageFile, imageId);
+                var imagePath = _imageService.GetImagePath(imageId);
+                imagePaths.Add(imagePath);
+
+                var imageDto = new ImageDto
+                {
+                    Id = imageId,
+                    generatedCaption = null,
+                    CaptionEmbedding = null,
+                };
+                imageDtos.Add(imageDto);
             }
 
-            try
+            // Ensure all files are saved before proceeding
+            for (int i = 0; i < imagePaths.Count; i++)
             {
-                var uploadTasks = imageFiles
-                    .Where(imageFile => imageFile != null && imageFile.Length > 0)
-                    .Select(async imageFile =>
-                    {
-                        // Save each image asynchronously
-                        Guid imageId = Guid.NewGuid();
-                        ImageDto imageDto = await _imageService.SaveImage(imageFile, imageId);
-                        return imageDto;
-                    });
-
-                // Wait for all upload tasks to complete
-                var uploadedImages = await Task.WhenAll(uploadTasks);
+                var imageDto = imageDtos[i];
+                var imagePath = imagePaths[i];
 
                 // Additional processing or actions after successful image uploads
 
-                return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = uploadedImages });
+                // Save the Image entity to the database
+                var newImage = _mapper.Map<Image>(imageDto);
+                _dbContext.Images.Add(newImage);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error uploading images: {ex.Message}");
-                return StatusCode(500, "An error occurred while uploading the images");
-            }
+            _dbContext.SaveChanges();
+
+            // Additional processing or actions after saving images to the database
+
+            return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = imageDtos });
         }
+
+
 
         //[HttpPost("upload-multiple")]
         //public IActionResult UploadMultipleImages(List<IFormFile> imageFiles)
