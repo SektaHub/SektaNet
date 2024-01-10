@@ -83,8 +83,6 @@ namespace backend.Services
                 await stream.FlushAsync();
             }
 
-            await WaitForFileReady(videoFilePath);
-
             // After this, the file should be fully written to disk
             return videoFilePath;
         }

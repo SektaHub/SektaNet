@@ -104,31 +104,31 @@ namespace backend.Controllers
             }
         }
 
-        [HttpPost("upload")]
-        public IActionResult UploadImage(IFormFile imageFile)
-        {
-            if (imageFile == null || imageFile.Length == 0)
-            {
-                return BadRequest("No image file provided");
-            }
+        //[HttpPost("upload")]
+        //public IActionResult UploadImage(IFormFile imageFile)
+        //{
+        //    if (imageFile == null || imageFile.Length == 0)
+        //    {
+        //        return BadRequest("No image file provided");
+        //    }
 
-            // Validate other properties in the ImageDto if needed
+        //    // Validate other properties in the ImageDto if needed
 
-            try
-            {
-                // Save the image
-                ImageDto imageDto = _imageService.SaveImage(imageFile);
+        //    try
+        //    {
+        //        // Save the image
+        //        ImageDto imageDto = _imageService.SaveImage(imageFile);
 
-                // Additional processing or actions after successful image upload
+        //        // Additional processing or actions after successful image upload
 
-                return Ok(new { Message = "Image uploaded and saved successfully" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error uploading image: {ex.Message}");
-                return StatusCode(500, "An error occurred while uploading the image");
-            }
-        }
+        //        return Ok(new { Message = "Image uploaded and saved successfully" });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Error uploading image: {ex.Message}");
+        //        return StatusCode(500, "An error occurred while uploading the image");
+        //    }
+        //}
 
         [HttpPost("upload-multiple")]
         public async Task<IActionResult> UploadMultipleImages(List<IFormFile> imageFiles)
@@ -144,9 +144,9 @@ namespace backend.Controllers
                     .Where(imageFile => imageFile != null && imageFile.Length > 0)
                     .Select(async imageFile =>
                     {
-                        // Validate other properties in the ImageDto if needed
                         // Save each image asynchronously
-                        ImageDto imageDto = await _imageService.SaveImageAsync(imageFile);
+                        Guid imageId = Guid.NewGuid();
+                        ImageDto imageDto = await _imageService.SaveImage(imageFile, imageId);
                         return imageDto;
                     });
 

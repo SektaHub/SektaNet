@@ -41,74 +41,25 @@ namespace backend.Services
             }
         }
 
-        public ImageDto SaveImage(IFormFile imageFile)
-        {
-            // Create a new ImageDto with default values
-            var imageDto = new ImageDto
-            {
-                Id = Guid.NewGuid(),
-                generatedCaption = null,
-                // Add other properties as needed
-            };
-
-            // Process and save the image file to the wwwroot/Images folder
-            var imageFolderPath = Path.Combine(_env.WebRootPath, "Images");
-            var imageFileName = $"{imageDto.Id}.jpg"; // Adjust the extension based on your image format
-            var imageFilePath = Path.Combine(imageFolderPath, imageFileName);
-
-            using (var stream = new FileStream(imageFilePath, FileMode.Create))
-            {
-                imageFile.CopyTo(stream);
-            }
-
-            // Set other properties or perform additional processing as needed
-
-            // Map ImageDto to Image entity
-            var newImage = _mapper.Map<Image>(imageDto);
-
-            // Save the Image entity to the database
-            _dbContext.Images.Add(newImage);
-            _dbContext.SaveChanges();
-
-            // Return the updated ImageDto
-            return _mapper.Map<ImageDto>(newImage);
-        }
-
-        public async Task<ImageDto> SaveImageAsync(IFormFile imageFile)
+        public async Task<ImageDto> SaveImage(IFormFile imageFile, Guid imageId)
         {
             // Process and save the image file to the wwwroot/Images folder
             var imageFolderPath = Path.Combine(_env.WebRootPath, "Images");
-            Guid imageId = Guid.NewGuid();
             var imageFileName = $"{imageId}.jpg"; // Adjust the extension based on your image format
             var imageFilePath = Path.Combine(imageFolderPath, imageFileName);
 
             using (var stream = new FileStream(imageFilePath, FileMode.Create))
             {
                 await imageFile.CopyToAsync(stream);
+                await stream.FlushAsync();
             }
-
-            // Generate caption using FastAPI
-            var apiUrl = "http://127.0.0.1:8000/api/generateCaptionFromUpload/";
-            var apiUrl2 = "http://localhost:8000/api/embed_sentence";
-
-            var jsonResponse = await GenerateCaptionFromFastAPIAsync(apiUrl, imageFilePath);
-
-            //Console.WriteLine(jsonResponse.ToString());
-
-            var caption = JObject.Parse(jsonResponse)?["caption"]?.ToString() ?? null;
-
-            var jsonResponse2 = await EmbedSentenceUsingFastAPIAsync(apiUrl2, caption);
-
-            //Console.WriteLine(jsonResponse2.ToString());
-
-            var captionEmbedding = JObject.Parse(jsonResponse2)?["embedding"]?.ToObject<List<float>>() ?? null;
 
             // Create a new ImageDto with default values
             var imageDto = new ImageDto
             {
                 Id = imageId,
-                generatedCaption = caption,
-                CaptionEmbedding = new Pgvector.Vector(captionEmbedding.ToArray())
+                generatedCaption = null,
+                CaptionEmbedding = null
             };
 
             // Map ImageDto to Image entity
@@ -121,6 +72,55 @@ namespace backend.Services
             // Return the updated ImageDto
             return _mapper.Map<ImageDto>(newImage);
         }
+
+        //Old shit
+        //public async Task<ImageDto> SaveImageAsync(IFormFile imageFile)
+        //{
+        //    // Process and save the image file to the wwwroot/Images folder
+        //    var imageFolderPath = Path.Combine(_env.WebRootPath, "Images");
+        //    Guid imageId = Guid.NewGuid();
+        //    var imageFileName = $"{imageId}.jpg"; // Adjust the extension based on your image format
+        //    var imageFilePath = Path.Combine(imageFolderPath, imageFileName);
+
+        //    using (var stream = new FileStream(imageFilePath, FileMode.Create))
+        //    {
+        //        await imageFile.CopyToAsync(stream);
+        //    }
+
+        //    // Generate caption using FastAPI
+        //    var apiUrl = "http://127.0.0.1:8000/api/generateCaptionFromUpload/";
+        //    var apiUrl2 = "http://localhost:8000/api/embed_sentence";
+
+        //    var jsonResponse = await GenerateCaptionFromFastAPIAsync(apiUrl, imageFilePath);
+
+        //    //Console.WriteLine(jsonResponse.ToString());
+
+        //    var caption = JObject.Parse(jsonResponse)?["caption"]?.ToString() ?? null;
+
+        //    var jsonResponse2 = await EmbedSentenceUsingFastAPIAsync(apiUrl2, caption);
+
+        //    //Console.WriteLine(jsonResponse2.ToString());
+
+        //    var captionEmbedding = JObject.Parse(jsonResponse2)?["embedding"]?.ToObject<List<float>>() ?? null;
+
+        //    // Create a new ImageDto with default values
+        //    var imageDto = new ImageDto
+        //    {
+        //        Id = imageId,
+        //        generatedCaption = caption,
+        //        CaptionEmbedding = new Pgvector.Vector(captionEmbedding.ToArray())
+        //    };
+
+        //    // Map ImageDto to Image entity
+        //    var newImage = _mapper.Map<Image>(imageDto);
+
+        //    // Save the Image entity to the database
+        //    _dbContext.Images.Add(newImage);
+        //    await _dbContext.SaveChangesAsync();
+
+        //    // Return the updated ImageDto
+        //    return _mapper.Map<ImageDto>(newImage);
+        //}
 
         private async Task<string> EmbedSentenceUsingFastAPIAsync(string apiUrl, string sentence)
         {
@@ -204,18 +204,6 @@ namespace backend.Services
             {
                 Directory.CreateDirectory(imageFolderPath);
             }
-        }
-
-        public async Task<string> GenerateCaptionFromUploadAsync(IFormFile imageFile)
-        {
-            // Save the image locally
-            var savedImage = SaveImage(imageFile);
-
-            // Generate caption using FastAPI
-            var apiUrl = "http://127.0.0.1:8000/api/generateCaptionFromUpload/";
-            var response = await SendImageToFastAPI(apiUrl, savedImage);
-
-            return response;
         }
 
         public async Task<string> GenerateCaptionFromLinkAsync(string imageLink)
