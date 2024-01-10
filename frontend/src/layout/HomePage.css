@@ -20,7 +20,7 @@ a{
 
 .logo {
   height: auto;
-  width: 400px;
+  width: 250px;
   padding: 1em;
   will-change: filter;
   transition: filter 200ms;

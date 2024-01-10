@@ -1,0 +1,8 @@
+.uploader-cont{
+    display: flex;
+    justify-content: space-around;
+  }
+
+.margina-xl {
+    margin: 100px;    
+}
