@@ -7,18 +7,10 @@ export default defineConfig({
   server: {
     // SPA fallback for the development server.
     proxy: {
-      // Use a wildcard to match all paths.
-      '/': {
-        bypass: (req, res) => {
-          // If the request is not for a file, serve index.html.
-          if (
-            req.method === 'GET' &&
-            !req.url?.startsWith('/api') && // Here, skip any API requests or other paths you don't want to redirect.
-            req.headers.accept?.includes('html')
-          ) {
-            return '/index.html'
-          }
-        },
+      '/api': {
+        target: 'http://localhost:8080', // Change this to your backend server URL
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
   },
