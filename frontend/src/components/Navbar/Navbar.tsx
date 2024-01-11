@@ -1,11 +1,11 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import "./Navbar.css"
+import React from "react";
+import "./Navbar.css";
+import { Button } from "react-bootstrap";
 
 const Navbar: React.FC = () => {
   return (
     <nav className="sidebar">
-      <ul className='menu'>
+      {/* <ul className="menu">
         <li>
           <Link to="/">HOME</Link>
         </li>
@@ -18,7 +18,25 @@ const Navbar: React.FC = () => {
         <li>
           <Link to="/upload">UPLOAD</Link>
         </li>
-      </ul>
+      </ul> */}
+
+      <div className="navContainer">
+        <div className="navBarLogo">
+          <img className="logo" src="../../../public/hub.png" />
+        </div>
+        <Button className="homeNavButton" href="/">
+          Home
+        </Button>
+        <Button className="homeNavButton" href="/images">
+          Library
+        </Button>
+        <Button className="homeNavButton" href="/reels">
+          Reels
+        </Button>
+        <Button className="homeNavButton" href="/upload">
+          Upload
+        </Button>
+      </div>
     </nav>
   );
 };

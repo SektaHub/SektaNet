@@ -27,15 +27,17 @@ const Reels: React.FC<ReelsProps> = ({ videoId }) => {
 
   return (
     <div ref={ref} className="reel-card">
-      <video
-        className="reel-player"
-        ref={vidRef}
-        src={videoUrl}
-        loop
-        muted={false}
-        controls
-        preload="metadata"
-      ></video>
+      {videoUrl && (
+        <video
+          className="reel-player"
+          ref={vidRef}
+          src={videoUrl ?? "/404"}
+          loop
+          muted={false}
+          controls
+          preload="metadata"
+        />
+      )}
     </div>
   );
 };

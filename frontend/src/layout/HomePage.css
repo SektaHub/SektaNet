@@ -7,10 +7,10 @@ body{
 }
 
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  padding-top: 0px;
+  /* max-width: 1280px; */
+  /* margin: 0 auto; */
+  /* padding: 2rem; */
+  /* padding-top: 0px; */
   text-align: center;
 }
 
@@ -39,7 +39,7 @@ a{
 }
 
 .reel-cont{
-  position: relative;
+  /* position: relative; */
   border-radius: 20px;
   background-color: white;
   height: 65vh;
@@ -49,25 +49,17 @@ a{
   max-width: 500px;
 }
 
-.ad-cont-left {
-  position: fixed;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 1000; /* Set a z-index to ensure it's above other content if needed */
-}
-
 .ad-cont-right {
-  position: fixed;
+  position: absolute;
   right: 0;
-  top: 50%;
+  top:50%;
   transform: translateY(-50%);
   z-index: 1000; /* Set a z-index to ensure it's above other content if needed */
 }
 
 .ad{
   height: 90%;
-  width: 100%;
+  /* width: 100%; */
   max-width: 400px;
   max-height: 950px;
   min-height: 950px;
