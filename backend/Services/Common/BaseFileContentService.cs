@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using backend.Models.Common;
+using backend.Models.Dto;
 using Xabe.FFmpeg;
 
 namespace backend.Services.Common
@@ -65,6 +66,11 @@ namespace backend.Services.Common
                 Directory.CreateDirectory(folderPath);
             }
 
+        }
+
+        public virtual async Task<List<TDto>> UploadMultiple(List<IFormFile> files)
+        {
+            throw new NotImplementedException();
         }
 
     }

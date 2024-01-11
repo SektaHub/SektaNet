@@ -43,16 +43,29 @@ namespace backend.Controllers
         }
 
         [HttpGet("GetImagesByCaption")]
-        public IEnumerable<ImageDto> GetImagesByCaption(string caption)
+        public IQueryable<ImageDto> GetImagesByCaption(string caption)
         {
             // Filter images based on the provided caption (case-insensitive)
             var filteredEntities = _dbContext.Set<Image>()
                 .Where(image => image.GeneratedCaption != null && image.GeneratedCaption.ToLower().Contains(caption.ToLower()))
-                .ToList();
+                .AsQueryable();
 
-            var filteredDtoList = _mapper.Map<List<ImageDto>>(filteredEntities);
+            var filteredDtoList = _mapper.ProjectTo<ImageDto>(filteredEntities);
             return filteredDtoList;
         }
+
+        [HttpGet("GetImagesWithoutCaption")]
+        public IQueryable<ImageDto> GetImagesWithoutCaption()
+        {
+            // Filter images where GeneratedCaption is null
+            var filteredEntities = _dbContext.Set<Image>()
+                .Where(image => image.GeneratedCaption == null)
+                .AsQueryable();
+
+            var filteredDtoList = _mapper.ProjectTo<ImageDto>(filteredEntities);
+            return filteredDtoList;
+        }
+
 
         [HttpGet("{id}/Content", Name = "GetImageStream")]
         public override IActionResult GetFileContent(Guid id)
@@ -86,45 +99,8 @@ namespace backend.Controllers
         [HttpPost("upload-multiple")]
         public async override Task<IActionResult> UploadMultiple(List<IFormFile> files)
         {
-            // ...omitting initial checks and try-catch for brevity
 
-            List<string> imagePaths = new List<string>();
-            List<ImageDto> imageDtos = new List<ImageDto>();
-
-            foreach (var imageFile in files)
-            {
-                if (imageFile == null || imageFile.Length == 0) continue;
-
-                var imageId = Guid.NewGuid();
-
-                var imageDto = new ImageDto
-                {
-                    Id = imageId,
-                    FileExtension = imageFile.ContentType.Split('/')[1],
-                    generatedCaption = null,
-                    CaptionEmbedding = null,
-                };
-                imageDtos.Add(imageDto);
-
-                var imagePath = await _fileConentService.SaveFile(imageFile, imageId, imageDto.FileExtension);
-                imagePaths.Add(imagePath);
-            }
-
-            // Ensure all files are saved before proceeding
-            for (int i = 0; i < imagePaths.Count; i++)
-            {
-                var imageDto = imageDtos[i];
-                var imagePath = imagePaths[i];
-
-                // Additional processing or actions after successful image uploads
-
-                // Save the Image entity to the database
-                var newImage = _mapper.Map<Image>(imageDto);
-                _dbContext.Images.Add(newImage);
-            }
-            _dbContext.SaveChanges();
-
-            // Additional processing or actions after saving images to the database
+            var imageDtos = await _fileConentService.UploadMultiple(files);
 
             return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = imageDtos });
         }
