@@ -39,6 +39,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<ReelService>();
 builder.Services.AddScoped<ImageService>();
+builder.Services.AddScoped<FfmpegService>();
 
 
 builder.Services.AddAutoMapper(typeof(MyMappingProfile));
@@ -55,8 +56,10 @@ using (var scope = app.Services.CreateScope())
 
     var reelService = scope.ServiceProvider.GetRequiredService<ReelService>();
     reelService.InitDirectories();
-    await reelService.DownloadFFmpeg();
-    reelService.SetFFmpegPermissions();
+
+    var ffmpegService = scope.ServiceProvider.GetRequiredService<FfmpegService>();
+    await ffmpegService.DownloadFFmpeg();
+    ffmpegService.SetFFmpegPermissions();
 }
 
 

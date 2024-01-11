@@ -14,7 +14,7 @@ const ImageView: React.FC = () => {
 
   useEffect(() => {
     // Fetch image data including the caption
-    fetch(`${API_URL}/Image/${imageId}/Data`)
+    fetch(`${API_URL}/Image/${imageId}/MetaData`)
       .then(response => response.json())
       .then(data => setImage(data))
       .catch(error => console.error('Error fetching image data:', error));
@@ -23,7 +23,7 @@ const ImageView: React.FC = () => {
   useEffect(() => {
     if (image) {
       // Fetch top 5 conceptually similar images
-      fetch(`${API_URL}/Image/GetConceptuallySimmilarImages/${image.id}`)
+      fetch(`${API_URL}/Image/${image.id}/GetConceptuallySimmilarImages`)
         .then(response => response.json())
         .then(data => setSimilarImages(data))
         .catch(error => console.error('Error fetching similar images:', error));
@@ -39,7 +39,7 @@ const ImageView: React.FC = () => {
       <div style={{ flex: 1 }}>
         {/* Display main image */}
         <img
-          src={`${API_URL}/Image/${image.id}`}
+          src={`${API_URL}/Image/${image.id}/Content`}
           alt={`Image ${image.id}`}
           style={{ width: '80%', height: 'auto', maxHeight: '100vh' }}
         />
@@ -58,7 +58,7 @@ const ImageView: React.FC = () => {
               <div style={{ border: '1px solid #ccc', margin: '10px', padding: '10px', cursor: 'pointer', width: '100px', height: '100px', overflow: 'hidden' }}>
                 {/* Display image thumbnail */}
                 <img
-                  src={`${API_URL}/Image/${similarImage.id}`}
+                  src={`${API_URL}/Image/${similarImage.id}/Content`}
                   alt={`Image ${similarImage.id}`}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />

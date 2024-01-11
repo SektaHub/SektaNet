@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -12,9 +13,11 @@ using backend;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240110214727_FileExtensions")]
+    partial class FileExtensions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,11 +36,11 @@ namespace backend.Migrations
                     b.Property<Vector>("CaptionEmbedding")
                         .HasColumnType("vector(384)");
 
-                    b.Property<string>("FileExtension")
+                    b.Property<string>("fileExtension")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("GeneratedCaption")
+                    b.Property<string>("generatedCaption")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -63,7 +66,7 @@ namespace backend.Migrations
                     b.Property<int?>("Duration")
                         .HasColumnType("integer");
 
-                    b.Property<string>("FileExtension")
+                    b.Property<string>("fileExtension")
                         .IsRequired()
                         .HasColumnType("text");
 

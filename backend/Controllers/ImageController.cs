@@ -6,39 +6,24 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pgvector.EntityFrameworkCore;
 using Pgvector;
+using backend.Controllers.Common;
 
 namespace backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ImageController : ControllerBase
+    public class ImageController : BaseFileContentController<Image, ImageDto, ImageService>
     {
-        private readonly ILogger<ImageController> _logger;
-        private readonly ImageService _imageService;
-        private readonly ApplicationDbContext _dbContext;
-        private readonly IMapper _mapper;
-
-        public ImageController(ILogger<ImageController> logger, ImageService imageService, ApplicationDbContext dbContext, IMapper mapper)
+        public ImageController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Image, ImageDto, ImageService>> logger, ImageService fileConentService) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService)
         {
-            _logger = logger;
-            _imageService = imageService;
-            _dbContext = dbContext;
-            _mapper = mapper;
+
         }
 
-        [HttpGet(Name = "GetImages")]
-        public IEnumerable<ImageDto> Get()
-        {
-            var entities = _dbContext.Set<Image>().ToList();
-            var dtoList = _mapper.Map<List<ImageDto>>(entities);
-            return dtoList;
-        }
-
-        [HttpGet("GetConceptuallySimmilarImages/{imageId}")]
-        public async Task<IEnumerable<ImageDto>> GetConceptuallySimmilarImages(Guid imageId)
+        [HttpGet("{id}/GetConceptuallySimmilarImages")]
+        public async Task<IEnumerable<ImageDto>> GetConceptuallySimmilarImages(Guid id)
         {
 
-            var entity = _dbContext.Set<Image>().Find(imageId);
+            var entity = _dbContext.Set<Image>().Find(id);
 
             if (entity == null)
             {
@@ -48,7 +33,7 @@ namespace backend.Controllers
             var imageDto = _mapper.Map<ImageDto>(entity);
 
             var entities = await _dbContext.Set<Image>()
-                .Where(x => x.Id != imageId)
+                .Where(x => x.Id != id)
                 .OrderBy(x => x.CaptionEmbedding!.L2Distance(imageDto.CaptionEmbedding))
                 .Take(4)
                 .ToListAsync();
@@ -62,41 +47,34 @@ namespace backend.Controllers
         {
             // Filter images based on the provided caption (case-insensitive)
             var filteredEntities = _dbContext.Set<Image>()
-                .Where(image => image.generatedCaption != null && image.generatedCaption.ToLower().Contains(caption.ToLower()))
+                .Where(image => image.GeneratedCaption != null && image.GeneratedCaption.ToLower().Contains(caption.ToLower()))
                 .ToList();
 
             var filteredDtoList = _mapper.Map<List<ImageDto>>(filteredEntities);
             return filteredDtoList;
         }
 
-        [HttpGet("{imageId}/Data", Name = "GetImageData")]
-        public ActionResult<ImageDto> GetImageData(Guid imageId)
+        [HttpGet("{id}/Content", Name = "GetImageStream")]
+        public override IActionResult GetFileContent(Guid id)
         {
-            var entity = _dbContext.Set<Image>().Find(imageId);
-
-            if (entity == null)
-            {
-                return NotFound();
-            }
-
-            var imageDto = _mapper.Map<ImageDto>(entity);
-            return imageDto;
-        }
-
-        [HttpGet("{imageId}", Name = "GetImageStream")]
-        public IActionResult GetImage(Guid imageId)
-        {
-            var imagePath = _imageService.GetImagePath(imageId);
-
-            if (string.IsNullOrEmpty(imagePath))
-            {
-                return NotFound();
-            }
-
             try
             {
+                var imageEntity = _dbContext.Images.FirstOrDefault(img => img.Id == id);
+
+                if (imageEntity == null)
+                {
+                    return NotFound();
+                }
+
+                var imagePath = _fileConentService.GetFilePath(id);
+
+                if (string.IsNullOrEmpty(imagePath))
+                {
+                    return NotFound();
+                }
+
                 var imageStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                return File(imageStream, "image/jpeg"); // Adjust the content type based on your image format
+                return File(imageStream, $"image/{imageEntity.FileExtension}"); // Adjust the content type based on your image format
             }
             catch (IOException)
             {
@@ -104,56 +82,32 @@ namespace backend.Controllers
             }
         }
 
-        //[HttpPost("upload")]
-        //public IActionResult UploadImage(IFormFile imageFile)
-        //{
-        //    if (imageFile == null || imageFile.Length == 0)
-        //    {
-        //        return BadRequest("No image file provided");
-        //    }
-
-        //    // Validate other properties in the ImageDto if needed
-
-        //    try
-        //    {
-        //        // Save the image
-        //        ImageDto imageDto = _imageService.SaveImage(imageFile);
-
-        //        // Additional processing or actions after successful image upload
-
-        //        return Ok(new { Message = "Image uploaded and saved successfully" });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError($"Error uploading image: {ex.Message}");
-        //        return StatusCode(500, "An error occurred while uploading the image");
-        //    }
-        //}
 
         [HttpPost("upload-multiple")]
-        public async Task<IActionResult> UploadMultipleImages(List<IFormFile> imageFiles)
+        public async override Task<IActionResult> UploadMultiple(List<IFormFile> files)
         {
             // ...omitting initial checks and try-catch for brevity
 
             List<string> imagePaths = new List<string>();
             List<ImageDto> imageDtos = new List<ImageDto>();
 
-            foreach (var imageFile in imageFiles)
+            foreach (var imageFile in files)
             {
                 if (imageFile == null || imageFile.Length == 0) continue;
 
                 var imageId = Guid.NewGuid();
-                await _imageService.SaveImage(imageFile, imageId);
-                var imagePath = _imageService.GetImagePath(imageId);
-                imagePaths.Add(imagePath);
 
                 var imageDto = new ImageDto
                 {
                     Id = imageId,
+                    FileExtension = imageFile.ContentType.Split('/')[1],
                     generatedCaption = null,
                     CaptionEmbedding = null,
                 };
                 imageDtos.Add(imageDto);
+
+                var imagePath = await _fileConentService.SaveFile(imageFile, imageId, imageDto.FileExtension);
+                imagePaths.Add(imagePath);
             }
 
             // Ensure all files are saved before proceeding
@@ -175,73 +129,5 @@ namespace backend.Controllers
             return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = imageDtos });
         }
 
-
-
-        //[HttpPost("upload-multiple")]
-        //public IActionResult UploadMultipleImages(List<IFormFile> imageFiles)
-        //{
-        //    if (imageFiles == null || imageFiles.Count == 0)
-        //    {
-        //        return BadRequest("No image files provided");
-        //    }
-
-        //    try
-        //    {
-        //        List<ImageDto> uploadedImages = new List<ImageDto>();
-
-        //        foreach (var imageFile in imageFiles)
-        //        {
-        //            if (imageFile == null || imageFile.Length == 0)
-        //            {
-        //                // Skip invalid files
-        //                continue;
-        //            }
-
-        //            // Validate other properties in the ImageDto if needed
-
-        //            // Save each image
-        //            ImageDto imageDto = _imageService.SaveImage(imageFile);
-        //            uploadedImages.Add(imageDto);
-        //        }
-
-        //        // Additional processing or actions after successful image uploads
-
-        //        return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = uploadedImages });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError($"Error uploading images: {ex.Message}");
-        //        return StatusCode(500, "An error occurred while uploading the images");
-        //    }
-        //}
-
-        [HttpDelete("{imageId}")]
-        public IActionResult DeleteImage(Guid imageId)
-        {
-            try
-            {
-                // Delete database entry
-                var image = _dbContext.Set<Image>().Find(imageId);
-                if (image != null)
-                {
-                    _dbContext.Set<Image>().Remove(image);
-                    _dbContext.SaveChanges();
-                }
-
-                // Delete image file
-                var imagePath = _imageService.GetImagePath(imageId);
-                if (System.IO.File.Exists(imagePath))
-                {
-                    System.IO.File.Delete(imagePath);
-                }
-
-                return Ok("Image deleted successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error deleting image: {ex.Message}");
-                return StatusCode(500, "An error occurred while deleting the image");
-            }
-        }
     }
 }
