@@ -81,10 +81,10 @@ namespace backend.Controllers.Common
                 }
 
                 // Delete database entry
-                var file = _dbContext.Set<Reel>().Find(id);
+                var file = _dbContext.Set<TEntity>().Find(id);
                 if (file != null)
                 {
-                    _dbContext.Set<Reel>().Remove(file);
+                    _dbContext.Set<TEntity>().Remove(file);
                     _dbContext.SaveChanges();
                 }
 
