@@ -7,6 +7,9 @@ using backend.Services.Common;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Xml.XPath;
+using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.JsonPatch.Adapters;
 
 namespace backend.Controllers.Common
 {
@@ -93,6 +96,71 @@ namespace backend.Controllers.Common
                 return StatusCode(500, "An error occurred while deleting the file");
             }
         }
+
+        [HttpPut("{fileId}")]
+        public IActionResult Put(Guid fileId, TDto updatedDto)
+        {
+            if (updatedDto == null || fileId != updatedDto.Id)
+            {
+                return BadRequest("Invalid request data.");
+            }
+
+            var existingEntity = _dbContext.Set<TEntity>().Find(fileId);
+
+            if (existingEntity == null)
+            {
+                return NotFound();
+            }
+
+            // Update entity properties based on the provided DTO
+            _mapper.Map(updatedDto, existingEntity);
+
+            // Perform the update in the database
+            _dbContext.SaveChanges();
+
+            // Additional processing or actions after successful update
+
+            return NoContent();
+        }
+
+        [HttpPatch("{fileId}")]
+        public IActionResult Patch(Guid fileId, JsonPatchDocument<TDto> patchDocument)
+        {
+            if (patchDocument == null)
+            {
+                return BadRequest("Invalid patch document.");
+            }
+
+            var existingEntity = _dbContext.Set<TEntity>().Find(fileId);
+
+            if (existingEntity == null)
+            {
+                return NotFound();
+            }
+
+            // Map the existing entity to a DTO for patching
+            var dtoToPatch = _mapper.Map<TDto>(existingEntity);
+
+            // Apply the patch document to the DTO without casting ModelState
+            patchDocument.ApplyTo(dtoToPatch, ModelState);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Update entity properties based on the patched DTO
+            _mapper.Map(dtoToPatch, existingEntity);
+
+            // Perform the update in the database
+            _dbContext.SaveChanges();
+
+            // Additional processing or actions after successful patch
+
+            return NoContent();
+        }
+
+
 
     }
 }
