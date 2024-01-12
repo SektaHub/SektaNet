@@ -1,6 +1,6 @@
 import React from 'react';
-import FileUploader from '../components/FileUpload/FileUploader';
-import { API_URL } from '../config';
+import FileUploader from '../FileUpload/FileUploader';
+import { API_URL } from '../../config';
 
 const VideoUploader: React.FC = () => {
   const uploadEndpoint = `${API_URL}/Reel/upload-multiple`;

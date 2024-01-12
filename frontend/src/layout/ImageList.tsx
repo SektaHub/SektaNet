@@ -22,29 +22,6 @@ const ImageList: React.FC = () => {
       .then(data => setImages(data));
   }, [searchCaption]);
 
-  const handleDeleteAll = async () => {
-    try {
-      // Fetch all images
-      const response = await fetch(`${API_URL}/Image`);
-      const fetchedImages = await response.json();
-
-      // Delete each image individually
-      for (const image of fetchedImages) {
-        await fetch(`${API_URL}/Image/${image.id}`, {
-          method: 'DELETE',
-        });
-      }
-
-      // Refresh the image list after deletion
-      fetch('${API_URL}/Image').then(response => response.json()).then(data => setImages(data));
-
-      alert('All images deleted successfully');
-    } catch (error : any) {
-      console.error('Error deleting images:', error.message);
-      alert('An unexpected error occurred while deleting the images.');
-    }
-  };
-
   return (
     <div>
       <h1>Image List</h1>
@@ -79,9 +56,6 @@ const ImageList: React.FC = () => {
           </span>
         )}
       </div>
-      <button onClick={handleDeleteAll} style={{ marginBottom: '10px', background: 'red' }}>
-        Delete All
-      </button>
       <div style={{ display: 'flex', flexWrap: 'wrap' }}>
         {images.map(image => (
           <Link key={image.id} to={`/images/${image.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>

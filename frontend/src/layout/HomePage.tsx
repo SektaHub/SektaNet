@@ -64,25 +64,26 @@ const HomePage: React.FC = () => {
     fetchData();
   }, [loaderInView, loading]);
 
+  const jaminAds = ["/JaminEbe.png", "/ficoNasilstvo.png"];
+
   return (
     <center>
-      <div className="logo-cont">
-        <a href="https://www.instagram.com/sektakecdvanaesipol/" target="_blank" rel="noopener noreferrer">
-          <img src={hubLogo} className="logo" alt="Hub logo" />
-        </a>
-      </div>
-      <div className="ad-cont-left">
+      {/* <div className="ad-cont-left">
         <a href="https://mvr.gov.mk/page/telefonski-imenik" target="_blank" rel="noopener noreferrer">
           <img className="ad" src="/ficoNasilstvo.png" alt="" />
         </a>
-      </div>
-      <div className="ad-cont-right">
-        <img className="ad" src="/JaminEbe.png" alt="" />
-      </div>
-      <p className="reel">Reels</p>
+      </div> */}
       <div className="reel-cont">
         {reelList.map((reel) => reel.component)}
         <div ref={loaderRef} style={{ height: '1px' }}></div>
+      </div>
+
+      <div className="ad-cont-right">
+      <img
+          className="ad"
+          src={jaminAds[Math.floor(Math.random() * jaminAds.length)]}
+          alt=""
+        />
       </div>
     </center>
   );
