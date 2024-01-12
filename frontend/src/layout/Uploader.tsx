@@ -1,21 +1,19 @@
 import React from 'react';
-// import 'bootstrap/dist/css/bootstrap.css';
-import VideoUploader from '../components/Uploaders/VideoUploader';
-import ImageUpload from '../components/Uploaders/ImageUploader';
-import "../Mantastrap.css";
+import FileUploader from '../components/FileUpload/FileUploader';
+import { API_URL } from '../config';
 
 const Uploader: React.FC = () => {
+  const uploadEndpoint = `${API_URL}/AnyFile/upload-multiple`;
+  const fileFormDataKey = 'files'; // Key for videos
 
   return (
-    <div className='uploader-cont'>
-          <div className='margina-xl'>
-              <ImageUpload />
-          </div>
-          <div className='margina-xl'>
-              <VideoUploader />
-          </div>
+    <div>
+      <h1>Upload Images/Reels</h1>
+      <FileUploader
+        uploadEndpoint={uploadEndpoint}
+        fileFormDataKey={fileFormDataKey} // Pass the key to FileUploader
+      />
     </div>
-        
   );
 };
 
