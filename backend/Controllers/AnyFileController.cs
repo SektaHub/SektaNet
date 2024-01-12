@@ -20,36 +20,45 @@ namespace backend.Controllers
             _imageService = imageService;
         }
 
+        [RequestSizeLimit(536_870_912)]
         [HttpPost("upload-multiple")]
         public async Task<IActionResult> UploadMultiple(List<IFormFile> files)
         {
-
-            List<IFormFile> imageFiles = new List<IFormFile>();
-            List<IFormFile> videoFiles = new List<IFormFile>();
-
-            foreach (var file in files)
+            try
             {
-                if (file == null || file.Length == 0) continue;
+                List<IFormFile> imageFiles = new List<IFormFile>();
+                List<IFormFile> videoFiles = new List<IFormFile>();
 
-                string fileType = file.ContentType.Split('/')[0];
-                switch(fileType.ToLower())
+                foreach (var file in files)
                 {
-                    case "image":
-                        imageFiles.Add(file);
-                        break;
-                    case "video":
-                        videoFiles.Add(file);
-                        break;
-                    default:
-                        Console.WriteLine("Unrecognized file type");
-                        break;
+                    if (file == null || file.Length == 0) continue;
+
+                    string fileType = file.ContentType.Split('/')[0];
+                    switch (fileType.ToLower())
+                    {
+                        case "image":
+                            imageFiles.Add(file);
+                            break;
+                        case "video":
+                            videoFiles.Add(file);
+                            break;
+                        default:
+                            Console.WriteLine("Unrecognized file type");
+                            break;
+                    }
                 }
+
+                await _imageService.UploadMultiple(imageFiles);
+                await _reelService.UploadMultiple(videoFiles);
+
+                return Ok("Files uploaded and saved successfully");
             }
-
-            await _imageService.UploadMultiple(imageFiles);
-            await _reelService.UploadMultiple(videoFiles);
-
-            return Ok("Files uploaded and saved successfully");
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine($"Error uploading files: {ex}");
+                return StatusCode(500, "Internal Server Error");
+            }
         }
     }
 }

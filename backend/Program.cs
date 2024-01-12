@@ -1,6 +1,7 @@
 using backend;
 using backend.Models;
 using backend.Services;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -19,6 +20,8 @@ builder.Services.AddCors(options =>
                                 .AllowAnyMethod(); // Allow any HTTP method
         });
 });
+
+
 
 // Add services to the container.
 
@@ -44,6 +47,20 @@ builder.Services.AddScoped<FfmpegService>();
 
 builder.Services.AddAutoMapper(typeof(MyMappingProfile));
 
+builder.Services.Configure<FormOptions>(options =>
+{
+    //// Set various options to their maximum values
+    options.MultipartBodyLengthLimit = long.MaxValue;
+    //options.MultipartBoundaryLengthLimit = int.MaxValue;
+    //options.MultipartHeadersLengthLimit = int.MaxValue;
+    //options.MultipartHeadersCountLimit = int.MaxValue;
+    //options.BufferBodyLengthLimit = long.MaxValue;
+    //options.ValueCountLimit = int.MaxValue;
+    //options.ValueLengthLimit = int.MaxValue;
+}
+);;
+
+
 
 var app = builder.Build();
 
@@ -63,6 +80,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -77,5 +95,7 @@ app.UseCors();
 app.UseAuthorization();
 
 app.MapControllers();
+
+
 
 app.Run();
