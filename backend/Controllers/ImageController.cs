@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using Pgvector.EntityFrameworkCore;
 using Pgvector;
 using backend.Controllers.Common;
+using Microsoft.AspNetCore.JsonPatch;
+using System.Globalization;
+using System;
 
 namespace backend.Controllers
 {
@@ -103,6 +106,41 @@ namespace backend.Controllers
             var imageDtos = await _fileConentService.UploadMultiple(files);
 
             return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = imageDtos });
+        }
+
+        [HttpPatch("{fileId}/PatchCaptionEmbedding")]
+        public IActionResult Patch(Guid fileId, EmbeddingDto embedding)
+        {
+            if (embedding == null)
+            {
+                return BadRequest("Invalid embedding");
+            }
+
+            var existingEntity = _dbContext.Set<Image>().Find(fileId);
+
+            if (existingEntity == null)
+            {
+                return NotFound();
+            }
+
+            // Map the existing entity to a DTO for patching
+            var dtoToPatch = _mapper.Map<ImageDto>(existingEntity);
+
+            //List<float> embed = embedding.Embedding;
+
+            Vector emb = new Vector(embedding.Embedding.Replace(" ", ""));
+
+            dtoToPatch.CaptionEmbedding = emb;
+
+            // Update entity properties based on the patched DTO
+            _mapper.Map(dtoToPatch, existingEntity);
+
+            // Perform the update in the database
+            _dbContext.SaveChanges();
+
+            // Additional processing or actions after successful patch
+
+            return Ok(dtoToPatch);
         }
 
     }
