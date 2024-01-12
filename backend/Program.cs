@@ -1,6 +1,7 @@
 using backend;
 using backend.Models;
 using backend.Services;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -20,9 +21,11 @@ builder.Services.AddCors(options =>
         });
 });
 
+
+
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddNewtonsoftJson();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -39,9 +42,24 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<ReelService>();
 builder.Services.AddScoped<ImageService>();
+builder.Services.AddScoped<FfmpegService>();
 
 
 builder.Services.AddAutoMapper(typeof(MyMappingProfile));
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    //// Set various options to their maximum values
+    options.MultipartBodyLengthLimit = long.MaxValue;
+    //options.MultipartBoundaryLengthLimit = int.MaxValue;
+    //options.MultipartHeadersLengthLimit = int.MaxValue;
+    //options.MultipartHeadersCountLimit = int.MaxValue;
+    //options.BufferBodyLengthLimit = long.MaxValue;
+    //options.ValueCountLimit = int.MaxValue;
+    //options.ValueLengthLimit = int.MaxValue;
+}
+);;
+
 
 
 var app = builder.Build();
@@ -55,9 +73,12 @@ using (var scope = app.Services.CreateScope())
 
     var reelService = scope.ServiceProvider.GetRequiredService<ReelService>();
     reelService.InitDirectories();
-    await reelService.DownloadFFmpeg();
-    reelService.SetFFmpegPermissions();
+
+    var ffmpegService = scope.ServiceProvider.GetRequiredService<FfmpegService>();
+    await ffmpegService.DownloadFFmpeg();
+    ffmpegService.SetFFmpegPermissions();
 }
+
 
 
 // Configure the HTTP request pipeline.
@@ -74,5 +95,7 @@ app.UseCors();
 app.UseAuthorization();
 
 app.MapControllers();
+
+
 
 app.Run();

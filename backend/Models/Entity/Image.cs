@@ -1,12 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using backend.Models.Common;
 using Pgvector;
 
 namespace backend.Models.Entity
 {
-    public class Image
+    public class Image : BaseFileContentEntity
     {
-        public Guid Id { get; set; }
-        public string? generatedCaption { get; set; }
+        public string? GeneratedCaption { get; set; }
 
         [Column(TypeName = "vector(384)")]
         public Vector? CaptionEmbedding { get; set; }

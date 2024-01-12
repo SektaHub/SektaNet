@@ -88,7 +88,7 @@ const ImageList: React.FC = () => {
             <div style={{ border: '1px solid #ccc', margin: '10px', padding: '10px', cursor: 'pointer', width: '200px', height: '250px', overflow: 'hidden' }}>
               {/* Display image properties or thumbnail */}
               <img
-                src={`${API_URL}/Image/${image.id}`}
+                src={`${API_URL}/Image/${image.id}/Content`}
                 alt={`Image ${image.id}`}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />

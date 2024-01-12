@@ -15,7 +15,7 @@ const Reels: React.FC<ReelsProps> = ({ videoId }) => {
   });
 
   // Build the video URL dynamically based on the videoId
-  const videoUrl = `${API_URL}/Reel/${videoId}`;
+  const videoUrl = `${API_URL}/Reel/${videoId}/Content`;
 
   useEffect(() => {
     if (inView) {
