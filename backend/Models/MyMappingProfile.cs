@@ -14,6 +14,10 @@ namespace backend.Models
 
             CreateMap<Image, ImageDto>();
             CreateMap<ImageDto, Image>();
+
+
+            CreateMap<Cvrc, CvrcDto>();
+            CreateMap<CvrcDto, Cvrc>();
         }
     }
 

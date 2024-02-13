@@ -43,6 +43,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<ReelService>();
 builder.Services.AddScoped<ImageService>();
 builder.Services.AddScoped<FfmpegService>();
+builder.Services.AddScoped<CvrcService>();
 
 
 builder.Services.AddAutoMapper(typeof(MyMappingProfile));

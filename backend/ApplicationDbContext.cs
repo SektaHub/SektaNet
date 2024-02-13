@@ -31,6 +31,7 @@ namespace backend
 
         public DbSet<Reel> Reels { get; set; }
         public DbSet<Image> Images { get; set; }
+        public DbSet<Cvrc> Cvrces { get; set; }
 
     }
 }
