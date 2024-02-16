@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using backend.Models.Common;
 using backend.Models.Dto;
+using MongoDB.Bson;
 using Xabe.FFmpeg;
 
 namespace backend.Services.Common
@@ -24,7 +25,7 @@ namespace backend.Services.Common
             _mapper = mapper;
         }
 
-        public string GetFilePath(Guid fileId)
+        public string GetFilePath(ObjectId fileId)
         {
             var imageEntity = _dbContext.Set<TEntity>().FirstOrDefault(img => img.Id == fileId);
 
@@ -41,7 +42,7 @@ namespace backend.Services.Common
         }
 
 
-        public async Task<string> SaveFile(IFormFile file, Guid id, string fileExtension)
+        public async Task<string> SaveFile(IFormFile file, ObjectId id, string fileExtension)
         {
             var folderPath = Path.Combine(_env.WebRootPath, FolderName);
             var fileName = $"{id}.{fileExtension}";

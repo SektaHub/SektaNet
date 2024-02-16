@@ -3,6 +3,7 @@ using backend.Models.Dto;
 using backend.Models.Entity;
 using backend.Services.Common;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.Http;
@@ -30,7 +31,7 @@ namespace backend.Services
             {
                 if (imageFile == null || imageFile.Length == 0) continue;
 
-                var imageId = Guid.NewGuid();
+                var imageId = new ObjectId();
 
                 var imageDto = new ImageDto
                 {

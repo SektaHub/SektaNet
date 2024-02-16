@@ -2,9 +2,11 @@
 using backend.Controllers.Common;
 using backend.Models.Dto;
 using backend.Models.Entity;
+using backend.Repo;
 using backend.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 
 namespace backend.Controllers
 {
@@ -13,16 +15,16 @@ namespace backend.Controllers
     public class ReelController : BaseFileContentController<Reel, ReelDto, ReelService>
     {
 
-        MongoDBService _mongoDBService;
+        MongoDBRepository _mongoDBRepo;
 
-        public ReelController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Reel, ReelDto, ReelService>> logger, ReelService fileConentService, MongoDBService mongoDBService) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService)
+        public ReelController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Reel, ReelDto, ReelService>> logger, ReelService fileConentService, MongoDBRepository mongoDBRepo) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService)
         {
-            _mongoDBService = mongoDBService;
+            _mongoDBRepo = mongoDBRepo;
         }
 
 
         [HttpGet("{videoId}/Content")]
-        public override IActionResult GetFileContent(Guid videoId)
+        public override IActionResult GetFileContent(ObjectId videoId)
         {
             var videoPath = _fileConentService.GetFilePath(videoId);
 
@@ -55,7 +57,7 @@ namespace backend.Controllers
         }
 
         [HttpGet("{videoId}/Thumbnail", Name = "GetReelThumbnail")]
-        public IActionResult GetReelThumbnail(Guid videoId)
+        public IActionResult GetReelThumbnail(ObjectId videoId)
         {
             var videoPath = _fileConentService.GetFilePath(videoId);
             var outputPath = Path.Combine(_env.WebRootPath, "Thumbnails");
@@ -96,7 +98,7 @@ namespace backend.Controllers
         {
             try
             {
-                var randomVideo = _dbContext.Set<Reel>().OrderBy(r => Guid.NewGuid()).FirstOrDefault();
+                var randomVideo = _dbContext.Set<Reel>().OrderBy(r => new ObjectId()).FirstOrDefault();
 
                 if (randomVideo == null)
                 {
@@ -134,7 +136,7 @@ namespace backend.Controllers
                 using (var stream = videoFile.OpenReadStream())
                 {
                     // Assuming you've injected MongoDBService as _mongoDBService
-                    var fileId = await _mongoDBService.UploadFileAsync(stream, videoFile.FileName);
+                    var fileId = await _mongoDBRepo.UploadFileAsync(stream, videoFile.FileName);
 
                     // Here you can link fileId with your reel entity if necessary
 
@@ -160,7 +162,7 @@ namespace backend.Controllers
             try
             {
                 // Assuming `_mongoDBService` is already injected and accessible in your controller
-                var videoStream = await _mongoDBService.GetFileStreamAsync(videoId);
+                var videoStream = await _mongoDBRepo.GetFileStreamAsync(videoId);
 
                 if (videoStream.Length == 0)
                 {
@@ -179,7 +181,7 @@ namespace backend.Controllers
 
 
         [HttpDelete("{videoId}")]
-        public override IActionResult DeleteFileContent(Guid videoId)
+        public override IActionResult DeleteFileContent(ObjectId videoId)
         {
             base.DeleteFileContent(videoId);
             try

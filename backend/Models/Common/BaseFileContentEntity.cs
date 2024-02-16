@@ -1,8 +1,10 @@
-﻿namespace backend.Models.Common
+﻿using MongoDB.Bson;
+
+namespace backend.Models.Common
 {
     public class BaseFileContentEntity
     {
-        public Guid Id { get; set; }
+        public ObjectId Id { get; set; }
         public required string FileExtension { get; set; }
     }
 }

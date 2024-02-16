@@ -5,7 +5,7 @@ using backend.Services.Common;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-
+using MongoDB.Bson;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -49,7 +49,7 @@ namespace backend.Services
             {
                 if (videoFile == null || videoFile.Length == 0) continue;
 
-                var reelId = Guid.NewGuid();
+                var reelId = new ObjectId();
 
                 var reelDto = new ReelDto
                 {

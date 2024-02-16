@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Xml.XPath;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.JsonPatch.Adapters;
+using MongoDB.Bson;
 
 namespace backend.Controllers.Common
 {
@@ -49,13 +50,13 @@ namespace backend.Controllers.Common
         }
 
         [HttpGet("{id}/Content", Name = "GetImageStream")]
-        public virtual IActionResult GetFileContent(Guid id)
+        public virtual IActionResult GetFileContent(ObjectId id)
         {
             return StatusCode(501, "UploadMultiple method not implemented in the derived class.");
         }
 
         [HttpGet("{id}/MetaData")]
-        public ActionResult<TDto> GetFileMetadata(Guid id)
+        public ActionResult<TDto> GetFileMetadata(ObjectId id)
         {
             var entity = _dbContext.Set<TEntity>().Find(id);
 
@@ -69,7 +70,7 @@ namespace backend.Controllers.Common
         }
 
         [HttpDelete("{id}")]
-        public virtual IActionResult DeleteFileContent(Guid id)
+        public virtual IActionResult DeleteFileContent(ObjectId id)
         {
             try
             {
@@ -98,7 +99,7 @@ namespace backend.Controllers.Common
         }
 
         [HttpPut("{fileId}")]
-        public IActionResult Put(Guid fileId, TDto updatedDto)
+        public IActionResult Put(ObjectId fileId, TDto updatedDto)
         {
             if (updatedDto == null || fileId != updatedDto.Id)
             {
@@ -124,7 +125,7 @@ namespace backend.Controllers.Common
         }
 
         [HttpPatch("{fileId}")]
-        public IActionResult Patch(Guid fileId, JsonPatchDocument<TDto> patchDocument)
+        public IActionResult Patch(ObjectId fileId, JsonPatchDocument<TDto> patchDocument)
         {
             if (patchDocument == null)
             {

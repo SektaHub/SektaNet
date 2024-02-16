@@ -10,6 +10,7 @@ using backend.Controllers.Common;
 using Microsoft.AspNetCore.JsonPatch;
 using System.Globalization;
 using System;
+using MongoDB.Bson;
 
 namespace backend.Controllers
 {
@@ -23,7 +24,7 @@ namespace backend.Controllers
         }
 
         [HttpGet("{id}/GetConceptuallySimmilarImages")]
-        public async Task<IEnumerable<ImageDto>> GetConceptuallySimmilarImages(Guid id)
+        public async Task<IEnumerable<ImageDto>> GetConceptuallySimmilarImages(ObjectId id)
         {
 
             var entity = _dbContext.Set<Image>().Find(id);
@@ -71,7 +72,7 @@ namespace backend.Controllers
 
 
         [HttpGet("{id}/Content", Name = "GetImageStream")]
-        public override IActionResult GetFileContent(Guid id)
+        public override IActionResult GetFileContent(ObjectId id)
         {
             try
             {
@@ -109,7 +110,7 @@ namespace backend.Controllers
         }
 
         [HttpPatch("{fileId}/PatchCaptionEmbedding")]
-        public IActionResult Patch(Guid fileId, EmbeddingDto embedding)
+        public IActionResult Patch(ObjectId fileId, EmbeddingDto embedding)
         {
             if (embedding == null)
             {
