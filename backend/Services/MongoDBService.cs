@@ -31,5 +31,13 @@ namespace backend.Services
         {
             await gridFS.DeleteAsync(new MongoDB.Bson.ObjectId(id));
         }
+
+        public async Task<Stream> GetFileStreamAsync(string id)
+        {
+            var stream = new MemoryStream();
+            await gridFS.DownloadToStreamAsync(new MongoDB.Bson.ObjectId(id), stream);
+            stream.Position = 0; // Reset the stream position to the start
+            return stream;
+        }
     }
 }

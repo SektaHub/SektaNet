@@ -149,6 +149,35 @@ namespace backend.Controllers
         }
 
 
+        [HttpGet("{videoId}/Content2")]
+        public async Task<IActionResult> GetFileContent2(string videoId) // Assuming videoId is the string representation of MongoDB's ObjectId
+        {
+            if (string.IsNullOrEmpty(videoId))
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                // Assuming `_mongoDBService` is already injected and accessible in your controller
+                var videoStream = await _mongoDBService.GetFileStreamAsync(videoId);
+
+                if (videoStream.Length == 0)
+                {
+                    return NotFound();
+                }
+
+                // Return the video stream, enabling range processing for bufferable streaming
+                return File(videoStream, "video/mp4", enableRangeProcessing: true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred while attempting to read the video file: {ex.Message}");
+                return StatusCode(500, "An error occurred while attempting to read the video file.");
+            }
+        }
+
+
         [HttpDelete("{videoId}")]
         public override IActionResult DeleteFileContent(Guid videoId)
         {
