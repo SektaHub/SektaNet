@@ -40,9 +40,12 @@ var configuration = builder.Configuration;
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),  o => o.UseVector()));
 
+builder.Services.AddSingleton<MongoDBService>(provider => new MongoDBService("mongodb://admin:admin123@localhost:27017/MongoBaza?authSource=admin", "MongoBaza"));
+
 builder.Services.AddScoped<ReelService>();
 builder.Services.AddScoped<ImageService>();
 builder.Services.AddScoped<FfmpegService>();
+//builder.Services.AddScoped<MongoDBService>();
 
 
 builder.Services.AddAutoMapper(typeof(MyMappingProfile));

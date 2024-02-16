@@ -13,9 +13,11 @@ namespace backend.Controllers
     public class ReelController : BaseFileContentController<Reel, ReelDto, ReelService>
     {
 
-        public ReelController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Reel, ReelDto, ReelService>> logger, ReelService fileConentService) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService)
-        {
+        MongoDBService _mongoDBService;
 
+        public ReelController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Reel, ReelDto, ReelService>> logger, ReelService fileConentService, MongoDBService mongoDBService) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService)
+        {
+            _mongoDBService = mongoDBService;
         }
 
 
@@ -118,6 +120,33 @@ namespace backend.Controllers
             return Ok(new { Message = "Videos uploaded and saved successfully", Reels = reelDtos });
         }
 
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> Upload(IFormFile videoFile)
+        {
+            if (videoFile == null || videoFile.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            try
+            {
+                using (var stream = videoFile.OpenReadStream())
+                {
+                    // Assuming you've injected MongoDBService as _mongoDBService
+                    var fileId = await _mongoDBService.UploadFileAsync(stream, videoFile.FileName);
+
+                    // Here you can link fileId with your reel entity if necessary
+
+                    return Ok(new { Message = "Video uploaded successfully", FileId = fileId });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error uploading video: {ex.Message}");
+                return StatusCode(500, "An error occurred while uploading the video.");
+            }
+        }
 
 
         [HttpDelete("{videoId}")]

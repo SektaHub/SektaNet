@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Reels from '../components/Reels/Reels';
 import './HomePage.css';
-import hubLogo from '/hub.png';
 import { useInView } from 'react-intersection-observer';
 import { API_URL } from '../config';
 
