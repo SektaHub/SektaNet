@@ -24,7 +24,7 @@ namespace backend.Controllers
 
 
         [HttpGet("{videoId}/Content")]
-        public override IActionResult GetFileContent(ObjectId videoId)
+        public override IActionResult GetFileContent(string videoId)
         {
             var videoPath = _fileConentService.GetFilePath(videoId);
 
@@ -57,7 +57,7 @@ namespace backend.Controllers
         }
 
         [HttpGet("{videoId}/Thumbnail", Name = "GetReelThumbnail")]
-        public IActionResult GetReelThumbnail(ObjectId videoId)
+        public IActionResult GetReelThumbnail(string videoId)
         {
             var videoPath = _fileConentService.GetFilePath(videoId);
             var outputPath = Path.Combine(_env.WebRootPath, "Thumbnails");
@@ -181,7 +181,7 @@ namespace backend.Controllers
 
 
         [HttpDelete("{videoId}")]
-        public override IActionResult DeleteFileContent(ObjectId videoId)
+        public override IActionResult DeleteFileContent(string videoId)
         {
             base.DeleteFileContent(videoId);
             try

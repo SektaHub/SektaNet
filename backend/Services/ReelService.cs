@@ -49,7 +49,7 @@ namespace backend.Services
             {
                 if (videoFile == null || videoFile.Length == 0) continue;
 
-                var reelId = new ObjectId();
+                string reelId = ObjectId.GenerateNewId().ToString();
 
                 var reelDto = new ReelDto
                 {

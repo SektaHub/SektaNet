@@ -50,7 +50,7 @@ namespace backend.Controllers.Common
         }
 
         [HttpGet("{id}/Content", Name = "GetImageStream")]
-        public virtual IActionResult GetFileContent(ObjectId id)
+        public virtual IActionResult GetFileContent(string id)
         {
             return StatusCode(501, "UploadMultiple method not implemented in the derived class.");
         }
@@ -70,7 +70,7 @@ namespace backend.Controllers.Common
         }
 
         [HttpDelete("{id}")]
-        public virtual IActionResult DeleteFileContent(ObjectId id)
+        public virtual IActionResult DeleteFileContent(string id)
         {
             try
             {
@@ -99,7 +99,7 @@ namespace backend.Controllers.Common
         }
 
         [HttpPut("{fileId}")]
-        public IActionResult Put(ObjectId fileId, TDto updatedDto)
+        public IActionResult Put(string fileId, TDto updatedDto)
         {
             if (updatedDto == null || fileId != updatedDto.Id)
             {
@@ -125,7 +125,7 @@ namespace backend.Controllers.Common
         }
 
         [HttpPatch("{fileId}")]
-        public IActionResult Patch(ObjectId fileId, JsonPatchDocument<TDto> patchDocument)
+        public IActionResult Patch(string fileId, JsonPatchDocument<TDto> patchDocument)
         {
             if (patchDocument == null)
             {

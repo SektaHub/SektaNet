@@ -4,7 +4,7 @@ namespace backend.Models.Common
 {
     public class BaseFileContentDto
     {
-        public ObjectId Id { get; set; }
+        public string Id { get; set; }
         public required string FileExtension { get; set; }
     }
 

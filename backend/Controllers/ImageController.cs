@@ -24,7 +24,7 @@ namespace backend.Controllers
         }
 
         [HttpGet("{id}/GetConceptuallySimmilarImages")]
-        public async Task<IEnumerable<ImageDto>> GetConceptuallySimmilarImages(ObjectId id)
+        public async Task<IEnumerable<ImageDto>> GetConceptuallySimmilarImages(string id)
         {
 
             var entity = _dbContext.Set<Image>().Find(id);
@@ -72,7 +72,7 @@ namespace backend.Controllers
 
 
         [HttpGet("{id}/Content", Name = "GetImageStream")]
-        public override IActionResult GetFileContent(ObjectId id)
+        public override IActionResult GetFileContent(string id)
         {
             try
             {

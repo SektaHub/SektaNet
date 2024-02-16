@@ -31,7 +31,7 @@ namespace backend.Services
             {
                 if (imageFile == null || imageFile.Length == 0) continue;
 
-                var imageId = new ObjectId();
+                string imageId = ObjectId.GenerateNewId().ToString();
 
                 var imageDto = new ImageDto
                 {
