@@ -15,82 +15,16 @@ namespace backend.Controllers
     public class ReelController : BaseFileContentController<Reel, ReelDto, ReelService>
     {
 
-        MongoDBRepository _mongoDBRepo;
-
-        public ReelController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Reel, ReelDto, ReelService>> logger, ReelService fileConentService, MongoDBRepository mongoDBRepo, AnyFileRepository anyFileRepository) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService, anyFileRepository)
+        public ReelController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Reel, ReelDto, ReelService>> logger, ReelService fileConentService, MongoDBRepository mongoDBRepo, AnyFileRepository anyFileRepository) : base(mapper, webHostEnvironment, logger, fileConentService)
         {
-            _mongoDBRepo = mongoDBRepo;
+
         }
 
-
-        [HttpGet("{videoId}/Content")]
-        public override IActionResult GetFileContent(string videoId)
-        {
-            var videoPath = _fileConentService.GetFilePath(videoId);
-
-            if (string.IsNullOrEmpty(videoPath))
-            {
-                return NotFound();
-            }
-
-            try
-            {
-                var videoStream = new FileStream(videoPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                return File(videoStream, "video/mp4", enableRangeProcessing: true);
-            }
-            catch (IOException)
-            {
-                return StatusCode(500, "An error occurred while attempting to read the video file.");
-            }
-        }
 
         [HttpGet("GetReelsWithoutTranscription")]
         public IQueryable<ReelDto> GetReelsWithoutTranscription()
         {
-            // Filter images where GeneratedCaption is null
-            var filteredEntities = _dbContext.Set<Reel>()
-                .Where(reel => reel.AudioTranscription == null)
-                .AsQueryable();
-
-            var filteredDtoList = _mapper.ProjectTo<ReelDto>(filteredEntities);
-            return filteredDtoList;
-        }
-
-        [HttpGet("{videoId}/Thumbnail", Name = "GetReelThumbnail")]
-        public IActionResult GetReelThumbnail(string videoId)
-        {
-            var videoPath = _fileConentService.GetFilePath(videoId);
-            var outputPath = Path.Combine(_env.WebRootPath, "Thumbnails");
-
-            if (string.IsNullOrEmpty(videoPath))
-            {
-                return NotFound();
-            }
-
-            // Assume the thumbnail file has the same name as the video with a .jpg extension
-            var thumbnailFileName = $"{videoId}.jpg";
-            var thumbnailPath = Path.Combine(outputPath, thumbnailFileName);
-
-            if (System.IO.File.Exists(thumbnailPath))
-            {
-                try
-                {
-                    // Open the file stream without closing it immediately
-                    var thumbnailStream = new FileStream(thumbnailPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-                    // Return the file stream directly as the response
-                    return File(thumbnailStream, "image/jpeg");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error accessing thumbnail file: {ex.Message}");
-                    return StatusCode(500, "An error occurred while attempting to read the thumbnail file.");
-                }
-            }
-            else
-            {
-                return NotFound("Thumbnail not found");
-            }
+            return _fileConentService.GetReelsWithoutTranscription();
         }
 
         [HttpGet("RandomVideoId", Name = "GetRandomVideoId")]
@@ -98,7 +32,7 @@ namespace backend.Controllers
         {
             try
             {
-                var randomVideo = _dbContext.Set<Reel>().OrderBy(r => new ObjectId()).FirstOrDefault();
+                var randomVideo = _fileConentService.GetRandomVideo();
 
                 if (randomVideo == null)
                 {
@@ -136,7 +70,7 @@ namespace backend.Controllers
                 using (var stream = videoFile.OpenReadStream())
                 {
                     // Assuming you've injected MongoDBService as _mongoDBService
-                    var fileId = await _mongoDBRepo.UploadFileAsync(stream, videoFile.FileName);
+                    var fileId = await _fileConentService.UploadReel(stream, videoFile.FileName);
 
                     // Here you can link fileId with your reel entity if necessary
 
@@ -162,7 +96,7 @@ namespace backend.Controllers
             try
             {
                 // Assuming `_mongoDBService` is already injected and accessible in your controller
-                var videoStream = await _mongoDBRepo.GetFileStreamAsync(videoId);
+                var videoStream = await _fileConentService.GetFileStreamAsync(videoId);
 
                 if (videoStream.Length == 0)
                 {
@@ -179,36 +113,12 @@ namespace backend.Controllers
             }
         }
 
-
-        [HttpDelete("{videoId}")]
-        public override IActionResult DeleteFileContent(string videoId)
-        {
-            base.DeleteFileContent(videoId);
-            try
-            {
-                // Delete thumbnail file
-                var outputPath = Path.Combine(_env.WebRootPath, "Thumbnails");
-                var thumbnailFileName = $"{videoId}.jpg";
-                var thumbnailPath = Path.Combine(outputPath, thumbnailFileName);
-                if (System.IO.File.Exists(thumbnailPath))
-                {
-                    System.IO.File.Delete(thumbnailPath);
-                }
-                return Ok("Reel and thumbnail deleted successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error deleting reel: {ex.Message}");
-                return StatusCode(500, "An error occurred while deleting the reel or thumbnail");
-            }
-        }
-
         [HttpDelete("2/{videoId}")]
         public async Task<IActionResult> DeleteFileContent2(string videoId)
         {
             try
             {
-               await _anyFileRepository.DeleteReel(videoId);
+               await _fileConentService.DeleteReel(videoId);
                return Ok();
             }
             catch (Exception ex)

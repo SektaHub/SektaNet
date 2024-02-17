@@ -21,88 +21,47 @@ namespace backend.Controllers
     public class ImageController : BaseFileContentController<Image, ImageDto, ImageService>
     {
 
-        MongoDBRepository _mongoDBRepo;
 
-        public ImageController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Image, ImageDto, ImageService>> logger, ImageService fileConentService, MongoDBRepository mongoDBRepo, AnyFileRepository anyFileRepository) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService, anyFileRepository)
-        {
-            _mongoDBRepo = mongoDBRepo;
-        }
-
-        [HttpGet("{id}/GetConceptuallySimmilarImages")]
-        public async Task<IEnumerable<ImageDto>> GetConceptuallySimmilarImages(string id)
+        public ImageController(IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Image, ImageDto, ImageService>> logger, ImageService fileConentService) : base(mapper, webHostEnvironment, logger, fileConentService)
         {
 
-            var entity = _dbContext.Set<Image>().Find(id);
-
-            if (entity == null)
-            {
-                return (IEnumerable<ImageDto>)NotFound();
-            }
-
-            var imageDto = _mapper.Map<ImageDto>(entity);
-
-            var entities = await _dbContext.Set<Image>()
-                .Where(x => x.Id != id)
-                .OrderBy(x => x.CaptionEmbedding!.L2Distance(imageDto.CaptionEmbedding))
-                .Take(4)
-                .ToListAsync();
-
-            var dtoList = _mapper.Map<List<ImageDto>>(entities);
-            return dtoList;
         }
+
+        //[HttpGet("{id}/GetConceptuallySimmilarImages")]
+        //public async Task<IEnumerable<ImageDto>> GetConceptuallySimmilarImages(string id)
+        //{
+
+        //    var entity = _dbContext.Set<Image>().Find(id);
+
+        //    if (entity == null)
+        //    {
+        //        return (IEnumerable<ImageDto>)NotFound();
+        //    }
+
+        //    var imageDto = _mapper.Map<ImageDto>(entity);
+
+        //    var entities = await _dbContext.Set<Image>()
+        //        .Where(x => x.Id != id)
+        //        .OrderBy(x => x.CaptionEmbedding!.L2Distance(imageDto.CaptionEmbedding))
+        //        .Take(4)
+        //        .ToListAsync();
+
+        //    var dtoList = _mapper.Map<List<ImageDto>>(entities);
+        //    return dtoList;
+        //}
 
         [HttpGet("GetImagesByCaption")]
         public IQueryable<ImageDto> GetImagesByCaption(string caption)
         {
-            // Filter images based on the provided caption (case-insensitive)
-            var filteredEntities = _dbContext.Set<Image>()
-                .Where(image => image.GeneratedCaption != null && image.GeneratedCaption.ToLower().Contains(caption.ToLower()))
-                .AsQueryable();
-
-            var filteredDtoList = _mapper.ProjectTo<ImageDto>(filteredEntities);
-            return filteredDtoList;
+            return _fileConentService.GetImagesByCaption(caption);
         }
 
         [HttpGet("GetImagesWithoutCaption")]
         public IQueryable<ImageDto> GetImagesWithoutCaption()
         {
-            // Filter images where GeneratedCaption is null
-            var filteredEntities = _dbContext.Set<Image>()
-                .Where(image => image.GeneratedCaption == null)
-                .AsQueryable();
-
-            var filteredDtoList = _mapper.ProjectTo<ImageDto>(filteredEntities);
-            return filteredDtoList;
+            return _fileConentService.GetImagesWithoutCaption();
         }
 
-
-        [HttpGet("{id}/Content", Name = "GetImageStream")]
-        public override IActionResult GetFileContent(string id)
-        {
-            try
-            {
-                var imageEntity = _dbContext.Images.FirstOrDefault(img => img.Id == id);
-
-                if (imageEntity == null)
-                {
-                    return NotFound();
-                }
-
-                var imagePath = _fileConentService.GetFilePath(id);
-
-                if (string.IsNullOrEmpty(imagePath))
-                {
-                    return NotFound();
-                }
-
-                var imageStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                return File(imageStream, $"image/{imageEntity.FileExtension}"); // Adjust the content type based on your image format
-            }
-            catch (IOException)
-            {
-                return StatusCode(500, "An error occurred while attempting to read the image file.");
-            }
-        }
 
         [HttpGet("{id}/Content2", Name = "GetImageStream2")]
         public async Task<IActionResult> GetFileContent2(string id)
@@ -114,14 +73,14 @@ namespace backend.Controllers
 
             try
             {
-                var imageEntity = await _dbContext.Images.FirstOrDefaultAsync(img => img.Id == id);
+                var imageEntity = _fileConentService.GetById(id);
 
                 if (imageEntity == null)
                 {
                     return NotFound();
                 }
 
-                var imageStream = await _mongoDBRepo.GetFileStreamAsync(id);
+                var imageStream = await _fileConentService.GetFileStreamAsync(id);
 
                 if (imageStream.Length == 0)
                 {
@@ -139,21 +98,21 @@ namespace backend.Controllers
         }
 
 
-        [HttpPost("upload-multiple")]
-        public async override Task<IActionResult> UploadMultiple(List<IFormFile> files)
-        {
+        //[HttpPost("upload-multiple")]
+        //public async override Task<IActionResult> UploadMultiple(List<IFormFile> files)
+        //{
 
-            var imageDtos = await _fileConentService.UploadMultiple(files);
+        //    var imageDtos = await _fileConentService.UploadImage(files);
 
-            return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = imageDtos });
-        }
+        //    return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = imageDtos });
+        //}
 
         [HttpDelete("2/{imageId}")]
         public async Task<IActionResult> DeleteFileContent2(string imageId)
         {
             try
             {
-                await _anyFileRepository.DeleteImage(imageId);
+                await _fileConentService.DeleteImage(imageId);
                 return Ok();
             }
             catch (Exception ex)
@@ -164,14 +123,14 @@ namespace backend.Controllers
         }
 
         [HttpPatch("{fileId}/PatchCaptionEmbedding")]
-        public IActionResult Patch(ObjectId fileId, EmbeddingDto embedding)
+        public IActionResult Patch(string fileId, EmbeddingDto embedding)
         {
             if (embedding == null)
             {
                 return BadRequest("Invalid embedding");
             }
 
-            var existingEntity = _dbContext.Set<Image>().Find(fileId);
+            var existingEntity = _fileConentService.GetById(fileId);
 
             if (existingEntity == null)
             {
@@ -191,7 +150,7 @@ namespace backend.Controllers
             _mapper.Map(dtoToPatch, existingEntity);
 
             // Perform the update in the database
-            _dbContext.SaveChanges();
+            _fileConentService.Update();
 
             // Additional processing or actions after successful patch
 

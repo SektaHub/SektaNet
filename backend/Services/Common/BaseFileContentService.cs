@@ -1,8 +1,25 @@
 ﻿using AutoMapper;
 using backend.Models.Common;
 using backend.Models.Dto;
+using Microsoft.AspNetCore.JsonPatch;
 using MongoDB.Bson;
+using System.Xml.XPath;
 using Xabe.FFmpeg;
+
+using AutoMapper;
+using backend.Models.Common;
+using backend.Models.Dto;
+using backend.Models.Entity;
+using backend.Services;
+using backend.Services.Common;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System.Xml.XPath;
+using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.JsonPatch.Adapters;
+using MongoDB.Bson;
+using backend.Repo;
 
 namespace backend.Services.Common
 {
@@ -14,64 +31,136 @@ namespace backend.Services.Common
         protected readonly IWebHostEnvironment _env;
         protected readonly IMapper _mapper;
         protected readonly ApplicationDbContext _dbContext;
+        protected readonly MongoDBRepository _mongoRepo;
+        protected readonly AnyFileRepository _anyFileRepository;
 
-        //Folder name where the files are stored
-        protected string FolderName;
 
-        public BaseFileContentService(IWebHostEnvironment env, ApplicationDbContext dbContext, IMapper mapper)
+        public BaseFileContentService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository)
         {
             _env = env;
-            _dbContext = dbContext;
             _mapper = mapper;
+            _dbContext = dbContext;
+            _mongoRepo = mongoRepo;
+            _anyFileRepository = anyFileRepository;
         }
 
-        public string GetFilePath(string fileId)
+        public IQueryable<TDto> GetAll()
         {
-            var imageEntity = _dbContext.Set<TEntity>().FirstOrDefault(img => img.Id == fileId);
-
-            if (imageEntity != null)
-            {
-                var folderPath = Path.Combine(_env.WebRootPath, FolderName);
-                var fileName = $"{fileId}.{imageEntity.FileExtension}";
-                return Path.Combine(folderPath, fileName);
-            }
-            else
-            {
-                throw new InvalidOperationException($"File with Id {fileId} not found in the database.");
-            }
+            var entities = _dbContext.Set<TEntity>();
+            var dtoList = _mapper.Map<List<TDto>>(entities);
+            return dtoList.AsQueryable();
         }
 
-
-        public async Task<string> SaveFile(IFormFile file, string id, string fileExtension)
+        public TDto GetDtoById(string id)
         {
-            var folderPath = Path.Combine(_env.WebRootPath, FolderName);
-            var fileName = $"{id}.{fileExtension}";
-            var filePath = Path.Combine(folderPath, fileName);
+            var entity = _dbContext.Set<TEntity>().Find(id);
 
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            if (entity == null)
             {
-                await file.CopyToAsync(stream);
-                await stream.FlushAsync();
+                // Entity with the specified ID was not found
+                //throw new EntityNotFoundException($"Entity with ID '{id}' not found.");
             }
 
-            // After this, the file should be fully written to disk
-            return filePath;
+            var dto = _mapper.Map<TDto>(entity);
+            return dto;
         }
 
-        public virtual void InitDirectories()
+        public TEntity GetById(string id)
         {
-            //Create directory if it does not exist
-            var folderPath = Path.Combine(_env.WebRootPath, FolderName);
-            if (!Directory.Exists(folderPath))
+            var entity = _dbContext.Set<TEntity>().Find(id);
+
+            if (entity == null)
             {
-                Directory.CreateDirectory(folderPath);
+                // Entity with the specified ID was not found
+                //throw new EntityNotFoundException($"Entity with ID '{id}' not found.");
             }
 
+            return entity;
+        }
+
+        public TDto GetMetaData(string id)
+        {
+            var entity = _dbContext.Set<TEntity>().Find(id);
+
+            if (entity == null)
+            {
+                // Entity not found, handle appropriately, e.g., throw NotFoundException
+                //throw new NotFoundException($"Entity with ID '{id}' not found");
+            }
+
+            var imageDto = _mapper.Map<TDto>(entity);
+            return imageDto;
+        }
+
+        public TDto Put(string fileId, TDto updatedDto)
+        {
+            if (updatedDto == null || fileId != updatedDto.Id)
+            {
+                //return BadRequest("Invalid request data.");
+            }
+
+            var existingEntity = _dbContext.Set<TEntity>().Find(fileId);
+
+            if (existingEntity == null)
+            {
+                //return NotFound();
+            }
+
+            // Update entity properties based on the provided DTO
+            _mapper.Map(updatedDto, existingEntity);
+
+            // Perform the update in the database
+            _dbContext.SaveChanges();
+
+            // Additional processing or actions after successful update
+
+            return updatedDto;
+
+            //return NoContent();
+        }
+
+        public void Update()
+        {
+            _dbContext.SaveChanges();
         }
 
         public virtual async Task<List<TDto>> UploadMultiple(List<IFormFile> files)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<string> UploadAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                //return BadRequest("No file uploaded.");
+                return null;
+            }
+
+            try
+            {
+                using (var stream = file.OpenReadStream())
+                {
+                    // Assuming you've injected MongoDBService as _mongoDBService
+                    var fileId = await _mongoRepo.UploadFileAsync(stream, file.FileName);
+
+                    // Here you can link fileId with your reel entity if necessary
+
+                    //return Ok(new { Message = "Video uploaded successfully", FileId = fileId });
+                    return fileId.ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                //_logger.LogError($"Error uploading video: {ex.Message}");
+                //return StatusCode(500, "An error occurred while uploading the video.");
+            }
+            return null;
+        }
+
+        public async Task<Stream> GetFileStreamAsync(string id)
+        {
+            return await _mongoRepo.GetFileStreamAsync(id);
         }
 
     }

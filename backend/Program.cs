@@ -72,13 +72,6 @@ var app = builder.Build();
 // Resolve the service to call the method
 using (var scope = app.Services.CreateScope())
 {
-    //Initialise the services so that they create the necessary folders if they are not present in the project
-    var imageService = scope.ServiceProvider.GetRequiredService<ImageService>();
-    imageService.InitDirectories();
-
-    var reelService = scope.ServiceProvider.GetRequiredService<ReelService>();
-    reelService.InitDirectories();
-
     var ffmpegService = scope.ServiceProvider.GetRequiredService<FfmpegService>();
     await ffmpegService.DownloadFFmpeg();
     ffmpegService.SetFFmpegPermissions();
