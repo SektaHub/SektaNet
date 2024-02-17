@@ -67,15 +67,14 @@ namespace backend.Controllers
 
             try
             {
-                using (var stream = videoFile.OpenReadStream())
-                {
-                    // Assuming you've injected MongoDBService as _mongoDBService
-                    var fileId = await _fileConentService.UploadReel(stream, videoFile.FileName);
+                
+                // Assuming you've injected MongoDBService as _mongoDBService
+                var fileId = await _fileConentService.UploadReel(videoFile);
 
-                    // Here you can link fileId with your reel entity if necessary
+                // Here you can link fileId with your reel entity if necessary
 
-                    return Ok(new { Message = "Video uploaded successfully", FileId = fileId });
-                }
+                return Ok(new { Message = "Video uploaded successfully", FileId = fileId });
+                
             }
             catch (Exception ex)
             {
@@ -85,8 +84,8 @@ namespace backend.Controllers
         }
 
 
-        [HttpGet("{videoId}/Content2")]
-        public async Task<IActionResult> GetFileContent2(string videoId) // Assuming videoId is the string representation of MongoDB's ObjectId
+        [HttpGet("{videoId}/Content")]
+        public async override Task<IActionResult> GetFileContent(string videoId) // Assuming videoId is the string representation of MongoDB's ObjectId
         {
             if (string.IsNullOrEmpty(videoId))
             {
@@ -113,12 +112,12 @@ namespace backend.Controllers
             }
         }
 
-        [HttpDelete("2/{videoId}")]
-        public async Task<IActionResult> DeleteFileContent2(string videoId)
+        [HttpDelete("{id}")]
+        public async override Task<IActionResult> DeleteFileContent(string id)
         {
             try
             {
-               await _fileConentService.DeleteReel(videoId);
+               await _fileConentService.DeleteReel(id);
                return Ok();
             }
             catch (Exception ex)

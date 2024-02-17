@@ -47,8 +47,8 @@ namespace backend.Controllers.Common
             return StatusCode(501, "UploadMultiple method not implemented in the derived class.");
         }
 
-        [HttpGet("{id}/Content", Name = "GetImageStream")]
-        public virtual IActionResult GetFileContent(string id)
+        [HttpGet("{id}/Content", Name = "GetStream")]
+        public virtual async Task<IActionResult> GetFileContent(string id)
         {
             return StatusCode(501, "UploadMultiple method not implemented in the derived class.");
         }
@@ -57,12 +57,6 @@ namespace backend.Controllers.Common
         public ActionResult<TDto> GetFileMetadata(string id)
         {
             return _fileConentService.GetMetaData(id);
-        }
-
-        [HttpDelete("{id}")]
-        public virtual IActionResult DeleteFileContent(string id)
-        {
-            throw new NotImplementedException();
         }
 
         //[HttpDelete("{id}")]
@@ -93,6 +87,12 @@ namespace backend.Controllers.Common
         //        return StatusCode(500, "An error occurred while deleting the file");
         //    }
         //}
+
+        [HttpDelete("{id}")]
+        public async virtual Task<IActionResult> DeleteFileContent(string id)
+        {
+            throw new NotImplementedException("DeleteFileContent method not implemented in the derived class.");
+        }
 
         [HttpPut("{fileId}")]
         public IActionResult Put(string fileId, TDto updatedDto)

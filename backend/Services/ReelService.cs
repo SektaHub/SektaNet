@@ -97,10 +97,9 @@ namespace backend.Services
 
         }
 
-        public async Task<string> UploadReel(Stream file, string name)
+        public async Task<string> UploadReel(IFormFile file)
         {
-            ObjectId id = await _mongoRepo.UploadFileAsync(file, name);
-            return id.ToString();
+            return await _anyFileRepository.SaveReel(file);
         }
 
         public async Task DeleteReel(string id)

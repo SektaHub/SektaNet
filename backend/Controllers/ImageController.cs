@@ -63,8 +63,8 @@ namespace backend.Controllers
         }
 
 
-        [HttpGet("{id}/Content2", Name = "GetImageStream2")]
-        public async Task<IActionResult> GetFileContent2(string id)
+        [HttpGet("{id}/Content", Name = "GetImageStream")]
+        public async override Task<IActionResult> GetFileContent(string id)
         {
             if (string.IsNullOrEmpty(id))
             {
