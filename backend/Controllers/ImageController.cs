@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.JsonPatch;
 using System.Globalization;
 using System;
 using MongoDB.Bson;
+using MongoDB.Driver;
+using backend.Repo;
 
 namespace backend.Controllers
 {
@@ -18,9 +20,12 @@ namespace backend.Controllers
     [Route("api/[controller]")]
     public class ImageController : BaseFileContentController<Image, ImageDto, ImageService>
     {
-        public ImageController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Image, ImageDto, ImageService>> logger, ImageService fileConentService) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService)
-        {
 
+        MongoDBRepository _mongoDBRepo;
+
+        public ImageController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Image, ImageDto, ImageService>> logger, ImageService fileConentService, MongoDBRepository mongoDBRepo) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService)
+        {
+            _mongoDBRepo = mongoDBRepo;
         }
 
         [HttpGet("{id}/GetConceptuallySimmilarImages")]
@@ -95,6 +100,40 @@ namespace backend.Controllers
             }
             catch (IOException)
             {
+                return StatusCode(500, "An error occurred while attempting to read the image file.");
+            }
+        }
+
+        [HttpGet("{id}/Content2", Name = "GetImageStream2")]
+        public async Task<IActionResult> GetFileContent2(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                var imageEntity = await _dbContext.Images.FirstOrDefaultAsync(img => img.Id == id);
+
+                if (imageEntity == null)
+                {
+                    return NotFound();
+                }
+
+                var imageStream = await _mongoDBRepo.GetFileStreamAsync(id);
+
+                if (imageStream.Length == 0)
+                {
+                    return NotFound();
+                }
+
+                // Return the image stream
+                return File(imageStream, $"image/{imageEntity.FileExtension}"); // Adjust the content type based on your image format
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred while attempting to read the image file: {ex.Message}");
                 return StatusCode(500, "An error occurred while attempting to read the image file.");
             }
         }

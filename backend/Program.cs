@@ -42,6 +42,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),  o => o.UseVector()));
 
 builder.Services.AddScoped<MongoDBRepository>(provider => new MongoDBRepository("mongodb://admin:admin123@localhost:27017/MongoBaza?authSource=admin", "MongoBaza"));
+builder.Services.AddScoped<AnyFileRepository>();
 
 builder.Services.AddScoped<ReelService>();
 builder.Services.AddScoped<ImageService>();

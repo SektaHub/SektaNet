@@ -1,4 +1,5 @@
 ﻿using backend.Models.Dto;
+using backend.Repo;
 using backend.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -13,11 +14,13 @@ namespace backend.Controllers
 
         private readonly ReelService _reelService;
         private readonly ImageService _imageService;
+        private readonly AnyFileRepository _fileRepository;
 
-        public AnyFileController(ReelService reelService, ImageService imageService)
+        public AnyFileController(ReelService reelService, ImageService imageService, AnyFileRepository fileRepository)
         {
             _reelService = reelService;
             _imageService = imageService;
+            _fileRepository = fileRepository;
         }
 
         [RequestSizeLimit(536_870_912)]
@@ -37,10 +40,12 @@ namespace backend.Controllers
                     switch (fileType.ToLower())
                     {
                         case "image":
-                            imageFiles.Add(file);
+                            //imageFiles.Add(file);
+                            await _fileRepository.SaveImage(file);
                             break;
                         case "video":
-                            videoFiles.Add(file);
+                            //videoFiles.Add(file);
+                            await _fileRepository.SaveReel(file);
                             break;
                         default:
                             Console.WriteLine("Unrecognized file type");
