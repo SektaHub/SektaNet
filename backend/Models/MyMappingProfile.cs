@@ -2,6 +2,7 @@
 using backend.Models.Dto;
 using backend.Models.Entity;
 using System;
+using backend.Models.Common;
 
 namespace backend.Models
 {
