@@ -51,6 +51,36 @@ namespace backend.Repo
             return reel.Id;
         }
 
+        public async Task DeleteReel(string id)
+        {
+            var reel = await _dbContext.Reels.FindAsync(id);
+
+            if (reel != null)
+            {
+                // Remove the reel from the context
+                _dbContext.Reels.Remove(reel);
+                await _dbContext.SaveChangesAsync();
+
+                // Delete the associated file from MongoDB
+                await _mongoRepo.DeleteFileAsync(id);
+            }
+        }
+
+        public async Task DeleteImage(string id)
+        {
+            var reel = await _dbContext.Images.FindAsync(id);
+
+            if (reel != null)
+            {
+                // Remove the reel from the context
+                _dbContext.Images.Remove(reel);
+                await _dbContext.SaveChangesAsync();
+
+                // Delete the associated file from MongoDB
+                await _mongoRepo.DeleteFileAsync(id);
+            }
+        }
+
         public async Task<string> SaveImage(IFormFile file)
         {
             ObjectId fileId = ObjectId.Empty;
@@ -82,6 +112,8 @@ namespace backend.Repo
 
             return image.Id;
         }
+
+
 
     }
 }

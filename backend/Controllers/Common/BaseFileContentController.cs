@@ -11,6 +11,7 @@ using System.Xml.XPath;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.JsonPatch.Adapters;
 using MongoDB.Bson;
+using backend.Repo;
 
 namespace backend.Controllers.Common
 {
@@ -25,14 +26,16 @@ namespace backend.Controllers.Common
         protected readonly IWebHostEnvironment _env;
         protected readonly ILogger<BaseFileContentController<TEntity, TDto, FileConentService>> _logger;
         protected readonly FileConentService _fileConentService;
+        protected readonly AnyFileRepository _anyFileRepository;
 
-        public BaseFileContentController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<TEntity, TDto, FileConentService>> logger, FileConentService fileConentService)
+        public BaseFileContentController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<TEntity, TDto, FileConentService>> logger, FileConentService fileConentService, AnyFileRepository anyFileRepository)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _env = webHostEnvironment;
             _logger = logger;
             _fileConentService = fileConentService;
+            _anyFileRepository = anyFileRepository;
         }
 
         [HttpGet()]

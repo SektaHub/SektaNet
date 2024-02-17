@@ -17,7 +17,7 @@ namespace backend.Controllers
 
         MongoDBRepository _mongoDBRepo;
 
-        public ReelController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Reel, ReelDto, ReelService>> logger, ReelService fileConentService, MongoDBRepository mongoDBRepo) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService)
+        public ReelController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Reel, ReelDto, ReelService>> logger, ReelService fileConentService, MongoDBRepository mongoDBRepo, AnyFileRepository anyFileRepository) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService, anyFileRepository)
         {
             _mongoDBRepo = mongoDBRepo;
         }
@@ -203,6 +203,20 @@ namespace backend.Controllers
             }
         }
 
+        [HttpDelete("2/{videoId}")]
+        public async Task<IActionResult> DeleteFileContent2(string videoId)
+        {
+            try
+            {
+               await _anyFileRepository.DeleteReel(videoId);
+               return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error deleting reel: {ex.Message}");
+                return StatusCode(500, "An error occurred while deleting the reel or thumbnail");
+            }
+        }
 
 
     }

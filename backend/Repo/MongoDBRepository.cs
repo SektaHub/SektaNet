@@ -9,7 +9,7 @@ namespace backend.Repo
 {
     public class MongoDBRepository
     {
-        private readonly IMongoCollection<Reel> reelCollection;
+        //private readonly IMongoCollection<Reel> reelCollection;
         private readonly IGridFSBucket gridFS;
 
         public MongoDBRepository(string connectionString, string databaseName)
@@ -18,7 +18,7 @@ namespace backend.Repo
             var database = client.GetDatabase(databaseName);
             gridFS = new GridFSBucket(database);
 
-            reelCollection = database.GetCollection<Reel>("metadata");
+            //reelCollection = database.GetCollection<Reel>("metadata");
         }
 
         public async Task<ObjectId> UploadFileAsync(Stream fileStream, string fileName)

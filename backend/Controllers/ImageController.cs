@@ -23,7 +23,7 @@ namespace backend.Controllers
 
         MongoDBRepository _mongoDBRepo;
 
-        public ImageController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Image, ImageDto, ImageService>> logger, ImageService fileConentService, MongoDBRepository mongoDBRepo) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService)
+        public ImageController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Image, ImageDto, ImageService>> logger, ImageService fileConentService, MongoDBRepository mongoDBRepo, AnyFileRepository anyFileRepository) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService, anyFileRepository)
         {
             _mongoDBRepo = mongoDBRepo;
         }
@@ -146,6 +146,21 @@ namespace backend.Controllers
             var imageDtos = await _fileConentService.UploadMultiple(files);
 
             return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = imageDtos });
+        }
+
+        [HttpDelete("2/{imageId}")]
+        public async Task<IActionResult> DeleteFileContent2(string imageId)
+        {
+            try
+            {
+                await _anyFileRepository.DeleteImage(imageId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error deleting image: {ex.Message}");
+                return StatusCode(500, "An error occurred while deleting the image");
+            }
         }
 
         [HttpPatch("{fileId}/PatchCaptionEmbedding")]

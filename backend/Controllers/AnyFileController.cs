@@ -1,4 +1,5 @@
-﻿using backend.Models.Dto;
+﻿using backend.Controllers.Common;
+using backend.Models.Dto;
 using backend.Repo;
 using backend.Services;
 using Microsoft.AspNetCore.Http;
@@ -15,12 +16,14 @@ namespace backend.Controllers
         private readonly ReelService _reelService;
         private readonly ImageService _imageService;
         private readonly AnyFileRepository _fileRepository;
+        protected readonly ILogger<AnyFileController> _logger;
 
-        public AnyFileController(ReelService reelService, ImageService imageService, AnyFileRepository fileRepository)
+        public AnyFileController(ReelService reelService, ImageService imageService, AnyFileRepository fileRepository, ILogger<AnyFileController> logger)
         {
             _reelService = reelService;
             _imageService = imageService;
             _fileRepository = fileRepository;
+            _logger = logger;
         }
 
         [RequestSizeLimit(536_870_912)]
@@ -65,5 +68,6 @@ namespace backend.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+
     }
 }
