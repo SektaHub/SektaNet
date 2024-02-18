@@ -66,6 +66,7 @@ namespace backend.Controllers
 
 
         [HttpGet("{id}/Content", Name = "GetImageStream")]
+        [AllowAnonymous]
         public async override Task<IActionResult> GetFileContent(string id)
         {
             if (string.IsNullOrEmpty(id))

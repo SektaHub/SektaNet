@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { API_URL } from '../config';
+import { fetchWithAuth } from '../api';
 
 interface Image {
   id: string;
@@ -14,7 +15,7 @@ const ImageView: React.FC = () => {
 
   useEffect(() => {
     // Fetch image data including the caption
-    fetch(`${API_URL}/Image/${imageId}/MetaData`)
+    fetchWithAuth(`${API_URL}/Image/${imageId}/MetaData`)
       .then(response => response.json())
       .then(data => setImage(data))
       .catch(error => console.error('Error fetching image data:', error));
@@ -23,7 +24,7 @@ const ImageView: React.FC = () => {
   useEffect(() => {
     if (image) {
       // Fetch top 5 conceptually similar images
-      fetch(`${API_URL}/Image/${image.id}/GetConceptuallySimmilarImages`)
+      fetchWithAuth(`${API_URL}/Image/${image.id}/GetConceptuallySimmilarImages`)
         .then(response => response.json())
         .then(data => setSimilarImages(data))
         .catch(error => console.error('Error fetching similar images:', error));
