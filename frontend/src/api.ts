@@ -10,5 +10,10 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}): Pro
     headers,
   });
 
+  // If response status is 401, redirect to login page
+  if (response.status === 401) {
+    window.location.href = '/login';
+  }
+
   return response;
 };
