@@ -5,6 +5,7 @@ using backend.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
 namespace backend.Controllers
 {
@@ -26,9 +27,9 @@ namespace backend.Controllers
             _logger = logger;
         }
 
-        [RequestSizeLimit(536_870_912)]
+        [RequestSizeLimit(536_870_912_0)]
         [HttpPost("upload-multiple")]
-        public async Task<IActionResult> UploadMultiple(List<IFormFile> files)
+        public async Task<IActionResult> UploadMultiple(List<IFormFile> files, string? tags)
         {
             try
             {
@@ -44,11 +45,11 @@ namespace backend.Controllers
                     {
                         case "image":
                             //imageFiles.Add(file);
-                            await _fileRepository.SaveImage(file);
+                            await _fileRepository.SaveImage(file, tags);
                             break;
                         case "video":
                             //videoFiles.Add(file);
-                            await _fileRepository.SaveReel(file);
+                            await _fileRepository.SaveReel(file, tags);
                             break;
                         default:
                             Console.WriteLine("Unrecognized file type");

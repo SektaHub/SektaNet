@@ -6,5 +6,6 @@ namespace backend.Models.Common
     {
         public string Id { get; set; }
         public required string FileExtension { get; set; }
+        public string? Tags { get; set; }
     }
 }

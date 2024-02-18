@@ -43,6 +43,40 @@ namespace backend.Repo
                 FileExtension = file.ContentType.Split('/')[1],
                 AudioTranscription = null,
                 Duration = null, // Will be set after getting duration
+                Tags = null,
+            };
+
+            _dbContext.Reels.Add(reel);
+            _dbContext.SaveChanges();
+
+            return reel.Id;
+        }
+
+        public async Task<string> SaveReel(IFormFile file, string tag)
+        {
+            ObjectId fileId = ObjectId.Empty;
+
+            try
+            {
+                using (var stream = file.OpenReadStream())
+                {
+                    fileId = await _mongoRepo.UploadFileAsync(stream, file.FileName);
+                    //return Ok(new { Message = "Video uploaded successfully", FileId = fileId });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error uploading video: {ex.Message}");
+                //return StatusCode(500, "An error occurred while uploading the video.");
+            }
+
+            Reel reel = new Reel
+            {
+                Id = fileId.ToString(),
+                FileExtension = file.ContentType.Split('/')[1],
+                AudioTranscription = null,
+                Duration = null, // Will be set after getting duration
+                Tags = tag,
             };
 
             _dbContext.Reels.Add(reel);
@@ -105,6 +139,40 @@ namespace backend.Repo
                 FileExtension = file.ContentType.Split('/')[1],
                 GeneratedCaption = null,
                 CaptionEmbedding = null, 
+                Tags = null,
+            };
+
+            _dbContext.Images.Add(image);
+            _dbContext.SaveChanges();
+
+            return image.Id;
+        }
+
+        public async Task<string> SaveImage(IFormFile file, string tag)
+        {
+            ObjectId fileId = ObjectId.Empty;
+
+            try
+            {
+                using (var stream = file.OpenReadStream())
+                {
+                    fileId = await _mongoRepo.UploadFileAsync(stream, file.FileName);
+                    //return Ok(new { Message = "Video uploaded successfully", FileId = fileId });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error uploading video: {ex.Message}");
+                //return StatusCode(500, "An error occurred while uploading the video.");
+            }
+
+            Image image = new Image
+            {
+                Id = fileId.ToString(),
+                FileExtension = file.ContentType.Split('/')[1],
+                GeneratedCaption = null,
+                CaptionEmbedding = null,
+                Tags = tag,
             };
 
             _dbContext.Images.Add(image);

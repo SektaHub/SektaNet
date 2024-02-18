@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 
 interface FileUploaderProps {
   uploadEndpoint: string;
-  fileFormDataKey: string; // New prop to specify the FormData key
+  fileFormDataKey: string;
 }
 
 const FileUploader: React.FC<FileUploaderProps> = ({ uploadEndpoint, fileFormDataKey }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [tags, setTags] = useState<string>('');
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files || [];
@@ -26,12 +27,21 @@ const FileUploader: React.FC<FileUploaderProps> = ({ uploadEndpoint, fileFormDat
     }
 
     try {
+      // Prepare query parameters
+      const queryParams = new URLSearchParams();
+      if (tags.trim() !== '') {
+        queryParams.append('tags', tags.trim());
+      }
+
+      // Construct upload URL with query parameters
+      const uploadUrl = `${uploadEndpoint}?${queryParams.toString()}`;
+
       const formData = new FormData();
       selectedFiles.forEach((file) => {
-        formData.append(fileFormDataKey, file); // Use the passed in key for form data
+        formData.append(fileFormDataKey, file);
       });
 
-      const response = await fetch(uploadEndpoint, {
+      const response = await fetch(uploadUrl, {
         method: 'POST',
         body: formData,
       });
@@ -42,7 +52,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ uploadEndpoint, fileFormDat
         if (contentType && contentType.includes('application/json')) {
           try {
             const data = await response.json();
-            errorMessage += ` ${data.message}`; // Assuming the error message is in the `message` property
+            errorMessage += ` ${data.message}`;
           } catch (err) {
             errorMessage += ' Could not parse JSON error message.';
           }
@@ -57,7 +67,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({ uploadEndpoint, fileFormDat
         alert(errorMessage);
       } else {
         alert('Files uploaded successfully!');
-        setSelectedFiles([]); // Clear selected files after upload
+        setSelectedFiles([]);
+        setTags(''); // Clear tags input after upload
       }
     } catch (error: any) {
       console.error('Error uploading files:', error);
@@ -73,6 +84,12 @@ const FileUploader: React.FC<FileUploaderProps> = ({ uploadEndpoint, fileFormDat
         onDragOver={(e) => e.preventDefault()}
       >
         <input type="file" multiple onChange={handleFileChange} />
+        <input
+          type="text"
+          placeholder="Enter tags (optional)"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+        />
         <p>Drag 'n' drop some files here, or click to select files</p>
       </div>
       <div>
