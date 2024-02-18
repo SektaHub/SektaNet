@@ -9,6 +9,8 @@ import ImageView from './layout/ImageView';
 import ImageUploader from './components/Uploaders/ImageUploader';
 import Layout from './layout/Layout';
 import Uploader from './layout/Uploader';
+import Login from './layout/Login';
+import Register from './layout/Register';
 
 const App: React.FC = () => {
   return (
@@ -16,6 +18,8 @@ const App: React.FC = () => {
       <Layout>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path='/login' element={<Login />}></Route>
+          <Route path='/register' element={<Register />}></Route>
           <Route path="/uploadReel" element={<VideoUploader />} />
           <Route path="/reels" element={<VideoList />} />
           <Route path="/images" element={<ImageList />} />

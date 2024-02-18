@@ -93,7 +93,7 @@ namespace backend.Services
         public Reel GetRandomVideo()
         {
 
-            return _dbContext.Set<Reel>().OrderBy(r => new ObjectId()).FirstOrDefault();
+            return _dbContext.Set<Reel>().OrderBy(r => Guid.NewGuid()).FirstOrDefault();
 
         }
 

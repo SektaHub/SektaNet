@@ -80,7 +80,7 @@ using (var scope = app.Services.CreateScope())
     ffmpegService.SetFFmpegPermissions();
 }
 
-app.MapGroup("/identity").MapIdentityApi<ApplicationUser>();
+app.MapGroup("/api/identity").MapIdentityApi<ApplicationUser>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
