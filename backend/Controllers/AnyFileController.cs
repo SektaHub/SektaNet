@@ -56,8 +56,8 @@ namespace backend.Controllers
                     }
                 }
 
-                await _imageService.UploadMultiple(imageFiles);
-                await _reelService.UploadMultiple(videoFiles);
+                //await _imageService.UploadMultiple(imageFiles);
+                //await _reelService.UploadMultiple(videoFiles);
 
                 return Ok("Files uploaded and saved successfully");
             }

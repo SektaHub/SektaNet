@@ -97,6 +97,31 @@ namespace backend.Controllers
             }
         }
 
+        [HttpPost("upload")]
+        public async Task<IActionResult> Upload(IFormFile imageFile)
+        {
+            if (imageFile == null || imageFile.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            try
+            {
+
+                // Assuming you've injected MongoDBService as _mongoDBService
+                var fileId = await _fileConentService.UploadImage(imageFile);
+
+                // Here you can link fileId with your reel entity if necessary
+
+                return Ok(new { Message = "Image uploaded successfully", FileId = fileId });
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error uploading image: {ex.Message}");
+                return StatusCode(500, "An error occurred while uploading the image.");
+            }
+        }
 
         //[HttpPost("upload-multiple")]
         //public async override Task<IActionResult> UploadMultiple(List<IFormFile> files)
@@ -107,8 +132,8 @@ namespace backend.Controllers
         //    return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = imageDtos });
         //}
 
-        [HttpDelete("2/{imageId}")]
-        public async Task<IActionResult> DeleteFileContent2(string imageId)
+        [HttpDelete("{imageId}")]
+        public async override Task<IActionResult> DeleteFileContent(string imageId)
         {
             try
             {
