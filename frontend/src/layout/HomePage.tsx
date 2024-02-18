@@ -23,7 +23,7 @@ const HomePage: React.FC = () => {
         console.error('Error fetching random video ID:', data);
         return null;
       }
-    } catch (error: any) {
+    } catch (error : any) {
       console.error('Error fetching random video ID:', error.message);
       return null;
     }
@@ -36,7 +36,7 @@ const HomePage: React.FC = () => {
     if (randomVideoId !== null) {
       setReelList((prevReels) => [
         ...prevReels,
-        { id: prevReels.length, component: <Reels key={prevReels.length} videoId={randomVideoId} /> },
+        { id: prevReels.length, component: <Reels key={prevReels.length} videoId={randomVideoId.id} /> },
       ]);
     }
 

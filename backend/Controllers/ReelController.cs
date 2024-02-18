@@ -39,7 +39,7 @@ namespace backend.Controllers
                     return NotFound("No videos found in the database.");
                 }
 
-                return Ok(randomVideo.Id);
+                return Ok(new { id = randomVideo.Id });
             }
             catch (Exception ex)
             {

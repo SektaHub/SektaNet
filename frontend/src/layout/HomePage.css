@@ -38,15 +38,20 @@ a{
   color: white;
 }
 
+center{
+  margin-left: -147.5px;
+}
+
 .reel-cont{
   /* position: relative; */
   border-radius: 20px;
   background-color: white;
-  height: 65vh;
-  width: 70%;
+  height: 96vh;
+  width: 87%;
   overflow: scroll;
   scroll-snap-type: y mandatory;
-  max-width: 500px;
+  max-width: 600px;
+
 }
 
 .ad-cont-right {
@@ -58,7 +63,7 @@ a{
 }
 
 .ad{
-  height: 90%;
+  height: 100%;
   /* width: 100%; */
   max-width: 400px;
   max-height: 950px;
