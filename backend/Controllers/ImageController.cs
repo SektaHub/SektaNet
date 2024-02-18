@@ -13,11 +13,13 @@ using System;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using backend.Repo;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ImageController : BaseFileContentController<Image, ImageDto, ImageService>
     {
 

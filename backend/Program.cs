@@ -3,6 +3,7 @@ using backend.Models;
 using backend.Repo;
 using backend.Services;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -37,6 +38,8 @@ builder.Services.AddHttpClient();
 //builder.Services.AddDbContext<ApplicationDbContext>();
 
 var configuration = builder.Configuration;
+
+builder.Services.AddIdentityApiEndpoints<ApplicationUser>().AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),  o => o.UseVector()));
@@ -77,7 +80,7 @@ using (var scope = app.Services.CreateScope())
     ffmpegService.SetFFmpegPermissions();
 }
 
-
+app.MapGroup("/identity").MapIdentityApi<ApplicationUser>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
