@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../config';
+import { fetchWithAuth } from '../api';
 
 interface Image {
   id: string;
@@ -17,7 +18,7 @@ const ImageList: React.FC = () => {
       ? `${API_URL}/Image/GetImagesByCaption?caption=${encodeURIComponent(searchCaption)}`
       : `${API_URL}/Image`;
 
-    fetch(url)
+    fetchWithAuth(url)
       .then(response => response.json())
       .then(data => setImages(data));
   }, [searchCaption]);
