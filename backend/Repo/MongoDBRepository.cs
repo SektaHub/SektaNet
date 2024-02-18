@@ -14,11 +14,11 @@ namespace backend.Repo
 
         public MongoDBRepository(string connectionString, string databaseName)
         {
-            var client = new MongoClient(connectionString);
+            var clientSettings = MongoClientSettings.FromConnectionString(connectionString);
+            clientSettings.MaxConnectionPoolSize = 5000; // Adjust the size as needed
+            var client = new MongoClient(clientSettings);
             var database = client.GetDatabase(databaseName);
             gridFS = new GridFSBucket(database);
-
-            //reelCollection = database.GetCollection<Reel>("metadata");
         }
 
         public async Task<ObjectId> UploadFileAsync(Stream fileStream, string fileName)

@@ -45,6 +45,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),  o => o.UseVector()));
 
 builder.Services.AddScoped<MongoDBRepository>(provider => new MongoDBRepository("mongodb://admin:admin123@localhost:27017/MongoBaza?authSource=admin", "MongoBaza"));
+
 builder.Services.AddScoped<AnyFileRepository>();
 
 builder.Services.AddScoped<ReelService>();
@@ -63,7 +64,7 @@ builder.Services.Configure<FormOptions>(options =>
     //options.MultipartHeadersLengthLimit = int.MaxValue;
     //options.MultipartHeadersCountLimit = int.MaxValue;
     //options.BufferBodyLengthLimit = long.MaxValue;
-    //options.ValueCountLimit = int.MaxValue;
+    options.ValueCountLimit = 5000;
     //options.ValueLengthLimit = int.MaxValue;
 }
 );;
