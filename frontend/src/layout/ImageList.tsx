@@ -11,17 +11,33 @@ interface Image {
 const ImageList: React.FC = () => {
   const [images, setImages] = useState<Image[]>([]);
   const [searchCaption, setSearchCaption] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1); // Pagination state
+  const itemsPerPage = 14; // Items per page, could be configurable
 
   useEffect(() => {
     // Fetch images from your API or backend based on the search caption
-    const url = searchCaption
-      ? `${API_URL}/Image/GetImagesByCaption?caption=${encodeURIComponent(searchCaption)}`
-      : `${API_URL}/Image`;
+    let url = `${API_URL}/Image`;
 
-    fetchWithAuth(url)
+    const queryParams = [`page=${currentPage}`, `pageSize=${itemsPerPage}`];
+    if (searchCaption) {
+      queryParams.push(`caption=${encodeURIComponent(searchCaption)}`);
+    }
+
+    const fullUrl = `${url}?${queryParams.join('&')}`;
+
+    fetchWithAuth(fullUrl)
       .then(response => response.json())
       .then(data => setImages(data));
-  }, [searchCaption]);
+  }, [searchCaption, currentPage]);
+
+  // Basic pagination controls
+  const goToNextPage = () => {
+    setCurrentPage(c => c + 1);
+  };
+
+  const goToPreviousPage = () => {
+    setCurrentPage(c => c > 1 ? c - 1 : 1);
+  };
 
   return (
     <div>
@@ -61,7 +77,6 @@ const ImageList: React.FC = () => {
         {images.map(image => (
           <Link key={image.id} to={`/images/${image.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
             <div style={{ border: '1px solid #ccc', margin: '10px', padding: '10px', cursor: 'pointer', width: '200px', height: '250px', overflow: 'hidden' }}>
-              {/* Display image properties or thumbnail */}
               <img
                 src={`${API_URL}/Image/${image.id}/Content`}
                 alt={`Image ${image.id}`}
@@ -71,6 +86,18 @@ const ImageList: React.FC = () => {
             </div>
           </Link>
         ))}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+        {/* Pagination Controls */}
+        <button onClick={goToPreviousPage} disabled={currentPage === 1}>
+          Previous
+        </button>
+        <span style={{ margin: '0 10px' }}>
+          Page {currentPage}
+        </span>
+        <button onClick={goToNextPage}>
+          Next
+        </button>
       </div>
     </div>
   );

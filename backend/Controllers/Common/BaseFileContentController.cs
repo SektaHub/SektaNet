@@ -35,10 +35,21 @@ namespace backend.Controllers.Common
             _fileConentService = fileConentService;
         }
 
-        [HttpGet()]
-        public IQueryable<TDto> Get()
+        [HttpGet]
+        public IQueryable<TDto> Get(int? page = null, int? pageSize = null)
         {
-            return _fileConentService.GetAll();
+            if (page == null && pageSize == null)
+            {
+                // Return all values if both page and pageSize are null
+                return _fileConentService.GetAll();
+            }
+            else
+            {
+                // Use provided page and pageSize, or default values if null
+                int currentPage = page ?? 1;
+                int itemsPerPage = pageSize ?? 10;
+                return _fileConentService.GetAll(currentPage, itemsPerPage);
+            }
         }
 
         [HttpPost("upload-multiple")]

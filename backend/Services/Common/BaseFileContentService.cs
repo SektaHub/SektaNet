@@ -51,6 +51,16 @@ namespace backend.Services.Common
             return dtoList.AsQueryable();
         }
 
+        public IQueryable<TDto> GetAll(int page, int pageSize)
+        {
+            var entities = _dbContext.Set<TEntity>()
+                                     .Skip((page - 1) * pageSize)
+                                     .Take(pageSize)
+                                     .ToList();
+            var dtoList = _mapper.Map<List<TDto>>(entities);
+            return dtoList.AsQueryable();
+        }
+
         public TDto GetDtoById(string id)
         {
             var entity = _dbContext.Set<TEntity>().Find(id);
