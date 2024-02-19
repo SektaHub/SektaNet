@@ -51,14 +51,24 @@ namespace backend.Services.Common
             return dtoList.AsQueryable();
         }
 
-        public IQueryable<TDto> GetAll(int page, int pageSize)
+        public PaginatedResponseDto<TDto> GetPaginated(int page, int pageSize)
         {
+            var totalCount = _dbContext.Set<TEntity>().Count();
+
             var entities = _dbContext.Set<TEntity>()
                                      .Skip((page - 1) * pageSize)
                                      .Take(pageSize)
                                      .ToList();
+
             var dtoList = _mapper.Map<List<TDto>>(entities);
-            return dtoList.AsQueryable();
+
+            var response = new PaginatedResponseDto<TDto>
+            {
+                Items = dtoList,
+                TotalCount = totalCount
+            };
+
+            return response;
         }
 
         public TDto GetDtoById(string id)

@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.JsonPatch.Adapters;
 using MongoDB.Bson;
 using backend.Repo;
 using Xabe.FFmpeg;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Controllers.Common
 {
@@ -36,20 +37,15 @@ namespace backend.Controllers.Common
         }
 
         [HttpGet]
-        public IQueryable<TDto> Get(int? page = null, int? pageSize = null)
+        public IQueryable<TDto> Get()
         {
-            if (page == null && pageSize == null)
-            {
-                // Return all values if both page and pageSize are null
-                return _fileConentService.GetAll();
-            }
-            else
-            {
-                // Use provided page and pageSize, or default values if null
-                int currentPage = page ?? 1;
-                int itemsPerPage = pageSize ?? 10;
-                return _fileConentService.GetAll(currentPage, itemsPerPage);
-            }
+            return _fileConentService.GetAll();
+        }
+
+        [HttpGet("Paginated")]
+        public ActionResult<PaginatedResponseDto<TDto>> GetWithPagination(int page, int pageSize)
+        {
+            return _fileConentService.GetPaginated(page, pageSize);
         }
 
         [HttpPost("upload-multiple")]

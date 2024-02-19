@@ -8,36 +8,40 @@ interface Image {
   // Add other image properties as needed
 }
 
+interface PaginatedResponse<T> {
+  items: T[];
+  totalCount: number;
+}
+
 const ImageList: React.FC = () => {
   const [images, setImages] = useState<Image[]>([]);
   const [searchCaption, setSearchCaption] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState<number>(1); // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalItems, setTotalItems] = useState<number>(0);
   const itemsPerPage = 14; // Items per page, could be configurable
 
   useEffect(() => {
-    // Fetch images from your API or backend based on the search caption
-    let url = `${API_URL}/Image`;
+    let url = `${API_URL}/Image/Paginated`;
 
     const queryParams = [`page=${currentPage}`, `pageSize=${itemsPerPage}`];
     if (searchCaption) {
       queryParams.push(`caption=${encodeURIComponent(searchCaption)}`);
     }
 
-    const fullUrl = `${url}?${queryParams.join('&')}`;
-
-    fetchWithAuth(fullUrl)
+    fetchWithAuth(`${url}?${queryParams.join('&')}`)
       .then(response => response.json())
-      .then(data => setImages(data));
+      .then((data: PaginatedResponse<Image>) => {
+        setImages(data.items);
+        setTotalItems(data.totalCount);
+        setTotalPages(Math.ceil(data.totalCount / itemsPerPage));
+      });
   }, [searchCaption, currentPage]);
 
-  // Basic pagination controls
-  const goToNextPage = () => {
-    setCurrentPage(c => c + 1);
-  };
-
-  const goToPreviousPage = () => {
-    setCurrentPage(c => c > 1 ? c - 1 : 1);
-  };
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToNextPage = () => setCurrentPage(c => c + 1);
+  const goToPreviousPage = () => setCurrentPage(c => Math.max(1, c - 1));
 
   return (
     <div>
@@ -52,9 +56,8 @@ const ImageList: React.FC = () => {
             padding: '10px',
             fontSize: '16px',
             width: '30%',
-            boxSizing: 'border-box',
-            borderRadius: '5px',
             border: '1px solid #ccc',
+            borderRadius: '5px',
             marginBottom: '10px',
           }}
         />
@@ -82,22 +85,17 @@ const ImageList: React.FC = () => {
                 alt={`Image ${image.id}`}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
-              <p>{/* Display other image properties */}</p>
+              {/* You can display more properties here */}
             </div>
           </Link>
         ))}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
-        {/* Pagination Controls */}
-        <button onClick={goToPreviousPage} disabled={currentPage === 1}>
-          Previous
-        </button>
-        <span style={{ margin: '0 10px' }}>
-          Page {currentPage}
-        </span>
-        <button onClick={goToNextPage}>
-          Next
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '20px' }}>
+        <button onClick={goToFirstPage} disabled={currentPage === 1}>First</button>
+        <button onClick={goToPreviousPage} disabled={currentPage === 1}>Previous</button>
+        <span style={{ margin: '0 10px' }}>{`Page ${currentPage} of ${totalPages} | Total Items: ${totalItems}`}</span>
+        <button onClick={goToNextPage} disabled={currentPage === totalPages}>Next</button>
+        <button onClick={goToLastPage} disabled={currentPage === totalPages}>Last</button>
       </div>
     </div>
   );
