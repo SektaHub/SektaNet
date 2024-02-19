@@ -26,38 +26,39 @@ namespace backend.Repo
         {
             var metadata = new BsonDocument();
 
-            // Extract generic file info such as creation time, last modification, etc.
-            // Since we're working with a stream, we assume the file is being uploaded and these system-specific metadata might not be available directly from the stream.
             metadata["UploadedAt"] = DateTime.UtcNow;
 
-            // Decide how to extract metadata based on file extension (simplistic approach)
             string extension = Path.GetExtension(fileName).ToLower();
             if (extension == ".jpg" || extension == ".jpeg" || extension == ".png")
             {
-                // For images
-                fileStream.Position = 0; // Reset position to ensure we read from the beginning
+                // Image metadata extraction
+                fileStream.Position = 0;
                 var imageMetadata = ImageMetadataReader.ReadMetadata(fileStream);
                 foreach (var directory in imageMetadata)
+                {
                     foreach (var tag in directory.Tags)
-                        metadata[$"{directory.Name}:{tag.Name}"] = tag.Description;
+                    {
+                        // Convert potentially complex objects to a string representation
+                        metadata[$"{directory.Name}:{tag.Name}"] = tag.Description.ToString();
+                    }
+                }
             }
             else if (extension == ".mp3" || extension == ".wav" || extension == ".mp4")
             {
-                // For audio and video, TagLib supports both but you might need special handling for video
-                fileStream.Position = 0;  // Reset position
+                // Audio and video metadata extraction
+                fileStream.Position = 0;
                 var file = TagLib.File.Create(new StreamFileAbstraction(fileName, fileStream, fileStream));
-                // Now extract different metadata based on the file type, e.g., title, album for audio
-                metadata["Duration"] = file.Properties.Duration.ToString();
-                // Add more metadata as needed
+                metadata["Duration"] = file.Properties.Duration.TotalSeconds.ToString(); // Represent duration as a string in seconds
+                                                                                         // Add more metadata as necessary, ensuring it's BSON-compatible
             }
-            // Can add more conditions for other file types
+            // More conditions for different file types could be added here
 
             var options = new GridFSUploadOptions
             {
                 Metadata = metadata
             };
 
-            fileStream.Position = 0; // Ensure we're at the beginning of the stream for upload
+            fileStream.Position = 0; // Ensure the stream is at the beginning for upload
             return await gridFS.UploadFromStreamAsync(fileName, fileStream, options);
         }
 
