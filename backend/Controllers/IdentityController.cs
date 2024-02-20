@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using backend.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -6,22 +7,21 @@ namespace backend.Controllers
 {
     [Route("api/identity")]
     [ApiController]
-    public class IdentityController : Controller
+    public class IdentityController : ControllerBase
     {
+
+        private readonly IdentityService _identityService;
+
+        public IdentityController(IdentityService identityService)
+        {
+            _identityService = identityService;
+        }
 
         [HttpGet("current-user")]
         [Authorize]
         public IActionResult GetCurrentUser()
         {
-            // Retrieve the current user's claims
-            var userClaims = HttpContext.User.Claims;
-
-            // Example: Retrieve the username
-            var usernameClaim = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
-            var username = usernameClaim?.Value;
-
-            // You can include any other user information you need
-
+            string username = _identityService.GetCurrentUserUsername(HttpContext);
             // Return the user information
             return Ok(new { Username = username });
         }
