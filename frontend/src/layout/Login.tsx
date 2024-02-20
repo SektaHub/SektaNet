@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../config';
+import { handleLogout } from "../api"; 
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -28,16 +29,12 @@ function Login() {
             localStorage.setItem('accessToken', accessToken);
             alert('Login successful');
             // Redirect user or update app state
+            window.location.href = '/';
         } catch (error) {
             // You can customize this part to handle different types of errors differently
             alert('Login failed');
         }
     };
-
-    const handleLogout = () => {
-      localStorage.removeItem('accessToken'); // Clear access token
-      window.location.href = '/login'; // Redirect to login page
-  };
 
     return (
       <div className="wrapper">

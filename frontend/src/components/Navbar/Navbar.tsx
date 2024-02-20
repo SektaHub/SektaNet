@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "react-bootstrap";
 import { fetchWithAuth } from "../../api"; // assuming fetchWithAuth is in a file named utils
-import {API_URL} from "../../config"
+import { handleLogout } from "../../api"; 
+import { API_URL } from "../../config";
 import "./Navbar.css";
 
 const Navbar: React.FC = () => {
@@ -10,7 +11,7 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const response = await fetchWithAuth(`${API_URL}/identity/current-user`);
+        const response = await fetchWithAuth(`${API_URL}/identity/current-user`, { disableRedirect: true });
         const user = await response.json();
         setCurrentUser(user.username); // Assuming the user object has a 'username' property
       } catch (error) {
@@ -39,7 +40,14 @@ const Navbar: React.FC = () => {
         <Button className="homeNavButton" href="/upload">
           Upload
         </Button>
-        {currentUser && <span>Welcome, {currentUser}</span>}
+        {currentUser ? (
+          <>
+            <span className="currentUserText">Welcome, {currentUser}</span>
+            <Button className="homeAccountButton" onClick={handleLogout}>Logout</Button>
+          </>
+        ) : (
+          <Button className="homeAccountButton" href="/login">Login</Button>
+        )}
       </div>
     </nav>
   );

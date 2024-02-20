@@ -1,4 +1,8 @@
-export const fetchWithAuth = async (url: string, options: RequestInit = {}): Promise<Response> => {
+export interface CustomRequestInit extends RequestInit {
+  disableRedirect?: boolean;
+}
+
+export const fetchWithAuth = async (url: string, options: CustomRequestInit = {}): Promise<Response> => {
   const token: string | null = localStorage.getItem('accessToken');
   const headers: HeadersInit = {
     ...options.headers,
@@ -10,16 +14,19 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}): Pro
     headers,
   });
 
-  // If response status is 401, redirect to login page
-  if (response.status === 401) {
+  // If response status is 401 and the request was not initiated from the logout function, redirect to login page
+  if (response.status === 401 && !options.disableRedirect) {
     // Redirect to login page
-    setTimeout(() => {
-      window.location.href = '/login';
-    }, 0);
-    
-    // Show a popup indicating the user needs to be logged in
-    alert('You need to be logged in to do that.');
+    window.location.href = '/login';
   }
 
   return response;
+};
+
+
+
+
+export const handleLogout = () => {
+  localStorage.removeItem('accessToken'); // Clear access token
+  window.location.href = '/login'; // Redirect to login page
 };
