@@ -57,31 +57,31 @@ namespace backend.Controllers
         }
 
 
-        [HttpPost("upload")]
-        public async Task<IActionResult> Upload(IFormFile videoFile)
-        {
-            if (videoFile == null || videoFile.Length == 0)
-            {
-                return BadRequest("No file uploaded.");
-            }
+        //[HttpPost("upload")]
+        //public async Task<IActionResult> Upload(IFormFile videoFile)
+        //{
+        //    if (videoFile == null || videoFile.Length == 0)
+        //    {
+        //        return BadRequest("No file uploaded.");
+        //    }
 
-            try
-            {
+        //    try
+        //    {
                 
-                // Assuming you've injected MongoDBService as _mongoDBService
-                var fileId = await _fileConentService.UploadReel(videoFile);
+        //        // Assuming you've injected MongoDBService as _mongoDBService
+        //        var fileId = await _fileConentService.UploadReel(videoFile);
 
-                // Here you can link fileId with your reel entity if necessary
+        //        // Here you can link fileId with your reel entity if necessary
 
-                return Ok(new { Message = "Video uploaded successfully", FileId = fileId });
+        //        return Ok(new { Message = "Video uploaded successfully", FileId = fileId });
                 
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error uploading video: {ex.Message}");
-                return StatusCode(500, "An error occurred while uploading the video.");
-            }
-        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Error uploading video: {ex.Message}");
+        //        return StatusCode(500, "An error occurred while uploading the video.");
+        //    }
+        //}
 
 
         [HttpGet("{videoId}/Content")]

@@ -97,10 +97,10 @@ namespace backend.Services
 
         }
 
-        public async Task<string> UploadReel(IFormFile file)
-        {
-            return await _anyFileRepository.SaveReel(file);
-        }
+        //public async Task<string> UploadReel(IFormFile file)
+        //{
+        //    return await _anyFileRepository.SaveReel(file);
+        //}
 
         public async Task DeleteReel(string id)
         {

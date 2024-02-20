@@ -86,10 +86,10 @@ namespace backend.Services
             return filteredDtoList;
         }
 
-        public async Task<string> UploadImage(IFormFile image)
-        {
-            return await _anyFileRepository.SaveImage(image);
-        }
+        //public async Task<string> UploadImage(IFormFile image)
+        //{
+        //    return await _anyFileRepository.SaveImage(image);
+        //}
 
         public async Task DeleteImage(string id)
         {

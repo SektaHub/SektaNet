@@ -2,8 +2,8 @@
 
 namespace backend.Models.Entity
 {
-    public class Reel : BaseVideoContentEntity
+    public class LongVideo : BaseVideoContentEntity
     {
-        
+
     }
 }

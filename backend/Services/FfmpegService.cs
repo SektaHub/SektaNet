@@ -104,5 +104,42 @@ namespace backend.Services
             }
         }
 
+        public async Task<bool> Is9_16AspectRatio(IFormFile file)
+        {
+            try
+            {
+                // Save the uploaded file to a temporary location
+                var filePath = Path.GetTempFileName();
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+
+                // Get media info from the temporary file
+                var mediaInfo = await FFmpeg.GetMediaInfo(filePath);
+                var videoStream = mediaInfo.VideoStreams.FirstOrDefault();
+
+                if (videoStream != null)
+                {
+                    // Calculate aspect ratio
+                    double aspectRatio = (double)videoStream.Width / videoStream.Height;
+
+                    // Check if aspect ratio is approximately 16:9
+                    return Math.Abs(aspectRatio - (9.0 / 16.0)) < 0.02;
+                }
+                else
+                {
+                    // No video stream found
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions
+                //_logger.LogError($"Error checking aspect ratio: {ex.Message}");
+                return false;
+            }
+        }
+
     }
 }

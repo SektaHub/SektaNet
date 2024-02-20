@@ -52,6 +52,9 @@ builder.Services.AddScoped<ReelService>();
 builder.Services.AddScoped<ImageService>();
 builder.Services.AddScoped<FfmpegService>();
 builder.Services.AddScoped<IdentityService>();
+builder.Services.AddScoped<GenericFileService>();
+builder.Services.AddScoped<LongVideoService>();
+builder.Services.AddScoped<AudioService>();
 
 //builder.Services.AddScoped<MongoDBService>();
 

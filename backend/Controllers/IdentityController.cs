@@ -19,11 +19,13 @@ namespace backend.Controllers
 
         [HttpGet("current-user")]
         [Authorize]
-        public IActionResult GetCurrentUser()
+        public IActionResult GetCurrentUserUsername()
         {
             string username = _identityService.GetCurrentUserUsername(HttpContext);
             // Return the user information
             return Ok(new { Username = username });
         }
+
+
     }
 }

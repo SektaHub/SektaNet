@@ -2,8 +2,7 @@
 
 namespace backend.Models.Entity
 {
-    public class Reel : BaseVideoContentEntity
+    public class GenericFile : BaseFileContentEntity
     {
-        
     }
 }

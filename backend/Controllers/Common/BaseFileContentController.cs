@@ -54,7 +54,7 @@ namespace backend.Controllers.Common
             return StatusCode(501, "UploadMultiple method not implemented in the derived class.");
         }
 
-        [HttpGet("{id}/Content", Name = "GetStream")]
+        [HttpGet("{id}/Content")]
         public virtual async Task<IActionResult> GetFileContent(string id)
         {
             return StatusCode(501, "UploadMultiple method not implemented in the derived class.");

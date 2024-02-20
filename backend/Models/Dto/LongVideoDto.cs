@@ -2,8 +2,7 @@
 
 namespace backend.Models.Dto
 {
-    public class ReelDto : BaseVideoContentDto
+    public class LongVideoDto : BaseVideoContentDto
     {
-
     }
 }

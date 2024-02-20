@@ -100,31 +100,31 @@ namespace backend.Controllers
             }
         }
 
-        [HttpPost("upload")]
-        public async Task<IActionResult> Upload(IFormFile imageFile)
-        {
-            if (imageFile == null || imageFile.Length == 0)
-            {
-                return BadRequest("No file uploaded.");
-            }
+        //[HttpPost("upload")]
+        //public async Task<IActionResult> Upload(IFormFile imageFile)
+        //{
+        //    if (imageFile == null || imageFile.Length == 0)
+        //    {
+        //        return BadRequest("No file uploaded.");
+        //    }
 
-            try
-            {
+        //    try
+        //    {
 
-                // Assuming you've injected MongoDBService as _mongoDBService
-                var fileId = await _fileConentService.UploadImage(imageFile);
+        //        // Assuming you've injected MongoDBService as _mongoDBService
+        //        var fileId = await _fileConentService.UploadImage(imageFile);
 
-                // Here you can link fileId with your reel entity if necessary
+        //        // Here you can link fileId with your reel entity if necessary
 
-                return Ok(new { Message = "Image uploaded successfully", FileId = fileId });
+        //        return Ok(new { Message = "Image uploaded successfully", FileId = fileId });
 
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error uploading image: {ex.Message}");
-                return StatusCode(500, "An error occurred while uploading the image.");
-            }
-        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Error uploading image: {ex.Message}");
+        //        return StatusCode(500, "An error occurred while uploading the image.");
+        //    }
+        //}
 
         //[HttpPost("upload-multiple")]
         //public async override Task<IActionResult> UploadMultiple(List<IFormFile> files)
