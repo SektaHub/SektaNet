@@ -1,6 +1,7 @@
 ﻿using backend.Controllers.Common;
 using backend.Models.Dto;
 using backend.Models.Entity;
+using backend.Services;
 using Microsoft.AspNetCore.Http;
 using MongoDB.Bson;
 using System.Net.Http;
@@ -14,12 +15,14 @@ namespace backend.Repo
         private readonly ApplicationDbContext _dbContext;
         private readonly MongoDBRepository _mongoRepo;
         protected readonly ILogger<AnyFileRepository> _logger;
+        private readonly FfmpegService _ffmpegService;
 
-        public AnyFileRepository(ApplicationDbContext dbContext, MongoDBRepository mongoRepo, ILogger<AnyFileRepository> logger)
+        public AnyFileRepository(ApplicationDbContext dbContext, MongoDBRepository mongoRepo, ILogger<AnyFileRepository> logger, FfmpegService ffmpegService)
         {
             _dbContext = dbContext;
             _mongoRepo = mongoRepo;
             _logger = logger;
+            _ffmpegService = ffmpegService;
         }
 
         public async Task<string> SaveReel(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
@@ -41,22 +44,29 @@ namespace backend.Repo
             }
 
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            int dur = await _ffmpegService.GetVideoDuration(file);
+
+            IFormFile thumb = await _ffmpegService.GenerateThumbnail(file);
+            thumb = thumb;
+            string thubnailId = await SaveThumbnail(httpContext, thumb, tag, isPrivate);
 
             Reel reel = new Reel
             {
                 Id = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
                 AudioTranscription = null,
-                Duration = null, // Will be set after getting duration
+                Duration = dur, // Will be set after getting duration
                 Tags = tag,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 isPrivate = isPrivate,
                 OwnerId = currentUserId,
+                ThumbnailId = thubnailId,
             };
 
             _dbContext.Reels.Add(reel);
             _dbContext.SaveChanges();
+
 
             return reel.Id;
         }
@@ -81,12 +91,17 @@ namespace backend.Repo
 
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+            int dur = await _ffmpegService.GetVideoDuration(file);
+
+            IFormFile thumb = await _ffmpegService.GenerateThumbnail(file);
+            string thubnailId = await SaveThumbnail(httpContext, thumb, tag, isPrivate);
+
             LongVideo video = new LongVideo
             {
                 Id = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
                 AudioTranscription = null,
-                Duration = null, // Will be set after getting duration
+                Duration = dur, // Will be set after getting duration
                 Tags = tag,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
@@ -96,6 +111,7 @@ namespace backend.Repo
 
             _dbContext.LongVideos.Add(video);
             _dbContext.SaveChanges();
+
 
             return video.Id;
         }
@@ -179,6 +195,45 @@ namespace backend.Repo
             };
 
             _dbContext.Images.Add(image);
+            _dbContext.SaveChanges();
+
+            return image.Id;
+        }
+
+        public async Task<string> SaveThumbnail(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
+        {
+            ObjectId fileId = ObjectId.Empty;
+
+            try
+            {
+                using (var stream = file.OpenReadStream())
+                {
+                    fileId = await _mongoRepo.UploadFileAsync(stream, file.FileName);
+                    //return Ok(new { Message = "Video uploaded successfully", FileId = fileId });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error uploading video: {ex.Message}");
+                //return StatusCode(500, "An error occurred while uploading the video.");
+            }
+
+            string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            Thumbnail image = new Thumbnail
+            {
+                Id = fileId.ToString(),
+                FileExtension = file.ContentType.Split('/')[1],
+                //GeneratedCaption = null,
+                //CaptionEmbedding = null,
+                Tags = tag,
+                Name = file.FileName,
+                DateUploaded = DateTime.Now.ToUniversalTime(),
+                isPrivate = isPrivate,
+                OwnerId = currentUserId,
+            };
+
+            _dbContext.Thumbnails.Add(image);
             _dbContext.SaveChanges();
 
             return image.Id;

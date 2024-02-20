@@ -37,6 +37,6 @@ namespace backend
         public DbSet<Image> Images { get; set; }
         public DbSet<Audio> Audio { get; set; }
         public DbSet<GenericFile> Files { get; set; }
-
+        public DbSet<Thumbnail> Thumbnails { get; set; }
     }
 }

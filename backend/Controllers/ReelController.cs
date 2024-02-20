@@ -4,8 +4,10 @@ using backend.Models.Dto;
 using backend.Models.Entity;
 using backend.Repo;
 using backend.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 
 namespace backend.Controllers
@@ -109,6 +111,43 @@ namespace backend.Controllers
             {
                 _logger.LogError($"An error occurred while attempting to read the video file: {ex.Message}");
                 return StatusCode(500, "An error occurred while attempting to read the video file.");
+            }
+        }
+
+        [HttpGet("{id}/Thumbnail")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetThumbnail(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                var reelEntity = _fileConentService.GetById(id);
+
+                string? thumbnailId = reelEntity.ThumbnailId;
+
+                if (thumbnailId.IsNullOrEmpty())
+                {
+                    return NotFound();
+                }
+
+                var imageStream = await _fileConentService.GetFileStreamAsync(thumbnailId);
+
+                if (imageStream.Length == 0)
+                {
+                    return NotFound();
+                }
+
+                // Return the image stream
+                return File(imageStream, $"image/jpeg"); // Adjust the content type based on your image format
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred while attempting to read the image file: {ex.Message}");
+                return StatusCode(500, "An error occurred while attempting to read the image file.");
             }
         }
 

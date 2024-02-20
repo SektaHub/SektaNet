@@ -52,20 +52,53 @@ namespace backend.Services
             }
         }
 
-        public async Task<int> GetVideoDurationAsync(string videoPath)
+        public async Task<IFormFile> GenerateThumbnail(IFormFile videoFile)
         {
+            string tempVideoPath = Path.GetTempFileName(); // Temp path for video.
+            string thumbnailPath = Path.ChangeExtension(tempVideoPath, ".jpg"); // Temp path for thumbnail.
             try
             {
-                var mediaInfo = await FFmpeg.GetMediaInfo(videoPath);
-                return (int)mediaInfo.Duration.TotalSeconds;
+                await using (var fileStream = new FileStream(tempVideoPath, FileMode.Create))
+                {
+                    // Copy the video file to a temporary path
+                    await videoFile.CopyToAsync(fileStream);
+                }
+
+                // Extract the video file name without extension for thumbnail naming
+                string videoFileName = Path.GetFileNameWithoutExtension(videoFile.FileName);
+
+                // Take a snapshot at 1 second mark
+                IConversion conversion = await FFmpeg.Conversions.FromSnippet.Snapshot(tempVideoPath, thumbnailPath, TimeSpan.FromSeconds(1));
+                await conversion.Start();
+
+                // After generating the thumbnail, open and convert it to IFormFile
+                await using (var thumbnailStream = new FileStream(thumbnailPath, FileMode.Open, FileAccess.Read))
+                {
+                    var fileInfo = new FileInfo(thumbnailPath);
+                    var formFile = new FormFile(thumbnailStream, 0, fileInfo.Length, videoFileName, fileInfo.Name);
+
+                    return formFile; // Returning the generated thumbnail as an IFormFile
+                }
             }
             catch (Exception ex)
             {
-                // Log the exception or handle it as needed
-                Console.WriteLine($"Error getting video duration: {ex.Message}");
-                return 0; // Return a default value or handle the error accordingly
+                Console.WriteLine($"Error while generating thumbnail: {ex.Message}");
+                return null;
+            }
+            finally
+            {
+                //// Cleanup: Delete temporary files
+                //if (File.Exists(tempVideoPath))
+                //{
+                //    File.Delete(tempVideoPath);
+                //}
+                //if (File.Exists(thumbnailPath))
+                //{
+                //    File.Delete(thumbnailPath);
+                //}
             }
         }
+
 
         public void SetFFmpegPermissions()
         {
@@ -138,6 +171,40 @@ namespace backend.Services
                 // Handle exceptions
                 //_logger.LogError($"Error checking aspect ratio: {ex.Message}");
                 return false;
+            }
+        }
+
+        public async Task<int> GetVideoDuration(IFormFile file)
+        {
+            try
+            {
+                // Save the uploaded file to a temporary location
+                var filePath = Path.GetTempFileName();
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+
+                // Get media info from the temporary file
+                var mediaInfo = await FFmpeg.GetMediaInfo(filePath);
+                var videoStream = mediaInfo.VideoStreams.FirstOrDefault();
+
+                if (videoStream != null)
+                {
+                    // Extract duration from video stream
+                    return (int)videoStream.Duration.TotalSeconds;
+                }
+                else
+                {
+                    // No video stream found
+                    throw new InvalidOperationException("No video stream found in the provided file.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions
+                Console.WriteLine($"Error extracting video duration: {ex.Message}");
+                throw; // Rethrow the exception to be handled by the caller
             }
         }
 
