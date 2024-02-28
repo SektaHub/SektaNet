@@ -22,41 +22,44 @@ namespace backend.Repo
             gridFS = new GridFSBucket(database);
         }
 
-        public async Task<ObjectId> UploadFileAsync(Stream fileStream, string fileName)
+        public async Task<ObjectId> UploadFileAsync(Stream fileStream, string fileName, bool IgnoreMetadata = false)
         {
             var metadata = new BsonDocument();
 
             metadata["UploadedAt"] = DateTime.UtcNow;
 
-            string extension = Path.GetExtension(fileName).ToLower();
-            if (extension == ".jpg" || extension == ".jpeg" || extension == ".png")
+            if (!IgnoreMetadata)
             {
-                // Image metadata extraction
-                fileStream.Position = 0;
-                var imageMetadata = ImageMetadataReader.ReadMetadata(fileStream);
-                foreach (var directory in imageMetadata)
+                string extension = Path.GetExtension(fileName).ToLower();
+                if (extension == ".jpg" || extension == ".jpeg" || extension == ".png")
                 {
-                    foreach (var tag in directory.Tags)
+                    // Image metadata extraction
+                    fileStream.Position = 0;
+                    var imageMetadata = ImageMetadataReader.ReadMetadata(fileStream);
+                    foreach (var directory in imageMetadata)
                     {
-                        // Convert potentially complex objects to a string representation
-                        metadata[$"{directory.Name}:{tag.Name}"] = tag.Description.ToString();
+                        foreach (var tag in directory.Tags)
+                        {
+                            // Convert potentially complex objects to a string representation
+                            metadata[$"{directory.Name}:{tag.Name}"] = tag.Description.ToString();
+                        }
                     }
                 }
-            }
-            else if (extension == ".mp3" || extension == ".wav" || extension == ".mp4")
-            {
-                try
+                else if (extension == ".mp3" || extension == ".wav" || extension == ".mp4")
                 {
-                    fileStream.Position = 0;
-                    var file = TagLib.File.Create(new StreamFileAbstraction(fileName, fileStream, fileStream));
-                    metadata["Duration"] = file.Properties.Duration.TotalSeconds.ToString();
+                    try
+                    {
+                        fileStream.Position = 0;
+                        var file = TagLib.File.Create(new StreamFileAbstraction(fileName, fileStream, fileStream));
+                        metadata["Duration"] = file.Properties.Duration.TotalSeconds.ToString();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Failed to extract metadata for {fileName}: {ex.Message}");
+                    }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Failed to extract metadata for {fileName}: {ex.Message}");
-                }
+                // More conditions for different file types could be added here
             }
-            // More conditions for different file types could be added here
 
             var options = new GridFSUploadOptions
             {
@@ -66,6 +69,7 @@ namespace backend.Repo
             fileStream.Position = 0; // Ensure the stream is at the beginning for upload
             return await gridFS.UploadFromStreamAsync(fileName, fileStream, options);
         }
+
 
         public async Task<Stream> DownloadFileAsync(string id)
         {

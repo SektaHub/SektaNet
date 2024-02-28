@@ -206,7 +206,7 @@ namespace backend.Repo
             try
             {
                 // Upload the thumbnail bytes to the repository
-                fileId = await _mongoRepo.UploadFileAsync(new MemoryStream(thumbnailBytes), fileName);
+                fileId = await _mongoRepo.UploadFileAsync(new MemoryStream(thumbnailBytes), fileName, true);
             }
             catch (Exception ex)
             {
