@@ -6,7 +6,7 @@ import Col from 'react-bootstrap/Col';
 import { API_URL } from '../config';
 import { BASE_URL } from '../config';
 
-const VideoList: React.FC = () => {
+const ReelList: React.FC = () => {
   const [videos, setVideos] = useState<{
     id: string;
     thumbnail: string;
@@ -80,9 +80,11 @@ const VideoList: React.FC = () => {
       <h2 style={{ color: 'white' }}>Video List</h2>
       <Row xs={1} md={3} className="g-4">
         {videos.map((video) => (
-          <Col key={video.id}>
+          <Col key={video.id} xs={12} sm={6} md={4} lg={3}>
             <Card>
-              <Card.Img variant="top" src={video.thumbnail} alt={`Thumbnail for Video ${videos.indexOf(video) + 1}`} />
+              <div style={{ width: '200px', height: '150px' }}>
+                <Card.Img style={{ objectFit: 'cover', width: '100%', height: '100%' }} variant="top" src={video.thumbnail} alt={`Thumbnail for Video ${videos.indexOf(video) + 1}`} />
+              </div>
               <Card.Body>
                 <Card.Title style={{ color: 'white' }}>Video {videos.indexOf(video) + 1}</Card.Title>
                 <Card.Text style={{ color: 'white' }}>ID: {video.id}</Card.Text>
@@ -102,4 +104,4 @@ const VideoList: React.FC = () => {
   );
 };
 
-export default VideoList;
+export default ReelList;

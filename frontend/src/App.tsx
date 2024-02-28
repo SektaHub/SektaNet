@@ -3,7 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './layout/HomePage';
 import VideoUploader from './components/Uploaders/VideoUploader';
-import VideoList from './layout/VideoList';
+import ReelList from './layout/ReelList';
 import ImageList from './layout/ImageList';
 import ImageView from './layout/ImageView';
 import ImageUploader from './components/Uploaders/ImageUploader';
@@ -21,7 +21,7 @@ const App: React.FC = () => {
           <Route path='/login' element={<Login />}></Route>
           <Route path='/register' element={<Register />}></Route>
           <Route path="/uploadReel" element={<VideoUploader />} />
-          <Route path="/reels" element={<VideoList />} />
+          <Route path="/reels" element={<ReelList />} />
           <Route path="/images" element={<ImageList />} />
           <Route path="/images/:imageId" element={<ImageView />} /> 
           <Route path="/uploadImage" element={<ImageUploader />} />
