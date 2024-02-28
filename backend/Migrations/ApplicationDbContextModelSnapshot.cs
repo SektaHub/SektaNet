@@ -252,7 +252,7 @@ namespace backend.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Audio");
+                    b.ToTable("Audio", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Entity.GenericFile", b =>
@@ -284,7 +284,7 @@ namespace backend.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Files");
+                    b.ToTable("Files", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Entity.Image", b =>
@@ -328,7 +328,7 @@ namespace backend.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Images");
+                    b.ToTable("Images", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Entity.LongVideo", b =>
@@ -371,7 +371,7 @@ namespace backend.Migrations
 
                     b.HasIndex("ThumbnailId");
 
-                    b.ToTable("LongVideos");
+                    b.ToTable("LongVideos", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Entity.Reel", b =>
@@ -414,7 +414,7 @@ namespace backend.Migrations
 
                     b.HasIndex("ThumbnailId");
 
-                    b.ToTable("Reels");
+                    b.ToTable("Reels", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Entity.Thumbnail", b =>
@@ -446,7 +446,7 @@ namespace backend.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Thumbnails");
+                    b.ToTable("Thumbnails", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

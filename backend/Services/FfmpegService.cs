@@ -52,33 +52,35 @@ namespace backend.Services
             }
         }
 
-        public async Task<IFormFile> GenerateThumbnail(IFormFile videoFile)
+        public async Task<byte[]> GenerateThumbnail(IFormFile videoFile)
         {
-            string tempVideoPath = Path.GetTempFileName(); // Temp path for video.
-            string thumbnailPath = Path.ChangeExtension(tempVideoPath, ".jpg"); // Temp path for thumbnail.
+            // Generate file names without creating files
+            string tempVideoFileName = Path.GetRandomFileName();
+            string tempThumbnailFileName = Path.ChangeExtension(tempVideoFileName, ".jpeg");
+
+            // Construct the full path for video and thumbnail using the temp path
+            string tempVideoPath = Path.Combine(Path.GetTempPath(), tempVideoFileName);
+            string thumbnailPath = Path.Combine(Path.GetTempPath(), tempThumbnailFileName);
+
             try
             {
-                await using (var fileStream = new FileStream(tempVideoPath, FileMode.Create))
+                using (var fileStream = new FileStream(tempVideoPath, FileMode.Create))
                 {
-                    // Copy the video file to a temporary path
+                    // Copy the video file to the temporary path first
                     await videoFile.CopyToAsync(fileStream);
                 }
 
-                // Extract the video file name without extension for thumbnail naming
-                string videoFileName = Path.GetFileNameWithoutExtension(videoFile.FileName);
+                // Now, we assume the file is ready for FFmpeg to process. 
+                // No need for the file readiness check loop here.
 
-                // Take a snapshot at 1 second mark
+                // Take a snapshot at the 1-second mark using FFmpeg
                 IConversion conversion = await FFmpeg.Conversions.FromSnippet.Snapshot(tempVideoPath, thumbnailPath, TimeSpan.FromSeconds(1));
                 await conversion.Start();
 
-                // After generating the thumbnail, open and convert it to IFormFile
-                await using (var thumbnailStream = new FileStream(thumbnailPath, FileMode.Open, FileAccess.Read))
-                {
-                    var fileInfo = new FileInfo(thumbnailPath);
-                    var formFile = new FormFile(thumbnailStream, 0, fileInfo.Length, videoFileName, fileInfo.Name);
+                // Read the generated thumbnail into a byte array
+                byte[] thumbnailBytes = await File.ReadAllBytesAsync(thumbnailPath);
 
-                    return formFile; // Returning the generated thumbnail as an IFormFile
-                }
+                return thumbnailBytes;  // Returning the thumbnail as a byte array
             }
             catch (Exception ex)
             {
@@ -87,18 +89,17 @@ namespace backend.Services
             }
             finally
             {
-                //// Cleanup: Delete temporary files
-                //if (File.Exists(tempVideoPath))
-                //{
-                //    File.Delete(tempVideoPath);
-                //}
-                //if (File.Exists(thumbnailPath))
-                //{
-                //    File.Delete(thumbnailPath);
-                //}
+                // Cleanup: Deleting temporary files
+                if (File.Exists(tempVideoPath))
+                {
+                    File.Delete(tempVideoPath);
+                }
+                if (File.Exists(thumbnailPath))
+                {
+                    File.Delete(thumbnailPath);
+                }
             }
         }
-
 
         public void SetFFmpegPermissions()
         {

@@ -46,9 +46,8 @@ namespace backend.Repo
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             int dur = await _ffmpegService.GetVideoDuration(file);
 
-            IFormFile thumb = await _ffmpegService.GenerateThumbnail(file);
-            thumb = thumb;
-            string thubnailId = await SaveThumbnail(httpContext, thumb, tag, isPrivate);
+            byte[] thumb = await _ffmpegService.GenerateThumbnail(file);
+            string thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag ,isPrivate);
 
             Reel reel = new Reel
             {
@@ -93,8 +92,8 @@ namespace backend.Repo
 
             int dur = await _ffmpegService.GetVideoDuration(file);
 
-            IFormFile thumb = await _ffmpegService.GenerateThumbnail(file);
-            string thubnailId = await SaveThumbnail(httpContext, thumb, tag, isPrivate);
+            byte[] thumb = await _ffmpegService.GenerateThumbnail(file);
+            string thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag, isPrivate);
 
             LongVideo video = new LongVideo
             {
@@ -200,22 +199,19 @@ namespace backend.Repo
             return image.Id;
         }
 
-        public async Task<string> SaveThumbnail(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
+        public async Task<string> SaveThumbnail(HttpContext httpContext, byte[] thumbnailBytes, string fileName, string tag, bool isPrivate = false)
         {
             ObjectId fileId = ObjectId.Empty;
 
             try
             {
-                using (var stream = file.OpenReadStream())
-                {
-                    fileId = await _mongoRepo.UploadFileAsync(stream, file.FileName);
-                    //return Ok(new { Message = "Video uploaded successfully", FileId = fileId });
-                }
+                // Upload the thumbnail bytes to the repository
+                fileId = await _mongoRepo.UploadFileAsync(new MemoryStream(thumbnailBytes), fileName);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error uploading video: {ex.Message}");
-                //return StatusCode(500, "An error occurred while uploading the video.");
+                _logger.LogError($"Error uploading thumb: {ex.Message}");
+                // Handle the exception as per your requirement
             }
 
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -223,11 +219,9 @@ namespace backend.Repo
             Thumbnail image = new Thumbnail
             {
                 Id = fileId.ToString(),
-                FileExtension = file.ContentType.Split('/')[1],
-                //GeneratedCaption = null,
-                //CaptionEmbedding = null,
+                FileExtension = Path.GetExtension(fileName).TrimStart('.'),
                 Tags = tag,
-                Name = file.FileName,
+                Name = fileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 isPrivate = isPrivate,
                 OwnerId = currentUserId,

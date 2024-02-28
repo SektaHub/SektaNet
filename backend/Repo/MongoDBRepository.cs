@@ -45,11 +45,16 @@ namespace backend.Repo
             }
             else if (extension == ".mp3" || extension == ".wav" || extension == ".mp4")
             {
-                // Audio and video metadata extraction
-                fileStream.Position = 0;
-                var file = TagLib.File.Create(new StreamFileAbstraction(fileName, fileStream, fileStream));
-                metadata["Duration"] = file.Properties.Duration.TotalSeconds.ToString(); // Represent duration as a string in seconds
-                                                                                         // Add more metadata as necessary, ensuring it's BSON-compatible
+                try
+                {
+                    fileStream.Position = 0;
+                    var file = TagLib.File.Create(new StreamFileAbstraction(fileName, fileStream, fileStream));
+                    metadata["Duration"] = file.Properties.Duration.TotalSeconds.ToString();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to extract metadata for {fileName}: {ex.Message}");
+                }
             }
             // More conditions for different file types could be added here
 
