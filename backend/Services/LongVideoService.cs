@@ -12,5 +12,10 @@ namespace backend.Services
         {
         }
 
+        public async Task DeleteLongVideo(string id)
+        {
+            await _anyFileRepository.DeleteLongVideo(id);
+        }
+
     }
 }

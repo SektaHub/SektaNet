@@ -37,6 +37,12 @@ const Navbar: React.FC = () => {
         <Button className="homeNavButton" href="/reels">
           Reels
         </Button>
+        <Button className="homeNavButton" href="/videos">
+          Videos
+        </Button>
+        <Button className="homeNavButton" href="/files">
+          Files
+        </Button>
         <Button className="homeNavButton" href="/upload">
           Upload
         </Button>

@@ -106,6 +106,7 @@ namespace backend.Repo
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 isPrivate = isPrivate,
                 OwnerId = currentUserId,
+                ThumbnailId = thubnailId,
             };
 
             _dbContext.LongVideos.Add(video);

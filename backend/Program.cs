@@ -41,6 +41,12 @@ var configuration = builder.Configuration;
 
 builder.Services.AddIdentityApiEndpoints<ApplicationUser>().AddEntityFrameworkStores<ApplicationDbContext>();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // Set session timeout to 30 minutes
+    options.SlidingExpiration = true; // Enable sliding expiration
+});
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),  o => o.UseVector()));
 
