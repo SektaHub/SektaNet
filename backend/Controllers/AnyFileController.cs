@@ -1,8 +1,11 @@
-﻿using backend.Models.Dto;
+﻿using backend.Controllers.Common;
+using backend.Models.Dto;
+using backend.Repo;
 using backend.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
 namespace backend.Controllers
 {
@@ -13,21 +16,25 @@ namespace backend.Controllers
 
         private readonly ReelService _reelService;
         private readonly ImageService _imageService;
+        private readonly AnyFileRepository _fileRepository;
+        private readonly FfmpegService _ffmpegService;
+        protected readonly ILogger<AnyFileController> _logger;
 
-        public AnyFileController(ReelService reelService, ImageService imageService)
+        public AnyFileController(ReelService reelService, ImageService imageService, AnyFileRepository fileRepository, ILogger<AnyFileController> logger, FfmpegService ffmpegService)
         {
             _reelService = reelService;
             _imageService = imageService;
+            _fileRepository = fileRepository;
+            _logger = logger;
+            _ffmpegService = ffmpegService;
         }
 
-        [RequestSizeLimit(536_870_912)]
+        [RequestSizeLimit(536_870_912_0)]
         [HttpPost("upload-multiple")]
-        public async Task<IActionResult> UploadMultiple(List<IFormFile> files)
+        public async Task<IActionResult> UploadMultiple(List<IFormFile> files, string? tags)
         {
             try
             {
-                List<IFormFile> imageFiles = new List<IFormFile>();
-                List<IFormFile> videoFiles = new List<IFormFile>();
 
                 foreach (var file in files)
                 {
@@ -37,19 +44,22 @@ namespace backend.Controllers
                     switch (fileType.ToLower())
                     {
                         case "image":
-                            imageFiles.Add(file);
+                            await _fileRepository.SaveImage(HttpContext, file, tags);
                             break;
                         case "video":
-                            videoFiles.Add(file);
+                            if(await _ffmpegService.Is9_16AspectRatio(file))
+                                await _fileRepository.SaveReel(HttpContext, file, tags);
+                            else
+                                await _fileRepository.SaveLongVideo(HttpContext, file, tags);
+                            break;
+                        case "audio":
+                            await _fileRepository.SaveAudio(HttpContext, file, tags);
                             break;
                         default:
-                            Console.WriteLine("Unrecognized file type");
+                            await _fileRepository.SaveGenericFile(HttpContext, file, tags);
                             break;
                     }
                 }
-
-                await _imageService.UploadMultiple(imageFiles);
-                await _reelService.UploadMultiple(videoFiles);
 
                 return Ok("Files uploaded and saved successfully");
             }
@@ -60,5 +70,6 @@ namespace backend.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+
     }
 }

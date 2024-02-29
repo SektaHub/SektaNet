@@ -2,9 +2,8 @@
 
 namespace backend.Models.Entity
 {
-    public class Reel : BaseFileContentEntity
+    public class Reel : BaseVideoContentEntity
     {
-        public string? AudioTranscription { get; set; }
-        public int? Duration { get; set; }
+        
     }
 }

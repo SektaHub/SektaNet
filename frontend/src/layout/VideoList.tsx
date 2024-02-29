@@ -16,7 +16,7 @@ const VideoList: React.FC = () => {
 
   const fetchThumbnail = async (videoId: string) => {
     try {
-      const response = await fetch(`${API_URL}/Reel/${videoId}/thumbnail`);
+      const response = await fetch(`${API_URL}/LongVideo/${videoId}/thumbnail`);
       if (response.ok) {
         const blob = await response.blob();
         const thumbnailUrl = URL.createObjectURL(blob);
@@ -33,7 +33,7 @@ const VideoList: React.FC = () => {
 
   const handleDeleteClick = async (videoId: string) => {
     try {
-      const response = await fetch(`${API_URL}/Reel/${videoId}`, {
+      const response = await fetch(`${API_URL}/LongVideo/${videoId}`, {
         method: 'DELETE',
       });
 
@@ -52,7 +52,7 @@ const VideoList: React.FC = () => {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const response = await fetch(`${API_URL}/Reel`);
+        const response = await fetch(`${API_URL}/LongVideo`);
         const data = await response.json();
 
         if (response.ok) {
@@ -80,9 +80,11 @@ const VideoList: React.FC = () => {
       <h2 style={{ color: 'white' }}>Video List</h2>
       <Row xs={1} md={3} className="g-4">
         {videos.map((video) => (
-          <Col key={video.id}>
+          <Col key={video.id} xs={12} sm={6} md={4} lg={3}>
             <Card>
-              <Card.Img variant="top" src={video.thumbnail} alt={`Thumbnail for Video ${videos.indexOf(video) + 1}`} />
+              <div style={{ width: '200px', height: '150px' }}>
+                <Card.Img style={{ objectFit: 'cover', width: '100%', height: '100%' }} variant="top" src={video.thumbnail} alt={`Thumbnail for Video ${videos.indexOf(video) + 1}`} />
+              </div>
               <Card.Body>
                 <Card.Title style={{ color: 'white' }}>Video {videos.indexOf(video) + 1}</Card.Title>
                 <Card.Text style={{ color: 'white' }}>ID: {video.id}</Card.Text>

@@ -14,6 +14,15 @@ namespace backend.Models
 
             CreateMap<Image, ImageDto>();
             CreateMap<ImageDto, Image>();
+
+            CreateMap<LongVideo, LongVideoDto>();
+            CreateMap<LongVideoDto, LongVideo>();
+
+            CreateMap<GenericFile, GenericFileDto>();
+            CreateMap<GenericFileDto, GenericFile>();
+
+            CreateMap<Audio, AudioDto>();
+            CreateMap<AudioDto, Audio>();
         }
     }
 

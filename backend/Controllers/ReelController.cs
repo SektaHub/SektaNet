@@ -2,9 +2,13 @@
 using backend.Controllers.Common;
 using backend.Models.Dto;
 using backend.Models.Entity;
+using backend.Repo;
 using backend.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using MongoDB.Bson;
 
 namespace backend.Controllers
 {
@@ -13,80 +17,16 @@ namespace backend.Controllers
     public class ReelController : BaseFileContentController<Reel, ReelDto, ReelService>
     {
 
-        public ReelController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Reel, ReelDto, ReelService>> logger, ReelService fileConentService) : base(dbContext, mapper, webHostEnvironment, logger, fileConentService)
+        public ReelController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Reel, ReelDto, ReelService>> logger, ReelService fileConentService, MongoDBRepository mongoDBRepo, AnyFileRepository anyFileRepository) : base(mapper, webHostEnvironment, logger, fileConentService)
         {
 
         }
 
-
-        [HttpGet("{videoId}/Content")]
-        public override IActionResult GetFileContent(Guid videoId)
-        {
-            var videoPath = _fileConentService.GetFilePath(videoId);
-
-            if (string.IsNullOrEmpty(videoPath))
-            {
-                return NotFound();
-            }
-
-            try
-            {
-                var videoStream = new FileStream(videoPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                return File(videoStream, "video/mp4", enableRangeProcessing: true);
-            }
-            catch (IOException)
-            {
-                return StatusCode(500, "An error occurred while attempting to read the video file.");
-            }
-        }
 
         [HttpGet("GetReelsWithoutTranscription")]
         public IQueryable<ReelDto> GetReelsWithoutTranscription()
         {
-            // Filter images where GeneratedCaption is null
-            var filteredEntities = _dbContext.Set<Reel>()
-                .Where(reel => reel.AudioTranscription == null)
-                .AsQueryable();
-
-            var filteredDtoList = _mapper.ProjectTo<ReelDto>(filteredEntities);
-            return filteredDtoList;
-        }
-
-        [HttpGet("{videoId}/Thumbnail", Name = "GetReelThumbnail")]
-        public IActionResult GetReelThumbnail(Guid videoId)
-        {
-            var videoPath = _fileConentService.GetFilePath(videoId);
-            var outputPath = Path.Combine(_env.WebRootPath, "Thumbnails");
-
-            if (string.IsNullOrEmpty(videoPath))
-            {
-                return NotFound();
-            }
-
-            // Assume the thumbnail file has the same name as the video with a .jpg extension
-            var thumbnailFileName = $"{videoId}.jpg";
-            var thumbnailPath = Path.Combine(outputPath, thumbnailFileName);
-
-            if (System.IO.File.Exists(thumbnailPath))
-            {
-                try
-                {
-                    // Open the file stream without closing it immediately
-                    var thumbnailStream = new FileStream(thumbnailPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-                    // Return the file stream directly as the response
-                    return File(thumbnailStream, "image/jpeg");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error accessing thumbnail file: {ex.Message}");
-                    return StatusCode(500, "An error occurred while attempting to read the thumbnail file.");
-                }
-            }
-            else
-            {
-                return NotFound("Thumbnail not found");
-            }
+            return _fileConentService.GetReelsWithoutTranscription();
         }
 
         [HttpGet("RandomVideoId", Name = "GetRandomVideoId")]
@@ -94,14 +34,14 @@ namespace backend.Controllers
         {
             try
             {
-                var randomVideo = _dbContext.Set<Reel>().OrderBy(r => Guid.NewGuid()).FirstOrDefault();
+                var randomVideo = _fileConentService.GetRandomVideo();
 
                 if (randomVideo == null)
                 {
                     return NotFound("No videos found in the database.");
                 }
 
-                return Ok(randomVideo.Id);
+                return Ok(new { id = randomVideo.Id });
             }
             catch (Exception ex)
             {
@@ -119,22 +59,105 @@ namespace backend.Controllers
         }
 
 
+        //[HttpPost("upload")]
+        //public async Task<IActionResult> Upload(IFormFile videoFile)
+        //{
+        //    if (videoFile == null || videoFile.Length == 0)
+        //    {
+        //        return BadRequest("No file uploaded.");
+        //    }
 
-        [HttpDelete("{videoId}")]
-        public override IActionResult DeleteFileContent(Guid videoId)
+        //    try
+        //    {
+                
+        //        // Assuming you've injected MongoDBService as _mongoDBService
+        //        var fileId = await _fileConentService.UploadReel(videoFile);
+
+        //        // Here you can link fileId with your reel entity if necessary
+
+        //        return Ok(new { Message = "Video uploaded successfully", FileId = fileId });
+                
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Error uploading video: {ex.Message}");
+        //        return StatusCode(500, "An error occurred while uploading the video.");
+        //    }
+        //}
+
+
+        [HttpGet("{videoId}/Content")]
+        public async override Task<IActionResult> GetFileContent(string videoId) // Assuming videoId is the string representation of MongoDB's ObjectId
         {
-            base.DeleteFileContent(videoId);
+            if (string.IsNullOrEmpty(videoId))
+            {
+                return NotFound();
+            }
+
             try
             {
-                // Delete thumbnail file
-                var outputPath = Path.Combine(_env.WebRootPath, "Thumbnails");
-                var thumbnailFileName = $"{videoId}.jpg";
-                var thumbnailPath = Path.Combine(outputPath, thumbnailFileName);
-                if (System.IO.File.Exists(thumbnailPath))
+                // Assuming `_mongoDBService` is already injected and accessible in your controller
+                var videoStream = await _fileConentService.GetFileStreamAsync(videoId);
+
+                if (videoStream.Length == 0)
                 {
-                    System.IO.File.Delete(thumbnailPath);
+                    return NotFound();
                 }
-                return Ok("Reel and thumbnail deleted successfully");
+
+                // Return the video stream, enabling range processing for bufferable streaming
+                return File(videoStream, "video/mp4", enableRangeProcessing: true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred while attempting to read the video file: {ex.Message}");
+                return StatusCode(500, "An error occurred while attempting to read the video file.");
+            }
+        }
+
+        [HttpGet("{id}/Thumbnail")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetThumbnail(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                var reelEntity = _fileConentService.GetById(id);
+
+                string? thumbnailId = reelEntity.ThumbnailId;
+
+                if (thumbnailId.IsNullOrEmpty())
+                {
+                    return NotFound();
+                }
+
+                var imageStream = await _fileConentService.GetFileStreamAsync(thumbnailId);
+
+                if (imageStream.Length == 0)
+                {
+                    return NotFound();
+                }
+
+                // Return the image stream
+                return File(imageStream, $"image/jpeg"); // Adjust the content type based on your image format
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred while attempting to read the image file: {ex.Message}");
+                return StatusCode(500, "An error occurred while attempting to read the image file.");
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async override Task<IActionResult> DeleteFileContent(string id)
+        {
+            try
+            {
+               await _fileConentService.DeleteReel(id);
+               return Ok();
             }
             catch (Exception ex)
             {
@@ -142,7 +165,6 @@ namespace backend.Controllers
                 return StatusCode(500, "An error occurred while deleting the reel or thumbnail");
             }
         }
-
 
 
     }

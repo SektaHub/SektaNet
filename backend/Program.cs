@@ -1,7 +1,9 @@
 using backend;
 using backend.Models;
+using backend.Repo;
 using backend.Services;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -37,12 +39,30 @@ builder.Services.AddHttpClient();
 
 var configuration = builder.Configuration;
 
+builder.Services.AddIdentityApiEndpoints<ApplicationUser>().AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // Set session timeout to 30 minutes
+    options.SlidingExpiration = true; // Enable sliding expiration
+});
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),  o => o.UseVector()));
+
+builder.Services.AddScoped<MongoDBRepository>(provider => new MongoDBRepository("mongodb://admin:admin123@localhost:27017/MongoBaza?authSource=admin", "MongoBaza"));
+
+builder.Services.AddScoped<AnyFileRepository>();
 
 builder.Services.AddScoped<ReelService>();
 builder.Services.AddScoped<ImageService>();
 builder.Services.AddScoped<FfmpegService>();
+builder.Services.AddScoped<IdentityService>();
+builder.Services.AddScoped<GenericFileService>();
+builder.Services.AddScoped<LongVideoService>();
+builder.Services.AddScoped<AudioService>();
+
+//builder.Services.AddScoped<MongoDBService>();
 
 
 builder.Services.AddAutoMapper(typeof(MyMappingProfile));
@@ -55,7 +75,7 @@ builder.Services.Configure<FormOptions>(options =>
     //options.MultipartHeadersLengthLimit = int.MaxValue;
     //options.MultipartHeadersCountLimit = int.MaxValue;
     //options.BufferBodyLengthLimit = long.MaxValue;
-    //options.ValueCountLimit = int.MaxValue;
+    options.ValueCountLimit = 5000;
     //options.ValueLengthLimit = int.MaxValue;
 }
 );;
@@ -67,19 +87,12 @@ var app = builder.Build();
 // Resolve the service to call the method
 using (var scope = app.Services.CreateScope())
 {
-    //Initialise the services so that they create the necessary folders if they are not present in the project
-    var imageService = scope.ServiceProvider.GetRequiredService<ImageService>();
-    imageService.InitDirectories();
-
-    var reelService = scope.ServiceProvider.GetRequiredService<ReelService>();
-    reelService.InitDirectories();
-
     var ffmpegService = scope.ServiceProvider.GetRequiredService<FfmpegService>();
     await ffmpegService.DownloadFFmpeg();
     ffmpegService.SetFFmpegPermissions();
 }
 
-
+app.MapGroup("/api/identity").MapIdentityApi<ApplicationUser>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

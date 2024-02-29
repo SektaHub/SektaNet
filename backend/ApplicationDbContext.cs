@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using System;
 using Pgvector.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using backend.Models;
 
 namespace backend
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
 
 
@@ -20,6 +22,7 @@ namespace backend
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
             modelBuilder.HasPostgresExtension("vector");
 
             modelBuilder.Entity<Image>()
@@ -30,7 +33,10 @@ namespace backend
         }
 
         public DbSet<Reel> Reels { get; set; }
+        public DbSet<LongVideo> LongVideos { get; set; }
         public DbSet<Image> Images { get; set; }
-
+        public DbSet<Audio> Audio { get; set; }
+        public DbSet<GenericFile> Files { get; set; }
+        public DbSet<Thumbnail> Thumbnails { get; set; }
     }
 }

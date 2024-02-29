@@ -52,18 +52,52 @@ namespace backend.Services
             }
         }
 
-        public async Task<int> GetVideoDurationAsync(string videoPath)
+        public async Task<byte[]> GenerateThumbnail(IFormFile videoFile)
         {
+            // Generate file names without creating files
+            string tempVideoFileName = Path.GetRandomFileName();
+            string tempThumbnailFileName = Path.ChangeExtension(tempVideoFileName, ".jpeg");
+
+            // Construct the full path for video and thumbnail using the temp path
+            string tempVideoPath = Path.Combine(Path.GetTempPath(), tempVideoFileName);
+            string thumbnailPath = Path.Combine(Path.GetTempPath(), tempThumbnailFileName);
+
             try
             {
-                var mediaInfo = await FFmpeg.GetMediaInfo(videoPath);
-                return (int)mediaInfo.Duration.TotalSeconds;
+                using (var fileStream = new FileStream(tempVideoPath, FileMode.Create))
+                {
+                    // Copy the video file to the temporary path first
+                    await videoFile.CopyToAsync(fileStream);
+                }
+
+                // Now, we assume the file is ready for FFmpeg to process. 
+                // No need for the file readiness check loop here.
+
+                // Take a snapshot at the 1-second mark using FFmpeg
+                IConversion conversion = await FFmpeg.Conversions.FromSnippet.Snapshot(tempVideoPath, thumbnailPath, TimeSpan.FromSeconds(1));
+                await conversion.Start();
+
+                // Read the generated thumbnail into a byte array
+                byte[] thumbnailBytes = await File.ReadAllBytesAsync(thumbnailPath);
+
+                return thumbnailBytes;  // Returning the thumbnail as a byte array
             }
             catch (Exception ex)
             {
-                // Log the exception or handle it as needed
-                Console.WriteLine($"Error getting video duration: {ex.Message}");
-                return 0; // Return a default value or handle the error accordingly
+                Console.WriteLine($"Error while generating thumbnail: {ex.Message}");
+                return null;
+            }
+            finally
+            {
+                // Cleanup: Deleting temporary files
+                if (File.Exists(tempVideoPath))
+                {
+                    File.Delete(tempVideoPath);
+                }
+                if (File.Exists(thumbnailPath))
+                {
+                    File.Delete(thumbnailPath);
+                }
             }
         }
 
@@ -101,6 +135,77 @@ namespace backend.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Error executing command: {ex.Message}");
+            }
+        }
+
+        public async Task<bool> Is9_16AspectRatio(IFormFile file)
+        {
+            try
+            {
+                // Save the uploaded file to a temporary location
+                var filePath = Path.GetTempFileName();
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+
+                // Get media info from the temporary file
+                var mediaInfo = await FFmpeg.GetMediaInfo(filePath);
+                var videoStream = mediaInfo.VideoStreams.FirstOrDefault();
+
+                if (videoStream != null)
+                {
+                    // Calculate aspect ratio
+                    double aspectRatio = (double)videoStream.Width / videoStream.Height;
+
+                    // Check if aspect ratio is approximately 16:9
+                    return Math.Abs(aspectRatio - (9.0 / 16.0)) < 0.02;
+                }
+                else
+                {
+                    // No video stream found
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions
+                //_logger.LogError($"Error checking aspect ratio: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<int> GetVideoDuration(IFormFile file)
+        {
+            try
+            {
+                // Save the uploaded file to a temporary location
+                var filePath = Path.GetTempFileName();
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+
+                // Get media info from the temporary file
+                var mediaInfo = await FFmpeg.GetMediaInfo(filePath);
+                var videoStream = mediaInfo.VideoStreams.FirstOrDefault();
+
+                if (videoStream != null)
+                {
+                    // Extract duration from video stream
+                    return (int)videoStream.Duration.TotalSeconds;
+                }
+                else
+                {
+                    // No video stream found
+                    throw new InvalidOperationException("No video stream found in the provided file.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions
+                Console.WriteLine($"Error extracting video duration: {ex.Message}");
+                throw; // Rethrow the exception to be handled by the caller
             }
         }
 

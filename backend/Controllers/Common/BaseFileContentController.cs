@@ -10,6 +10,10 @@ using Microsoft.AspNetCore.Mvc;
 using System.Xml.XPath;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.JsonPatch.Adapters;
+using MongoDB.Bson;
+using backend.Repo;
+using Xabe.FFmpeg;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Controllers.Common
 {
@@ -19,27 +23,29 @@ namespace backend.Controllers.Common
         where TDto : BaseFileContentDto
         where FileConentService : BaseFileContentService<TEntity, TDto>
     {
-        protected readonly ApplicationDbContext _dbContext;
         protected readonly IMapper _mapper;
         protected readonly IWebHostEnvironment _env;
         protected readonly ILogger<BaseFileContentController<TEntity, TDto, FileConentService>> _logger;
         protected readonly FileConentService _fileConentService;
 
-        public BaseFileContentController(ApplicationDbContext dbContext, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<TEntity, TDto, FileConentService>> logger, FileConentService fileConentService)
+        public BaseFileContentController(IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<TEntity, TDto, FileConentService>> logger, FileConentService fileConentService)
         {
-            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _env = webHostEnvironment;
             _logger = logger;
             _fileConentService = fileConentService;
         }
 
-        [HttpGet()]
+        [HttpGet]
         public IQueryable<TDto> Get()
         {
-            var entities = _dbContext.Set<TEntity>();
-            var dtoList = _mapper.Map<List<TDto>>(entities);
-            return dtoList.AsQueryable();
+            return _fileConentService.GetAll();
+        }
+
+        [HttpGet("Paginated")]
+        public ActionResult<PaginatedResponseDto<TDto>> GetWithPagination(int page, int pageSize)
+        {
+            return _fileConentService.GetPaginated(page, pageSize);
         }
 
         [HttpPost("upload-multiple")]
@@ -48,97 +54,75 @@ namespace backend.Controllers.Common
             return StatusCode(501, "UploadMultiple method not implemented in the derived class.");
         }
 
-        [HttpGet("{id}/Content", Name = "GetImageStream")]
-        public virtual IActionResult GetFileContent(Guid id)
+        [HttpGet("{id}/Content")]
+        public virtual async Task<IActionResult> GetFileContent(string id)
         {
             return StatusCode(501, "UploadMultiple method not implemented in the derived class.");
         }
 
         [HttpGet("{id}/MetaData")]
-        public ActionResult<TDto> GetFileMetadata(Guid id)
+        public ActionResult<TDto> GetFileMetadata(string id)
         {
-            var entity = _dbContext.Set<TEntity>().Find(id);
-
-            if (entity == null)
-            {
-                return NotFound();
-            }
-
-            var imageDto = _mapper.Map<TDto>(entity);
-            return imageDto;
+            return _fileConentService.GetMetaData(id);
         }
 
+        //[HttpDelete("{id}")]
+        //public virtual IActionResult DeleteFileContent(string id)
+        //{
+        //    try
+        //    {
+        //        // Delete file
+        //        var filePath = _fileConentService.GetFilePath(id);
+        //        if (System.IO.File.Exists(filePath))
+        //        {
+        //            System.IO.File.Delete(filePath);
+        //        }
+
+        //        // Delete database entry
+        //        var file = _dbContext.Set<TEntity>().Find(id);
+        //        if (file != null)
+        //        {
+        //            _dbContext.Set<TEntity>().Remove(file);
+        //            _dbContext.SaveChanges();
+        //        }
+
+        //        return Ok("File deleted successfully");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Error deleting File: {ex.Message}");
+        //        return StatusCode(500, "An error occurred while deleting the file");
+        //    }
+        //}
+
         [HttpDelete("{id}")]
-        public virtual IActionResult DeleteFileContent(Guid id)
+        public async virtual Task<IActionResult> DeleteFileContent(string id)
         {
-            try
-            {
-                // Delete file
-                var filePath = _fileConentService.GetFilePath(id);
-                if (System.IO.File.Exists(filePath))
-                {
-                    System.IO.File.Delete(filePath);
-                }
-
-                // Delete database entry
-                var file = _dbContext.Set<TEntity>().Find(id);
-                if (file != null)
-                {
-                    _dbContext.Set<TEntity>().Remove(file);
-                    _dbContext.SaveChanges();
-                }
-
-                return Ok("File deleted successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error deleting File: {ex.Message}");
-                return StatusCode(500, "An error occurred while deleting the file");
-            }
+            throw new NotImplementedException("DeleteFileContent method not implemented in the derived class.");
         }
 
         [HttpPut("{fileId}")]
-        public IActionResult Put(Guid fileId, TDto updatedDto)
+        public IActionResult Put(string fileId, TDto updatedDto)
         {
-            if (updatedDto == null || fileId != updatedDto.Id)
-            {
-                return BadRequest("Invalid request data.");
-            }
-
-            var existingEntity = _dbContext.Set<TEntity>().Find(fileId);
-
-            if (existingEntity == null)
-            {
-                return NotFound();
-            }
-
-            // Update entity properties based on the provided DTO
-            _mapper.Map(updatedDto, existingEntity);
-
-            // Perform the update in the database
-            _dbContext.SaveChanges();
-
-            // Additional processing or actions after successful update
-
-            return NoContent();
+            _fileConentService.Put(fileId, updatedDto);
+            return Ok();
         }
 
         [HttpPatch("{fileId}")]
-        public IActionResult Patch(Guid fileId, JsonPatchDocument<TDto> patchDocument)
+        public IActionResult Patch(string id, JsonPatchDocument<TDto> patchDocument)
         {
             if (patchDocument == null)
             {
                 return BadRequest("Invalid patch document.");
             }
 
-            var existingEntity = _dbContext.Set<TEntity>().Find(fileId);
+            var existingEntity = _fileConentService.GetById(id);
 
             if (existingEntity == null)
             {
                 return NotFound();
             }
 
-            // Map the existing entity to a DTO for patching
             var dtoToPatch = _mapper.Map<TDto>(existingEntity);
 
             // Apply the patch document to the DTO without casting ModelState
@@ -149,16 +133,15 @@ namespace backend.Controllers.Common
                 return BadRequest(ModelState);
             }
 
-            // Update entity properties based on the patched DTO
             _mapper.Map(dtoToPatch, existingEntity);
 
-            // Perform the update in the database
-            _dbContext.SaveChanges();
-
-            // Additional processing or actions after successful patch
+            _fileConentService.Update();
 
             return NoContent();
+
         }
+
+
 
 
 

@@ -2,9 +2,8 @@
 
 namespace backend.Models.Dto
 {
-    public class ReelDto : BaseFileContentDto
+    public class ReelDto : BaseVideoContentDto
     {
-        public string? AudioTranscription { get; set; }
-        public int? Duration { get; set; }
+
     }
 }
