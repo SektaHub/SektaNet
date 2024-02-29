@@ -4,9 +4,12 @@ using backend.Models.Entity;
 using backend.Repo;
 using backend.Services.Common;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MongoDB.Bson;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Pgvector.EntityFrameworkCore;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Web;
@@ -73,6 +76,50 @@ namespace backend.Services
 
             var filteredDtoList = _mapper.ProjectTo<ImageDto>(filteredEntities);
             return filteredDtoList;
+        }
+
+        public async Task<List<ImageDto>> GetVisuallySimmilar(string id)
+        {
+            var entity = await _dbContext.Set<Image>().FindAsync(id); // Ensure asynchronous operation
+
+            if (entity == null)
+            {
+                return null;
+            }
+
+            var imageDto = _mapper.Map<ImageDto>(entity);
+
+            var entities = await _dbContext.Set<Image>()
+                .Where(x => x.Id != id)
+                .OrderBy(x => x.ClipEmbedding!.L2Distance(imageDto.ClipEmbedding))
+                .Take(4)
+                .ToListAsync();
+
+            // Map List<Image> to List<ImageDto>
+            var dtos = _mapper.Map<List<ImageDto>>(entities);
+            return dtos;
+        }
+
+        public async Task<List<ImageDto>> GetVisuallySimmilar(string id, float maxDistance)
+        {
+            var entity = await _dbContext.Set<Image>().FindAsync(id); // Ensure asynchronous operation
+
+            if (entity == null)
+            {
+                return null;
+            }
+
+            var imageDto = _mapper.Map<ImageDto>(entity);
+
+            var entities = await _dbContext.Set<Image>()
+                .Where(x => x.Id != id && x.ClipEmbedding != null && x.ClipEmbedding.L2Distance(imageDto.ClipEmbedding) <= maxDistance)
+                .OrderBy(x => x.ClipEmbedding!.L2Distance(imageDto.ClipEmbedding))
+                .Take(4)
+                .ToListAsync();
+
+            // Map List<Image> to List<ImageDto>
+            var dtos = _mapper.Map<List<ImageDto>>(entities);
+            return dtos;
         }
 
         public IQueryable<ImageDto> GetImagesWithoutCaption()

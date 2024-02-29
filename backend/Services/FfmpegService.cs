@@ -159,7 +159,7 @@ namespace backend.Services
                     double aspectRatio = (double)videoStream.Width / videoStream.Height;
 
                     // Check if aspect ratio is approximately 16:9
-                    return Math.Abs(aspectRatio - (9.0 / 16.0)) < 0.02;
+                    return Math.Abs(aspectRatio - (9.0 / 16.0)) < 0.07;
                 }
                 else
                 {

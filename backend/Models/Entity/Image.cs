@@ -8,7 +8,7 @@ namespace backend.Models.Entity
     {
         public string? GeneratedCaption { get; set; }
 
-        [Column(TypeName = "vector(384)")]
-        public Vector? CaptionEmbedding { get; set; }
+        [Column(TypeName = "vector(768)")]
+        public Vector? ClipEmbedding { get; set; }
     }
 }

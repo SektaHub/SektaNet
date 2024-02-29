@@ -26,7 +26,7 @@ namespace backend
             modelBuilder.HasPostgresExtension("vector");
 
             modelBuilder.Entity<Image>()
-                .HasIndex(i => i.CaptionEmbedding)
+                .HasIndex(i => i.ClipEmbedding)
                 .HasMethod("ivfflat")
                 .HasOperators("vector_l2_ops")
                 .HasStorageParameter("lists", 100);

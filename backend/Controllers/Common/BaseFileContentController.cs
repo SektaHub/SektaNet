@@ -108,7 +108,7 @@ namespace backend.Controllers.Common
             return Ok();
         }
 
-        [HttpPatch("{fileId}")]
+        [HttpPatch("{id}")]
         public IActionResult Patch(string id, JsonPatchDocument<TDto> patchDocument)
         {
             if (patchDocument == null)

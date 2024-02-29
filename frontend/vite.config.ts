@@ -5,6 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    // Bind to all network interfaces
+    host: '0.0.0.0',
     // SPA fallback for the development server.
     proxy: {
       '/api': {

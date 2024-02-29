@@ -5,9 +5,9 @@ namespace backend.Models.Dto
 {
     public class ImageDto : BaseFileContentDto
     {
-        public string? generatedCaption { get; set; }
+        public string? GeneratedCaption { get; set; }
 
-        public Vector? CaptionEmbedding { get; set; }
+        public Vector? ClipEmbedding { get; set; }
 
     }
 }
