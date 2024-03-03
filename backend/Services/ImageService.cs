@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using backend.Models.Common;
 using backend.Models.Dto;
 using backend.Models.Entity;
 using backend.Repo;
@@ -77,6 +78,33 @@ namespace backend.Services
             var filteredDtoList = _mapper.ProjectTo<ImageDto>(filteredEntities);
             return filteredDtoList;
         }
+
+        public PaginatedResponseDto<ImageDto> GetPaginated(int page, int pageSize, string? captionSearch)
+        {
+            IQueryable<Image> query = _dbContext.Set<Image>();
+
+            if (!string.IsNullOrEmpty(captionSearch))
+            {
+                query = query.Where(image => image.GeneratedCaption != null && image.GeneratedCaption.ToLower().Contains(captionSearch.ToLower()));
+            }
+
+            var totalCount = query.Count();
+
+            var entities = query.Skip((page - 1) * pageSize)
+                                .Take(pageSize)
+                                .ToList();
+
+            var dtoList = _mapper.Map<List<ImageDto>>(entities);
+
+            var response = new PaginatedResponseDto<ImageDto>
+            {
+                Items = dtoList,
+                TotalCount = totalCount
+            };
+
+            return response;
+        }
+
 
         public async Task<List<ImageDto>> GetVisuallySimmilar(string id)
         {

@@ -88,7 +88,8 @@ const ReelList: React.FC = () => {
               <Card.Body>
                 <Card.Title style={{ color: 'white' }}>Video {videos.indexOf(video) + 1}</Card.Title>
                 <Card.Text style={{ color: 'white' }}>ID: {video.id}</Card.Text>
-                <Card.Text style={{ color: 'white' }}>Duration: {video.duration} seconds</Card.Text>
+                <Card.Text style={{ color: 'white'}}>Duration: {video.duration} seconds</Card.Text>
+                <Card.Text style={{ color: 'white' , maxWidth: '26vh'}}>Transcription: {video.audioTranscription}</Card.Text>
                 <Button variant="primary" href={`${BASE_URL}/?videoId=${video.id}`} target="_blank" rel="noopener noreferrer">
                   Watch Video
                 </Button>

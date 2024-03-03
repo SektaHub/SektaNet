@@ -14,6 +14,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using backend.Repo;
 using Microsoft.AspNetCore.Authorization;
+using backend.Models.Common;
 
 namespace backend.Controllers
 {
@@ -27,6 +28,12 @@ namespace backend.Controllers
         public ImageController(IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Image, ImageDto, ImageService>> logger, ImageService fileConentService) : base(mapper, webHostEnvironment, logger, fileConentService)
         {
 
+        }
+
+        [HttpGet("PaginatedWithCaption")]
+        public ActionResult<PaginatedResponseDto<ImageDto>> GetWithPagination(int page, int pageSize, string? captionSearch)
+        {
+            return _fileConentService.GetPaginated(page, pageSize, captionSearch);
         }
 
         [HttpGet("{id}/GetVisuallySimmilarImages")]
