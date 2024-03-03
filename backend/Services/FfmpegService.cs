@@ -1,6 +1,9 @@
 ﻿using System.Diagnostics;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Downloader;
+using MetadataExtractor;
+using MetadataExtractor.Formats.Exif;
+using System.Text.RegularExpressions;
 
 namespace backend.Services
 {
@@ -149,30 +152,66 @@ namespace backend.Services
                     await file.CopyToAsync(fileStream);
                 }
 
-                // Get media info from the temporary file
+                // Use FFmpeg to get the video information including rotation
+                string rotationOutput = await GetVideoRotation(filePath);
+                int rotation = 0;
+                if (int.TryParse(rotationOutput, out int parsedRotation))
+                {
+                    rotation = parsedRotation;
+                }
+
+                // Get media info from the temporary file using your previously preferred method
                 var mediaInfo = await FFmpeg.GetMediaInfo(filePath);
                 var videoStream = mediaInfo.VideoStreams.FirstOrDefault();
 
                 if (videoStream != null)
                 {
-                    // Calculate aspect ratio
-                    double aspectRatio = (double)videoStream.Width / videoStream.Height;
+                    bool isRotated90or270 = rotation == 90 || rotation == 270;
+                    int effectiveWidth = isRotated90or270 ? videoStream.Height : videoStream.Width;
+                    int effectiveHeight = isRotated90or270 ? videoStream.Width : videoStream.Height;
 
-                    // Check if aspect ratio is approximately 16:9
-                    return Math.Abs(aspectRatio - (9.0 / 16.0)) < 0.02;
+                    // Calculate aspect ratio considering rotation
+                    double aspectRatio = (double)effectiveWidth / (double)effectiveHeight;
+
+                    // Check if aspect ratio is approximately 9:16
+                    return Math.Abs(aspectRatio - (9.0 / 16.0)) < 0.05;
                 }
                 else
                 {
-                    // No video stream found
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                // Handle exceptions
                 //_logger.LogError($"Error checking aspect ratio: {ex.Message}");
                 return false;
             }
+        }
+
+        private async Task<string> GetVideoRotation(string filePath)
+        {
+            string output, rotation = "0";
+            using (var process = new Process())
+            {
+                process.StartInfo.FileName = "ffmpeg";
+                process.StartInfo.Arguments = $"-i \"{filePath}\"";
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+
+                output = await process.StandardError.ReadToEndAsync();
+                process.WaitForExit();
+            }
+
+            // Assuming the rotation is output in the line containing "rotate"
+            Match match = Regex.Match(output, "rotate\\s*:\\s*(\\d+)");
+            if (match.Success)
+            {
+                rotation = match.Groups[1].Value;
+            }
+
+            return rotation;
         }
 
         public async Task<int> GetVideoDuration(IFormFile file)

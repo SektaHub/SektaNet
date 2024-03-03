@@ -22,11 +22,11 @@ const ImageList: React.FC = () => {
   const itemsPerPage = 14; // Items per page, could be configurable
 
   useEffect(() => {
-    let url = `${API_URL}/Image/Paginated`;
+    let url = `${API_URL}/Image/PaginatedWithCaption`;
 
     const queryParams = [`page=${currentPage}`, `pageSize=${itemsPerPage}`];
     if (searchCaption) {
-      queryParams.push(`caption=${encodeURIComponent(searchCaption)}`);
+      queryParams.push(`captionSearch=${encodeURIComponent(searchCaption)}`);
     }
 
     fetchWithAuth(`${url}?${queryParams.join('&')}`)
@@ -77,7 +77,8 @@ const ImageList: React.FC = () => {
         )}
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-        {images.map(image => (
+      {images ? (
+        images.map(image => (
           <Link key={image.id} to={`/images/${image.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
             <div style={{ border: '1px solid #ccc', margin: '10px', padding: '10px', cursor: 'pointer', width: '200px', height: '250px', overflow: 'hidden' }}>
               <img
@@ -88,8 +89,11 @@ const ImageList: React.FC = () => {
               {/* You can display more properties here */}
             </div>
           </Link>
-        ))}
-      </div>
+        ))
+      ) : (
+        <p>Loading...</p>
+      )}
+    </div>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '20px' }}>
         <button onClick={goToFirstPage} disabled={currentPage === 1}>First</button>
         <button onClick={goToPreviousPage} disabled={currentPage === 1}>Previous</button>

@@ -14,12 +14,13 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using backend.Repo;
 using Microsoft.AspNetCore.Authorization;
+using backend.Models.Common;
 
 namespace backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    //[Authorize]
     public class ImageController : BaseFileContentController<Image, ImageDto, ImageService>
     {
 
@@ -29,28 +30,17 @@ namespace backend.Controllers
 
         }
 
-        //[HttpGet("{id}/GetConceptuallySimmilarImages")]
-        //public async Task<IEnumerable<ImageDto>> GetConceptuallySimmilarImages(string id)
-        //{
+        [HttpGet("PaginatedWithCaption")]
+        public ActionResult<PaginatedResponseDto<ImageDto>> GetWithPagination(int page, int pageSize, string? captionSearch)
+        {
+            return _fileConentService.GetPaginated(page, pageSize, captionSearch);
+        }
 
-        //    var entity = _dbContext.Set<Image>().Find(id);
-
-        //    if (entity == null)
-        //    {
-        //        return (IEnumerable<ImageDto>)NotFound();
-        //    }
-
-        //    var imageDto = _mapper.Map<ImageDto>(entity);
-
-        //    var entities = await _dbContext.Set<Image>()
-        //        .Where(x => x.Id != id)
-        //        .OrderBy(x => x.CaptionEmbedding!.L2Distance(imageDto.CaptionEmbedding))
-        //        .Take(4)
-        //        .ToListAsync();
-
-        //    var dtoList = _mapper.Map<List<ImageDto>>(entities);
-        //    return dtoList;
-        //}
+        [HttpGet("{id}/GetVisuallySimmilarImages")]
+        public async Task<IEnumerable<ImageDto>> GetConceptuallySimmilarImages(string id)
+        {
+            return await _fileConentService.GetVisuallySimmilar(id); ;
+        }
 
         [HttpGet("GetImagesByCaption")]
         public IQueryable<ImageDto> GetImagesByCaption(string caption)
@@ -59,6 +49,7 @@ namespace backend.Controllers
         }
 
         [HttpGet("GetImagesWithoutCaption")]
+        [AllowAnonymous]
         public IQueryable<ImageDto> GetImagesWithoutCaption()
         {
             return _fileConentService.GetImagesWithoutCaption();
@@ -150,7 +141,8 @@ namespace backend.Controllers
             }
         }
 
-        [HttpPatch("{fileId}/PatchCaptionEmbedding")]
+        [HttpPatch("{fileId}/PatchClipEmbedding")]
+        [AllowAnonymous]
         public IActionResult Patch(string fileId, EmbeddingDto embedding)
         {
             if (embedding == null)
@@ -172,7 +164,7 @@ namespace backend.Controllers
 
             Vector emb = new Vector(embedding.Embedding.Replace(" ", ""));
 
-            dtoToPatch.CaptionEmbedding = emb;
+            dtoToPatch.ClipEmbedding = emb;
 
             // Update entity properties based on the patched DTO
             _mapper.Map(dtoToPatch, existingEntity);

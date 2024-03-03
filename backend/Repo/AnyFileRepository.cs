@@ -186,7 +186,7 @@ namespace backend.Repo
                 Id = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
                 GeneratedCaption = null,
-                CaptionEmbedding = null,
+                ClipEmbedding = null,
                 Tags = tag,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),

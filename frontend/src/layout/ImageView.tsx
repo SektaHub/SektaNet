@@ -24,7 +24,7 @@ const ImageView: React.FC = () => {
   useEffect(() => {
     if (image) {
       // Fetch top 5 conceptually similar images
-      fetchWithAuth(`${API_URL}/Image/${image.id}/GetConceptuallySimmilarImages`)
+      fetchWithAuth(`${API_URL}/Image/${image.id}/GetVisuallySimmilarImages`)
         .then(response => response.json())
         .then(data => setSimilarImages(data))
         .catch(error => console.error('Error fetching similar images:', error));
@@ -52,7 +52,7 @@ const ImageView: React.FC = () => {
         {/* Add more properties as needed */}
         
         {/* Display top 5 conceptually similar images in a 1x5 grid */}
-        <h2>Conceptually Similar Images</h2>
+        <h2>Visually Similar Images</h2>
         <div style={{ display: 'flex', flexWrap: 'wrap' }}>
           {similarImages.map(similarImage => (
             <Link key={similarImage.id} to={`/images/${similarImage.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>

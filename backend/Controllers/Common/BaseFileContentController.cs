@@ -43,7 +43,7 @@ namespace backend.Controllers.Common
         }
 
         [HttpGet("Paginated")]
-        public ActionResult<PaginatedResponseDto<TDto>> GetWithPagination(int page, int pageSize)
+        public virtual ActionResult<PaginatedResponseDto<TDto>> GetWithPagination(int page, int pageSize)
         {
             return _fileConentService.GetPaginated(page, pageSize);
         }
@@ -108,7 +108,7 @@ namespace backend.Controllers.Common
             return Ok();
         }
 
-        [HttpPatch("{fileId}")]
+        [HttpPatch("{id}")]
         public IActionResult Patch(string id, JsonPatchDocument<TDto> patchDocument)
         {
             if (patchDocument == null)
