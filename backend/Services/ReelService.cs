@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using backend.Models;
 using backend.Models.Dto;
 using backend.Models.Entity;
 using backend.Repo;
 using backend.Services.Common;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using System;
@@ -22,7 +24,7 @@ namespace backend.Services
     {
         private readonly FfmpegService _ffmpegService;
 
-        public ReelService(IWebHostEnvironment env, ApplicationDbContext dbContext, IMapper mapper, FfmpegService ffmpegService, AnyFileRepository anyFileRepository, MongoDBRepository mongoDBRepository) : base(env, mapper, dbContext, mongoDBRepository, anyFileRepository)
+        public ReelService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager, FfmpegService ffmpegService) : base(env, mapper, dbContext, mongoRepo, anyFileRepository, userManager)
         {
             _ffmpegService = ffmpegService;
         }

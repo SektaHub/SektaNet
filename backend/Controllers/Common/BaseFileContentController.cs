@@ -14,6 +14,7 @@ using MongoDB.Bson;
 using backend.Repo;
 using Xabe.FFmpeg;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers.Common
 {
@@ -37,12 +38,14 @@ namespace backend.Controllers.Common
         }
 
         [HttpGet]
+        [Authorize (Roles = "Sektash, Admin")]
         public IQueryable<TDto> Get()
         {
             return _fileConentService.GetAll();
         }
 
         [HttpGet("Paginated")]
+        [Authorize(Roles = "Sektash, Admin")]
         public virtual ActionResult<PaginatedResponseDto<TDto>> GetWithPagination(int page, int pageSize)
         {
             return _fileConentService.GetPaginated(page, pageSize);
@@ -55,12 +58,14 @@ namespace backend.Controllers.Common
         }
 
         [HttpGet("{id}/Content")]
+        [AllowAnonymous]
         public virtual async Task<IActionResult> GetFileContent(string id)
         {
             return StatusCode(501, "UploadMultiple method not implemented in the derived class.");
         }
 
         [HttpGet("{id}/MetaData")]
+        [AllowAnonymous]
         public ActionResult<TDto> GetFileMetadata(string id)
         {
             return _fileConentService.GetMetaData(id);
@@ -96,12 +101,14 @@ namespace backend.Controllers.Common
         //}
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async virtual Task<IActionResult> DeleteFileContent(string id)
         {
             throw new NotImplementedException("DeleteFileContent method not implemented in the derived class.");
         }
 
         [HttpPut("{fileId}")]
+        [Authorize(Roles = "Admin")]
         public IActionResult Put(string fileId, TDto updatedDto)
         {
             _fileConentService.Put(fileId, updatedDto);
@@ -109,6 +116,7 @@ namespace backend.Controllers.Common
         }
 
         [HttpPatch("{id}")]
+        [AllowAnonymous]
         public IActionResult Patch(string id, JsonPatchDocument<TDto> patchDocument)
         {
             if (patchDocument == null)

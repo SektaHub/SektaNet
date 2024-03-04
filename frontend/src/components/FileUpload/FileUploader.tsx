@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { fetchWithAuth } from './../../api';
 
 interface FileUploaderProps {
   uploadEndpoint: string;
@@ -8,6 +9,7 @@ interface FileUploaderProps {
 const FileUploader: React.FC<FileUploaderProps> = ({ uploadEndpoint, fileFormDataKey }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [tags, setTags] = useState<string>('');
+  const [isPrivate, setIsPrivate] = useState<boolean>(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files || [];
@@ -27,21 +29,19 @@ const FileUploader: React.FC<FileUploaderProps> = ({ uploadEndpoint, fileFormDat
     }
 
     try {
-      // Prepare query parameters
-      const queryParams = new URLSearchParams();
-      if (tags.trim() !== '') {
-        queryParams.append('tags', tags.trim());
-      }
-
-      // Construct upload URL with query parameters
-      const uploadUrl = `${uploadEndpoint}?${queryParams.toString()}`;
-
       const formData = new FormData();
       selectedFiles.forEach((file) => {
         formData.append(fileFormDataKey, file);
       });
+      
+      const queryParams = new URLSearchParams();
+      if (tags.trim() !== '') {
+        queryParams.append('tags', tags.trim());
+      }
+      queryParams.append('isPrivate', String(isPrivate));
+      const queryString = queryParams.toString();
 
-      const response = await fetch(uploadUrl, {
+      const response = await fetchWithAuth(`${uploadEndpoint}?${queryString}`, {
         method: 'POST',
         body: formData,
       });
@@ -68,7 +68,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({ uploadEndpoint, fileFormDat
       } else {
         alert('Files uploaded successfully!');
         setSelectedFiles([]);
-        setTags(''); // Clear tags input after upload
+        setTags('');
+        setIsPrivate(false); // Reset privacy status after upload
       }
     } catch (error: any) {
       console.error('Error uploading files:', error);
@@ -90,6 +91,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({ uploadEndpoint, fileFormDat
           value={tags}
           onChange={(e) => setTags(e.target.value)}
         />
+        <label>
+          Private:
+          <input
+            type="checkbox"
+            checked={isPrivate}
+            onChange={(e) => setIsPrivate(e.target.checked)}
+          />
+        </label>
         <p>Drag 'n' drop some files here, or click to select files</p>
       </div>
       <div>

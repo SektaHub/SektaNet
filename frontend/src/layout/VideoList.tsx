@@ -5,6 +5,7 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { API_URL } from '../config';
 import { BASE_URL } from '../config';
+import { fetchWithAuth } from '../api';
 
 const VideoList: React.FC = () => {
   const [videos, setVideos] = useState<{
@@ -16,7 +17,7 @@ const VideoList: React.FC = () => {
 
   const fetchThumbnail = async (videoId: string) => {
     try {
-      const response = await fetch(`${API_URL}/LongVideo/${videoId}/thumbnail`);
+      const response = await fetchWithAuth(`${API_URL}/LongVideo/${videoId}/thumbnail`);
       if (response.ok) {
         const blob = await response.blob();
         const thumbnailUrl = URL.createObjectURL(blob);
@@ -33,7 +34,7 @@ const VideoList: React.FC = () => {
 
   const handleDeleteClick = async (videoId: string) => {
     try {
-      const response = await fetch(`${API_URL}/LongVideo/${videoId}`, {
+      const response = await fetchWithAuth(`${API_URL}/LongVideo/${videoId}`, {
         method: 'DELETE',
       });
 
@@ -52,7 +53,7 @@ const VideoList: React.FC = () => {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const response = await fetch(`${API_URL}/LongVideo`);
+        const response = await fetchWithAuth(`${API_URL}/LongVideo`);
         const data = await response.json();
 
         if (response.ok) {
