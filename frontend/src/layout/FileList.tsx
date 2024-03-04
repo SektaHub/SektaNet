@@ -4,7 +4,7 @@ import Button from 'react-bootstrap/Button';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { API_URL } from '../config';
-import { BASE_URL } from '../config'; // Import the generic file icon image
+//import { BASE_URL } from '../config'; // Import the generic file icon image
 
 const FileList: React.FC = () => {
   const [files, setFiles] = useState<{

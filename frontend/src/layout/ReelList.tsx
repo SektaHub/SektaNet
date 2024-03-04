@@ -4,7 +4,6 @@ import Button from 'react-bootstrap/Button';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { API_URL } from '../config';
-import { BASE_URL } from '../config';
 import { fetchWithAuth } from '../api';
 
 const ReelList: React.FC = () => {
@@ -91,7 +90,7 @@ const ReelList: React.FC = () => {
                 <Card.Text style={{ color: 'white' }}>ID: {video.id}</Card.Text>
                 <Card.Text style={{ color: 'white'}}>Duration: {video.duration} seconds</Card.Text>
                 <Card.Text style={{ color: 'white' , maxWidth: '26vh'}}>Transcription: {video.audioTranscription}</Card.Text>
-                <Button variant="primary" href={`${BASE_URL}/?videoId=${video.id}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="primary" href={`$/?videoId=${video.id}`} target="_blank" rel="noopener noreferrer">
                   Watch Video
                 </Button>
                 <Button variant="danger" onClick={() => handleDeleteClick(video.id)}>

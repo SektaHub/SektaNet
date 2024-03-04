@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import {useState} from 'react';
 import axios from 'axios';
 import { API_URL } from '../config';
 
@@ -6,7 +6,7 @@ function Register() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleRegister = async (e) => {
+    const handleRegister = async (e : any) => {
         e.preventDefault();
         try{
             const response = await axios.post(`${API_URL}/identity/register`, {
