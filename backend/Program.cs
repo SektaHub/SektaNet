@@ -39,7 +39,9 @@ builder.Services.AddHttpClient();
 
 var configuration = builder.Configuration;
 
-builder.Services.AddIdentityApiEndpoints<ApplicationUser>().AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -87,6 +89,15 @@ var app = builder.Build();
 // Resolve the service to call the method
 using (var scope = app.Services.CreateScope())
 {
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var roles = new[] { "Admin", "Sektash", "User" };
+    foreach (var role in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+            await roleManager.CreateAsync(new IdentityRole(role));
+    }
+
+
     var ffmpegService = scope.ServiceProvider.GetRequiredService<FfmpegService>();
     await ffmpegService.DownloadFFmpeg();
     ffmpegService.SetFFmpegPermissions();

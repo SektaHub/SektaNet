@@ -15,38 +15,43 @@ using MongoDB.Driver;
 using backend.Repo;
 using Microsoft.AspNetCore.Authorization;
 using backend.Models.Common;
+using System.Security.Claims;
 
 namespace backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    //[Authorize]
+    [Authorize]
     public class ImageController : BaseFileContentController<Image, ImageDto, ImageService>
     {
-
-
         public ImageController(IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Image, ImageDto, ImageService>> logger, ImageService fileConentService) : base(mapper, webHostEnvironment, logger, fileConentService)
         {
-
         }
 
         [HttpGet("PaginatedWithCaption")]
-        public ActionResult<PaginatedResponseDto<ImageDto>> GetWithPagination(int page, int pageSize, string? captionSearch)
+        public async Task<ActionResult<PaginatedResponseDto<ImageDto>>> GetWithPagination(int page, int pageSize, string? captionSearch)
         {
-            return _fileConentService.GetPaginated(page, pageSize, captionSearch);
+            // Get the current user's ID from claims
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            // Pass the userId to the service method
+            return await _fileConentService.GetPaginated(page, pageSize, captionSearch, userId);
         }
+
 
         [HttpGet("{id}/GetVisuallySimmilarImages")]
-        public async Task<IEnumerable<ImageDto>> GetConceptuallySimmilarImages(string id)
+        public async Task<IEnumerable<ImageDto>> GetVisuallySimmilarImages(string id)
         {
-            return await _fileConentService.GetVisuallySimmilar(id); ;
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            return await _fileConentService.GetVisuallySimmilar(id, userId);
         }
 
-        [HttpGet("GetImagesByCaption")]
-        public IQueryable<ImageDto> GetImagesByCaption(string caption)
-        {
-            return _fileConentService.GetImagesByCaption(caption);
-        }
+        //[HttpGet("GetImagesByCaption")]
+        //public IQueryable<ImageDto> GetImagesByCaption(string caption)
+        //{
+        //    return _fileConentService.GetImagesByCaption(caption);
+        //}
 
         [HttpGet("GetImagesWithoutCaption")]
         [AllowAnonymous]
@@ -127,6 +132,7 @@ namespace backend.Controllers
         //}
 
         [HttpDelete("{imageId}")]
+        [Authorize(Roles ="Admin")]
         public async override Task<IActionResult> DeleteFileContent(string imageId)
         {
             try

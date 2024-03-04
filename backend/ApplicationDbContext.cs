@@ -27,9 +27,10 @@ namespace backend
 
             modelBuilder.Entity<Image>()
                 .HasIndex(i => i.ClipEmbedding)
-                .HasMethod("ivfflat")
+                .HasMethod("hnsw")
                 .HasOperators("vector_l2_ops")
-                .HasStorageParameter("lists", 100);
+                .HasStorageParameter("m", 16)
+                .HasStorageParameter("ef_construction", 64);
         }
 
         public DbSet<Reel> Reels { get; set; }

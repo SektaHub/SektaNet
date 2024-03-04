@@ -31,11 +31,12 @@ namespace backend.Controllers
 
         [RequestSizeLimit(536_870_912_0)]
         [HttpPost("upload-multiple")]
-        public async Task<IActionResult> UploadMultiple(List<IFormFile> files, string? tags)
+        public async Task<IActionResult> UploadMultiple(List<IFormFile> files, string? tags, bool? isPrivate)
         {
             try
             {
-
+                if (isPrivate == null)
+                    isPrivate = false;
                 foreach (var file in files)
                 {
                     if (file == null || file.Length == 0) continue;
@@ -44,19 +45,19 @@ namespace backend.Controllers
                     switch (fileType.ToLower())
                     {
                         case "image":
-                            await _fileRepository.SaveImage(HttpContext, file, tags);
+                            await _fileRepository.SaveImage(HttpContext, file, tags, (bool)isPrivate);
                             break;
                         case "video":
                             if(await _ffmpegService.Is9_16AspectRatio(file))
-                                await _fileRepository.SaveReel(HttpContext, file, tags);
+                                await _fileRepository.SaveReel(HttpContext, file, tags, (bool)isPrivate);
                             else
-                                await _fileRepository.SaveLongVideo(HttpContext, file, tags);
+                                await _fileRepository.SaveLongVideo(HttpContext, file, tags, (bool)isPrivate);
                             break;
                         case "audio":
-                            await _fileRepository.SaveAudio(HttpContext, file, tags);
+                            await _fileRepository.SaveAudio(HttpContext, file, tags, (bool)isPrivate);
                             break;
                         default:
-                            await _fileRepository.SaveGenericFile(HttpContext, file, tags);
+                            await _fileRepository.SaveGenericFile(HttpContext, file, tags, (bool)isPrivate);
                             break;
                     }
                 }

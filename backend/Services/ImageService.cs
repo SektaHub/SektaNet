@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using backend.Models;
 using backend.Models.Common;
 using backend.Models.Dto;
 using backend.Models.Entity;
 using backend.Repo;
 using backend.Services.Common;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Bson;
@@ -19,10 +21,11 @@ namespace backend.Services
 {
     public class ImageService : BaseFileContentService<Image, ImageDto>
     {
-        public ImageService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository) : base(env, mapper, dbContext, mongoRepo, anyFileRepository)
+        public ImageService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager) : base(env, mapper, dbContext, mongoRepo, anyFileRepository, userManager)
         {
 
         }
+
 
         //public async override Task<List<ImageDto>> UploadMultiple(List<IFormFile> files)
         //{
@@ -79,7 +82,7 @@ namespace backend.Services
             return filteredDtoList;
         }
 
-        public PaginatedResponseDto<ImageDto> GetPaginated(int page, int pageSize, string? captionSearch)
+        public async Task<PaginatedResponseDto<ImageDto>> GetPaginated(int page, int pageSize, string? captionSearch, string? userId)
         {
             IQueryable<Image> query = _dbContext.Set<Image>();
 
@@ -88,8 +91,14 @@ namespace backend.Services
                 query = query.Where(image => image.GeneratedCaption != null && image.GeneratedCaption.ToLower().Contains(captionSearch.ToLower()));
             }
 
-            var totalCount = query.Count();
+            var user = await _userManager.FindByIdAsync(userId);
+            bool isAdmin = await _userManager.IsInRoleAsync(user, "admin") || await _userManager.IsInRoleAsync(user, "sektash");
 
+            // Filter images based on ownership or not private
+            query = query.Where(image => !image.isPrivate || image.OwnerId == userId || isAdmin);
+
+            var totalCount = query.Count();
+            
             var entities = query.Skip((page - 1) * pageSize)
                                 .Take(pageSize)
                                 .ToList();
@@ -106,7 +115,7 @@ namespace backend.Services
         }
 
 
-        public async Task<List<ImageDto>> GetVisuallySimmilar(string id)
+        public async Task<List<ImageDto>> GetVisuallySimmilar(string id, string? userId)
         {
             var entity = await _dbContext.Set<Image>().FindAsync(id); // Ensure asynchronous operation
 
@@ -117,8 +126,12 @@ namespace backend.Services
 
             var imageDto = _mapper.Map<ImageDto>(entity);
 
+            var user = await _userManager.FindByIdAsync(userId);
+            bool isAdmin = await _userManager.IsInRoleAsync(user, "admin") || await _userManager.IsInRoleAsync(user, "sektash");
+
+            // Retrieve images that the user can access
             var entities = await _dbContext.Set<Image>()
-                .Where(x => x.Id != id)
+                .Where(x => x.Id != id && (!x.isPrivate || x.OwnerId == userId || isAdmin))
                 .OrderBy(x => x.ClipEmbedding!.L2Distance(imageDto.ClipEmbedding))
                 .Take(4)
                 .ToListAsync();
@@ -128,27 +141,28 @@ namespace backend.Services
             return dtos;
         }
 
-        public async Task<List<ImageDto>> GetVisuallySimmilar(string id, float maxDistance)
-        {
-            var entity = await _dbContext.Set<Image>().FindAsync(id); // Ensure asynchronous operation
 
-            if (entity == null)
-            {
-                return null;
-            }
+        //public async Task<List<ImageDto>> GetVisuallySimmilar(string id, float maxDistance)
+        //{
+        //    var entity = await _dbContext.Set<Image>().FindAsync(id); // Ensure asynchronous operation
 
-            var imageDto = _mapper.Map<ImageDto>(entity);
+        //    if (entity == null)
+        //    {
+        //        return null;
+        //    }
 
-            var entities = await _dbContext.Set<Image>()
-                .Where(x => x.Id != id && x.ClipEmbedding != null && x.ClipEmbedding.L2Distance(imageDto.ClipEmbedding) <= maxDistance)
-                .OrderBy(x => x.ClipEmbedding!.L2Distance(imageDto.ClipEmbedding))
-                .Take(4)
-                .ToListAsync();
+        //    var imageDto = _mapper.Map<ImageDto>(entity);
 
-            // Map List<Image> to List<ImageDto>
-            var dtos = _mapper.Map<List<ImageDto>>(entities);
-            return dtos;
-        }
+        //    var entities = await _dbContext.Set<Image>()
+        //        .Where(x => x.Id != id && x.ClipEmbedding != null && x.ClipEmbedding.L2Distance(imageDto.ClipEmbedding) <= maxDistance)
+        //        .OrderBy(x => x.ClipEmbedding!.L2Distance(imageDto.ClipEmbedding))
+        //        .Take(4)
+        //        .ToListAsync();
+
+        //    // Map List<Image> to List<ImageDto>
+        //    var dtos = _mapper.Map<List<ImageDto>>(entities);
+        //    return dtos;
+        //}
 
         public IQueryable<ImageDto> GetImagesWithoutCaption()
         {

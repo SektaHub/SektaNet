@@ -20,6 +20,8 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.JsonPatch.Adapters;
 using MongoDB.Bson;
 using backend.Repo;
+using backend.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace backend.Services.Common
 {
@@ -33,22 +35,23 @@ namespace backend.Services.Common
         protected readonly ApplicationDbContext _dbContext;
         protected readonly MongoDBRepository _mongoRepo;
         protected readonly AnyFileRepository _anyFileRepository;
+        protected readonly UserManager<ApplicationUser> _userManager;
 
-
-        public BaseFileContentService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository)
+        public BaseFileContentService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager)
         {
             _env = env;
             _mapper = mapper;
             _dbContext = dbContext;
             _mongoRepo = mongoRepo;
             _anyFileRepository = anyFileRepository;
+            _userManager = userManager;
         }
 
         public IQueryable<TDto> GetAll()
         {
             var entities = _dbContext.Set<TEntity>();
-            var dtoList = _mapper.Map<List<TDto>>(entities);
-            return dtoList.AsQueryable();
+            var dtos = _mapper.ProjectTo<TDto>(entities);
+            return dtos;
         }
 
         public PaginatedResponseDto<TDto> GetPaginated(int page, int pageSize)
