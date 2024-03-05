@@ -10,7 +10,8 @@ export default defineConfig({
     // SPA fallback for the development server.
     proxy: {
       '/api': {
-        target: 'http://localhost:8080', // Change this to your backend server URL
+        //target: 'http://localhost:8080', // Change this to your backend server URL
+        target: 'http://backend:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },

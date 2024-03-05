@@ -7,5 +7,5 @@
 
 
 // PROD
-export const API_URL: string = 'http://localhost:8080/api';
+export const API_URL: string = 'http://backend:8080/api';
 //export const BASE_URL: string = 'https://localhost:3000';

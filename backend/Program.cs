@@ -17,7 +17,8 @@ builder.Services.AddCors(options =>
             policy.WithOrigins("http://example.com",
                                 "http://localhost:5173",
                                 "http://localhost:8000",
-                                "http://127.0.0.1:3000"
+                                "http://127.0.0.1:3000",
+                                "http://frontend:3000"
                                 ).AllowAnyHeader()
                                 .AllowAnyMethod(); // Allow any HTTP method
         });
