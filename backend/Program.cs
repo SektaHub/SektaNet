@@ -14,13 +14,9 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(
         policy =>
         {
-            policy.WithOrigins("http://example.com",
-                                "http://localhost:5173",
-                                "http://localhost:8000",
-                                "http://127.0.0.1:3000",
-                                "http://frontend:3000"
-                                ).AllowAnyHeader()
-                                .AllowAnyMethod(); // Allow any HTTP method
+            policy.AllowAnyOrigin() // Allow any origin to connect
+                .AllowAnyHeader()
+                .AllowAnyMethod(); // Allow any HTTP method
         });
 });
 
