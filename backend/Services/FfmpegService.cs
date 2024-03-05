@@ -11,10 +11,12 @@ namespace backend.Services
     {
 
         private readonly IWebHostEnvironment _env;
+        private readonly ILogger<FfmpegService> _logger;
 
-        public FfmpegService(IWebHostEnvironment env)
+        public FfmpegService(IWebHostEnvironment env, ILogger<FfmpegService> logger)
         {
             _env = env;
+            _logger = logger;
         }
 
         public async Task DownloadFFmpeg()
@@ -183,7 +185,7 @@ namespace backend.Services
             }
             catch (Exception ex)
             {
-                //_logger.LogError($"Error checking aspect ratio: {ex.Message}");
+                _logger.LogError($"Error checking aspect ratio: {ex.Message}");
                 return false;
             }
         }
@@ -193,7 +195,8 @@ namespace backend.Services
             string output, rotation = "0";
             using (var process = new Process())
             {
-                process.StartInfo.FileName = "ffmpeg";
+                //process.StartInfo.FileName = "ffmpeg";
+                process.StartInfo.FileName = "/app/wwwroot/FFmpeg/ffmpeg";
                 process.StartInfo.Arguments = $"-i \"{filePath}\"";
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.RedirectStandardError = true;
