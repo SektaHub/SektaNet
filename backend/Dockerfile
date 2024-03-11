@@ -21,4 +21,7 @@ COPY --from=publish /app/publish .
 # Ensure execute permissions for the entire wwwroot folder
 RUN chmod -R +x /app/wwwroot
 
+# Set the ASPNETCORE_URLS environment variable
+ENV ASPNETCORE_URLS=http://+:8081
+
 ENTRYPOINT ["dotnet", "backend.dll"]
