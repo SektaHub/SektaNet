@@ -7,5 +7,5 @@
 
 
 // PROD
-export const API_URL: string = 'http://api.cicki.gratis/api';
+export const API_URL: string = 'https://api.cicki.gratis/api';
 //export const BASE_URL: string = 'https://localhost:3000';
