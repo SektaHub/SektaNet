@@ -1,0 +1,86 @@
+html{
+  scroll-snap-type: y mandatory;
+}
+
+body{
+  background-color: #292929;
+}
+
+#root {
+  /* max-width: 1280px; */
+  /* margin: 0 auto; */
+  /* padding: 2rem; */
+  /* padding-top: 0px; */
+  text-align: center;
+}
+
+a{
+  cursor: pointer;
+}
+
+.logo {
+  height: auto;
+  width: 250px;
+  padding: 1em;
+  will-change: filter;
+  transition: filter 200ms;
+}
+
+.logo-cont{
+  padding-top: 0px;
+}
+
+.reel{
+  font-weight: bold;
+  font-size: 20px;
+  margin-top: 0px;
+  padding-top: 0px;
+  color: white;
+}
+
+center{
+  margin-left: -147.5px;
+}
+
+.reel-cont{
+  /* position: relative; */
+  border-radius: 20px;
+  background-color: white;
+  height: 96vh;
+  width: 87%;
+  overflow: scroll;
+  scroll-snap-type: y mandatory;
+  max-width: 600px;
+
+}
+
+.ad-cont-right {
+  position: absolute;
+  right: 0;
+  top:50%;
+  transform: translateY(-50%);
+  z-index: 1000; /* Set a z-index to ensure it's above other content if needed */
+}
+
+.ad{
+  height: 100%;
+  /* width: 100%; */
+  max-width: 400px;
+  max-height: 950px;
+  min-height: 950px;
+}
+
+.reel-cont::-webkit-scrollbar{
+  display: none;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 3em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 3em #61dafbaa);
+}
+
+.read-the-docs {
+  color: #888;
+}

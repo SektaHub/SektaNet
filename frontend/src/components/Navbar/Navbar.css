@@ -1,0 +1,80 @@
+.navContainer {
+    display: flex;
+    flex-direction: column;
+    text-align: start;
+
+    .logo {
+        max-width: 125px;
+        padding: 20px 0;
+    }
+
+    .navBarLogo {
+        text-align: start;
+        margin-bottom: 10px;
+    }
+
+    .homeNavButton {
+        padding: 5px 10px;
+        margin: 5px 0;
+        font-size: large;
+        color: white;
+        font-family: sans-serif;
+        border-radius: 15px;
+    }
+
+    .homeAccountButton {
+        padding: 5px 10px;
+        margin: 5px 0;
+        font-size: large;
+        color: white;
+        background-color: darkslategray;
+        font-family: sans-serif;
+        border-radius: 15px;
+        text-align: start;
+        flex-shrink: 0; /* Prevent the Logout button from stretching */
+    }
+
+    .homeNavButton:hover {
+        background-color: rgb(77, 76, 76);
+    }
+
+    .currentUserText {
+        max-width: 1vh; /* Set a maximum width for the text container */
+      }
+
+}
+
+ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+li {
+    list-style-type: none;
+}
+
+nav {
+    width: 100%;
+    box-shadow: 0 0 10px rgb(0, 0, 0 / 8%);
+}
+
+.menu {
+    position: fixed;
+    top: 0px;
+    left: 150px;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    height: 100px;
+    gap: 8px;
+    width: 260px;
+    height: 100%;
+}
+
+.menu li {
+    display: inline-block;
+    width: 90px;
+}

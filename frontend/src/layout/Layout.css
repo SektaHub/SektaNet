@@ -1,0 +1,18 @@
+.layout {
+    display: flex;
+    flex-direction: row;
+    min-height: 98vh;
+
+    >nav {
+        padding-left: 15px;
+        max-width: fit-content;
+    }
+
+    >main {
+        padding: 0 15px;
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}

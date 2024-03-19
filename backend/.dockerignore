@@ -1,0 +1,14 @@
+bin/
+obj/
+obj-*/
+bin-*/
+node_modules/
+*.suo
+*.user
+*.vscode
+*.idea
+
+wwwroot/Reels/*
+wwwroot/Thumbnails/*
+wwwroot/Images/
+wwwroot/FFmpeg/*
