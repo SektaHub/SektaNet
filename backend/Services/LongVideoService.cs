@@ -12,9 +12,10 @@ namespace backend.Services
     {
         public LongVideoService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager) : base(env, mapper, dbContext, mongoRepo, anyFileRepository, userManager)
         {
+
         }
 
-        public async Task DeleteLongVideo(string id)
+        public async Task DeleteLongVideo(Guid id)
         {
             await _anyFileRepository.DeleteLongVideo(id);
         }

@@ -104,7 +104,7 @@ namespace backend.Services
         //    return await _anyFileRepository.SaveReel(file);
         //}
 
-        public async Task DeleteReel(string id)
+        public async Task DeleteReel(Guid id)
         {
             await _anyFileRepository.DeleteReel(id);
         }

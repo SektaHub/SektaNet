@@ -19,25 +19,27 @@ namespace backend.Controllers
 
         [HttpGet("{id}/Thumbnail")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetThumbnail(string id)
+        public async Task<IActionResult> GetThumbnail(Guid id)
         {
-            if (string.IsNullOrEmpty(id))
-            {
-                return NotFound();
-            }
+            //if (string.IsNullOrEmpty(id))
+            //{
+            //    return NotFound();
+            //}
 
             try
             {
                 var videoEntity = _fileConentService.GetById(id);
 
-                string? thumbnailId = videoEntity.ThumbnailId;
+                Guid? thumbnailId = videoEntity.ThumbnailId;
 
-                if (thumbnailId.IsNullOrEmpty())
-                {
-                    return NotFound();
-                }
+                //if (thumbnailId.IsNullOrEmpty())
+                //{
+                //    return NotFound();
+                //}
 
-                var imageStream = await _fileConentService.GetFileStreamAsync(thumbnailId);
+                var thumbnailContentId = videoEntity.Thumbnail.ContentId;
+
+                var imageStream = await _fileConentService.GetFileStreamAsync(thumbnailContentId);
 
                 if (imageStream.Length == 0)
                 {
@@ -54,7 +56,7 @@ namespace backend.Controllers
             }
         }
 
-        public async override Task<IActionResult> DeleteFileContent(string id)
+        public async override Task<IActionResult> DeleteFileContent(Guid id)
         {
             try
             {

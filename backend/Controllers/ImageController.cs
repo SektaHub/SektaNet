@@ -40,7 +40,7 @@ namespace backend.Controllers
 
 
         [HttpGet("{id}/GetVisuallySimmilarImages")]
-        public async Task<IEnumerable<ImageDto>> GetVisuallySimmilarImages(string id)
+        public async Task<IEnumerable<ImageDto>> GetVisuallySimmilarImages(Guid id)
         {
             string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -63,12 +63,12 @@ namespace backend.Controllers
 
         [HttpGet("{id}/Content", Name = "GetImageStream")]
         [AllowAnonymous]
-        public async override Task<IActionResult> GetFileContent(string id)
+        public async override Task<IActionResult> GetFileContent(Guid id)
         {
-            if (string.IsNullOrEmpty(id))
-            {
-                return NotFound();
-            }
+            //if (string.IsNullOrEmpty(id))
+            //{
+            //    return NotFound();
+            //}
 
             try
             {
@@ -79,7 +79,7 @@ namespace backend.Controllers
                     return NotFound();
                 }
 
-                var imageStream = await _fileConentService.GetFileStreamAsync(id);
+                var imageStream = await _fileConentService.GetFileStreamAsync(imageEntity.ContentId);
 
                 if (imageStream.Length == 0)
                 {
@@ -133,11 +133,13 @@ namespace backend.Controllers
 
         [HttpDelete("{imageId}")]
         [Authorize(Roles ="Admin")]
-        public async override Task<IActionResult> DeleteFileContent(string imageId)
+        public async override Task<IActionResult> DeleteFileContent(Guid imageId)
         {
+            var image = _fileConentService.GetById(imageId);
+
             try
             {
-                await _fileConentService.DeleteImage(imageId);
+                await _fileConentService.DeleteImage(image.ContentId);
                 return Ok();
             }
             catch (Exception ex)
@@ -149,7 +151,7 @@ namespace backend.Controllers
 
         [HttpPatch("{fileId}/PatchClipEmbedding")]
         [AllowAnonymous]
-        public IActionResult Patch(string fileId, EmbeddingDto embedding)
+        public IActionResult Patch(Guid fileId, EmbeddingDto embedding)
         {
             if (embedding == null)
             {

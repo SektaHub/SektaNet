@@ -115,7 +115,7 @@ namespace backend.Services
         }
 
 
-        public async Task<List<ImageDto>> GetVisuallySimmilar(string id, string? userId)
+        public async Task<List<ImageDto>> GetVisuallySimmilar(Guid id, string? userId)
         {
             var entity = await _dbContext.Set<Image>().FindAsync(id); // Ensure asynchronous operation
 

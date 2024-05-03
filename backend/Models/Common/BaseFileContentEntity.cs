@@ -4,7 +4,9 @@ namespace backend.Models.Common
 {
     public class BaseFileContentEntity
     {
-        public required string Id { get; set; }
+        public required Guid Id { get; set; }
+        //Id of the file content in the mongoDb repository
+        public required string ContentId { get; set; }
         public required string Name { get; set; }
         public required string FileExtension { get; set; }
         public string? Tags { get; set; }

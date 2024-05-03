@@ -2,6 +2,7 @@
 using backend.Models.Dto;
 using backend.Models.Entity;
 using backend.Services;
+using backend.Util;
 using Microsoft.AspNetCore.Http;
 using MongoDB.Bson;
 using System.Net.Http;
@@ -25,7 +26,7 @@ namespace backend.Repo
             _ffmpegService = ffmpegService;
         }
 
-        public async Task<string> SaveReel(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
+        public async Task<Guid> SaveReel(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -47,11 +48,12 @@ namespace backend.Repo
             int dur = await _ffmpegService.GetVideoDuration(file);
 
             byte[] thumb = await _ffmpegService.GenerateThumbnail(file);
-            string thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag ,isPrivate);
+            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag ,isPrivate);
 
             Reel reel = new Reel
             {
-                Id = fileId.ToString(),
+                Id = RandomBytesGenerator.GenerateGuid(),
+                ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
                 AudioTranscription = null,
                 Duration = dur, // Will be set after getting duration
@@ -70,7 +72,7 @@ namespace backend.Repo
             return reel.Id;
         }
 
-        public async Task<string> SaveLongVideo(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
+        public async Task<Guid> SaveLongVideo(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -93,11 +95,12 @@ namespace backend.Repo
             int dur = await _ffmpegService.GetVideoDuration(file);
 
             byte[] thumb = await _ffmpegService.GenerateThumbnail(file);
-            string thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag, isPrivate);
+            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag, isPrivate);
 
             LongVideo video = new LongVideo
             {
-                Id = fileId.ToString(),
+                Id = RandomBytesGenerator.GenerateGuid(),
+                ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
                 AudioTranscription = null,
                 Duration = dur, // Will be set after getting duration
@@ -116,7 +119,7 @@ namespace backend.Repo
             return video.Id;
         }
 
-        public async Task DeleteReel(string id)
+        public async Task DeleteReel(Guid id)
         {
             var reel = await _dbContext.Reels.FindAsync(id);
 
@@ -127,11 +130,11 @@ namespace backend.Repo
                 await _dbContext.SaveChangesAsync();
 
                 // Delete the associated file from MongoDB
-                await _mongoRepo.DeleteFileAsync(id);
+                await _mongoRepo.DeleteFileAsync(reel.ContentId);
             }
         }
 
-        public async Task DeleteLongVideo(string id)
+        public async Task DeleteLongVideo(Guid id)
         {
             var video = await _dbContext.LongVideos.FindAsync(id);
 
@@ -142,7 +145,7 @@ namespace backend.Repo
                 await _dbContext.SaveChangesAsync();
 
                 // Delete the associated file from MongoDB
-                await _mongoRepo.DeleteFileAsync(id);
+                await _mongoRepo.DeleteFileAsync(video.ContentId);
             }
         }
 
@@ -161,7 +164,7 @@ namespace backend.Repo
             }
         }
 
-        public async Task<string> SaveImage(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
+        public async Task<Guid> SaveImage(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -183,7 +186,8 @@ namespace backend.Repo
 
             Image image = new Image
             {
-                Id = fileId.ToString(),
+                Id = RandomBytesGenerator.GenerateGuid(),
+                ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
                 GeneratedCaption = null,
                 ClipEmbedding = null,
@@ -200,7 +204,7 @@ namespace backend.Repo
             return image.Id;
         }
 
-        public async Task<string> SaveThumbnail(HttpContext httpContext, byte[] thumbnailBytes, string fileName, string tag, bool isPrivate = false)
+        public async Task<Guid> SaveThumbnail(HttpContext httpContext, byte[] thumbnailBytes, string fileName, string tag, bool isPrivate = false)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -219,7 +223,8 @@ namespace backend.Repo
 
             Thumbnail image = new Thumbnail
             {
-                Id = fileId.ToString(),
+                Id = RandomBytesGenerator.GenerateGuid(),
+                ContentId = fileId.ToString(),
                 FileExtension = Path.GetExtension(fileName).TrimStart('.'),
                 Tags = tag,
                 Name = fileName,
@@ -234,7 +239,7 @@ namespace backend.Repo
             return image.Id;
         }
 
-        public async Task<string> SaveAudio(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
+        public async Task<Guid> SaveAudio(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -256,7 +261,8 @@ namespace backend.Repo
 
             Audio audio = new Audio
             {
-                Id = fileId.ToString(),
+                Id = RandomBytesGenerator.GenerateGuid(),
+                ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
                 Tags = tag,
                 Name = file.FileName,
@@ -271,7 +277,7 @@ namespace backend.Repo
             return audio.Id;
         }
 
-        public async Task<string> SaveGenericFile(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
+        public async Task<Guid> SaveGenericFile(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -293,7 +299,8 @@ namespace backend.Repo
 
             GenericFile fil = new GenericFile
             {
-                Id = fileId.ToString(),
+                Id = Guid.NewGuid(),
+                ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
                 Tags = tag,
                 Name = file.FileName,

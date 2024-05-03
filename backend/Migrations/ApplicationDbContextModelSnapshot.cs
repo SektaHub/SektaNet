@@ -222,7 +222,12 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Entity.Audio", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("DateUploaded")
@@ -257,7 +262,12 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Entity.GenericFile", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("DateUploaded")
@@ -289,11 +299,16 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Entity.Image", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<Vector>("ClipEmbedding")
                         .HasColumnType("vector(768)");
+
+                    b.Property<string>("ContentId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("DateUploaded")
                         .HasColumnType("timestamp with time zone");
@@ -334,10 +349,15 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Entity.LongVideo", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<string>("AudioTranscription")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContentId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("DateUploaded")
@@ -360,8 +380,8 @@ namespace backend.Migrations
                     b.Property<string>("Tags")
                         .HasColumnType("text");
 
-                    b.Property<string>("ThumbnailId")
-                        .HasColumnType("text");
+                    b.Property<Guid?>("ThumbnailId")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("isPrivate")
                         .HasColumnType("boolean");
@@ -377,10 +397,15 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Entity.Reel", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<string>("AudioTranscription")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContentId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("DateUploaded")
@@ -403,8 +428,8 @@ namespace backend.Migrations
                     b.Property<string>("Tags")
                         .HasColumnType("text");
 
-                    b.Property<string>("ThumbnailId")
-                        .HasColumnType("text");
+                    b.Property<Guid?>("ThumbnailId")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("isPrivate")
                         .HasColumnType("boolean");
@@ -420,7 +445,12 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Entity.Thumbnail", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("DateUploaded")

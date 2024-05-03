@@ -74,7 +74,7 @@ namespace backend.Services.Common
             return response;
         }
 
-        public TDto GetDtoById(string id)
+        public TDto GetDtoById(Guid id)
         {
             var entity = _dbContext.Set<TEntity>().Find(id);
 
@@ -88,7 +88,7 @@ namespace backend.Services.Common
             return dto;
         }
 
-        public TEntity GetById(string id)
+        public TEntity GetById(Guid id)
         {
             var entity = _dbContext.Set<TEntity>().Find(id);
 
@@ -101,7 +101,7 @@ namespace backend.Services.Common
             return entity;
         }
 
-        public TDto GetMetaData(string id)
+        public TDto GetMetaData(Guid id)
         {
             var entity = _dbContext.Set<TEntity>().Find(id);
 
@@ -115,7 +115,7 @@ namespace backend.Services.Common
             return imageDto;
         }
 
-        public TDto Put(string fileId, TDto updatedDto)
+        public TDto Put(Guid fileId, TDto updatedDto)
         {
             if (updatedDto == null || fileId != updatedDto.Id)
             {
