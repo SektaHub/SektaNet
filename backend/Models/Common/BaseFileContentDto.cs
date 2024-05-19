@@ -12,6 +12,7 @@ namespace backend.Models.Common
         public DateTime DateUploaded { get; set; }
         public bool isPrivate { get; set; }
         public ApplicationUser? Owner { get; set; }
+        public List<string> AuthorizedRoles { get; set; } = new List<string>();
     }
 
 }

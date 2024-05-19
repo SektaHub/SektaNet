@@ -24,6 +24,7 @@ namespace backend.Controllers
 
 
         [HttpGet("GetReelsWithoutTranscription")]
+        [Authorize(Roles = "Admin")]
         public IQueryable<ReelDto> GetReelsWithoutTranscription()
         {
             return _fileConentService.GetReelsWithoutTranscription();
@@ -87,6 +88,7 @@ namespace backend.Controllers
 
 
         [HttpGet("{videoId}/Content")]
+        [AllowAnonymous]
         public async override Task<IActionResult> GetFileContent(Guid videoId) // Assuming videoId is the string representation of MongoDB's ObjectId
         {
             //if (string.IsNullOrEmpty(videoId))
@@ -154,6 +156,7 @@ namespace backend.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async override Task<IActionResult> DeleteFileContent(Guid id)
         {
             try

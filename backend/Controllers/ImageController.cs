@@ -21,7 +21,6 @@ namespace backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class ImageController : BaseFileContentController<Image, ImageDto, ImageService>
     {
         public ImageController(IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Image, ImageDto, ImageService>> logger, ImageService fileConentService) : base(mapper, webHostEnvironment, logger, fileConentService)
@@ -54,7 +53,6 @@ namespace backend.Controllers
         //}
 
         [HttpGet("GetImagesWithoutCaption")]
-        [AllowAnonymous]
         public IQueryable<ImageDto> GetImagesWithoutCaption()
         {
             return _fileConentService.GetImagesWithoutCaption();
@@ -96,41 +94,6 @@ namespace backend.Controllers
             }
         }
 
-        //[HttpPost("upload")]
-        //public async Task<IActionResult> Upload(IFormFile imageFile)
-        //{
-        //    if (imageFile == null || imageFile.Length == 0)
-        //    {
-        //        return BadRequest("No file uploaded.");
-        //    }
-
-        //    try
-        //    {
-
-        //        // Assuming you've injected MongoDBService as _mongoDBService
-        //        var fileId = await _fileConentService.UploadImage(imageFile);
-
-        //        // Here you can link fileId with your reel entity if necessary
-
-        //        return Ok(new { Message = "Image uploaded successfully", FileId = fileId });
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError($"Error uploading image: {ex.Message}");
-        //        return StatusCode(500, "An error occurred while uploading the image.");
-        //    }
-        //}
-
-        //[HttpPost("upload-multiple")]
-        //public async override Task<IActionResult> UploadMultiple(List<IFormFile> files)
-        //{
-
-        //    var imageDtos = await _fileConentService.UploadImage(files);
-
-        //    return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = imageDtos });
-        //}
-
         [HttpDelete("{imageId}")]
         [Authorize(Roles ="Admin")]
         public async override Task<IActionResult> DeleteFileContent(Guid imageId)
@@ -150,7 +113,7 @@ namespace backend.Controllers
         }
 
         [HttpPatch("{fileId}/PatchClipEmbedding")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin")]
         public IActionResult Patch(Guid fileId, EmbeddingDto embedding)
         {
             if (embedding == null)

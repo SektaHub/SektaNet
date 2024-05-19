@@ -18,7 +18,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers.Common
 {
-
+    [Authorize]
     public class BaseFileContentController<TEntity, TDto, FileConentService> : ControllerBase
         where TEntity : BaseFileContentEntity
         where TDto : BaseFileContentDto
@@ -116,7 +116,7 @@ namespace backend.Controllers.Common
         }
 
         [HttpPatch("{id}")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin")]
         public IActionResult Patch(Guid id, JsonPatchDocument<TDto> patchDocument)
         {
             if (patchDocument == null)

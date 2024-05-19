@@ -56,6 +56,7 @@ namespace backend.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         public async override Task<IActionResult> DeleteFileContent(Guid id)
         {
             try
