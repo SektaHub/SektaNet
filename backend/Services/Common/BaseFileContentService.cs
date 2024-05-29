@@ -36,8 +36,10 @@ namespace backend.Services.Common
         protected readonly MongoDBRepository _mongoRepo;
         protected readonly AnyFileRepository _anyFileRepository;
         protected readonly UserManager<ApplicationUser> _userManager;
+        protected readonly IdentityService _identityService;
+        protected readonly IHttpContextAccessor _httpContextAccessor;
 
-        public BaseFileContentService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager)
+        public BaseFileContentService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager, IdentityService identityService, IHttpContextAccessor httpContextAccessor)
         {
             _env = env;
             _mapper = mapper;
@@ -45,6 +47,8 @@ namespace backend.Services.Common
             _mongoRepo = mongoRepo;
             _anyFileRepository = anyFileRepository;
             _userManager = userManager;
+            _identityService = identityService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public IQueryable<TDto> GetAll()
@@ -52,6 +56,20 @@ namespace backend.Services.Common
             var entities = _dbContext.Set<TEntity>();
             var dtos = _mapper.ProjectTo<TDto>(entities);
             return dtos;
+        }
+
+        public IQueryable<TEntity> GetAllowed()
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            var user = _identityService.GetCurrentUser(httpContext);
+            var userRoles = _identityService.GetCurrentUserRoles(httpContext);
+
+            var entities = _dbContext.Set<TEntity>().AsQueryable();
+
+            var allowedEntities = entities.Where(e =>
+                !e.isPrivate || e.OwnerId == user.Id || e.AuthorizedRoles.Any(role => userRoles.Contains(role)));
+
+            return allowedEntities;
         }
 
         public PaginatedResponseDto<TDto> GetPaginated(int page, int pageSize)
@@ -64,6 +82,28 @@ namespace backend.Services.Common
                                      .ToList();
 
             var dtoList = _mapper.Map<List<TDto>>(entities);
+
+            var response = new PaginatedResponseDto<TDto>
+            {
+                Items = dtoList,
+                TotalCount = totalCount
+            };
+
+            return response;
+        }
+
+        public PaginatedResponseDto<TDto> GetPaginatedAllowed(int page, int pageSize)
+        {
+            var allowedEntities = GetAllowed();
+
+            var totalCount = allowedEntities.Count();
+
+            var paginatedEntities = allowedEntities
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var dtoList = _mapper.Map<List<TDto>>(paginatedEntities);
 
             var response = new PaginatedResponseDto<TDto>
             {
@@ -150,35 +190,6 @@ namespace backend.Services.Common
         public virtual async Task<List<TDto>> UploadMultiple(List<IFormFile> files)
         {
             throw new NotImplementedException();
-        }
-
-        public async Task<string> UploadAsync(IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-            {
-                //return BadRequest("No file uploaded.");
-                return null;
-            }
-
-            try
-            {
-                using (var stream = file.OpenReadStream())
-                {
-                    // Assuming you've injected MongoDBService as _mongoDBService
-                    var fileId = await _mongoRepo.UploadFileAsync(stream, file.FileName);
-
-                    // Here you can link fileId with your reel entity if necessary
-
-                    //return Ok(new { Message = "Video uploaded successfully", FileId = fileId });
-                    return fileId.ToString();
-                }
-            }
-            catch (Exception ex)
-            {
-                //_logger.LogError($"Error uploading video: {ex.Message}");
-                //return StatusCode(500, "An error occurred while uploading the video.");
-            }
-            return null;
         }
 
         public async Task<Stream> GetFileStreamAsync(string id)

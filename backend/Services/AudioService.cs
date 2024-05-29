@@ -10,7 +10,7 @@ namespace backend.Services
 {
     public class AudioService : BaseFileContentService<Audio, AudioDto>
     {
-        public AudioService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager) : base(env, mapper, dbContext, mongoRepo, anyFileRepository, userManager)
+        public AudioService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager, IdentityService identityService, IHttpContextAccessor httpContextAccessor) : base(env, mapper, dbContext, mongoRepo, anyFileRepository, userManager, identityService, httpContextAccessor)
         {
         }
     }
