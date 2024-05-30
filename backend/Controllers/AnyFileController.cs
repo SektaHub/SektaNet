@@ -33,12 +33,22 @@ namespace backend.Controllers
 
         [RequestSizeLimit(536_870_912_0)]
         [HttpPost("upload-multiple")]
-        public async Task<IActionResult> UploadMultiple(List<IFormFile> files, string? tags, bool? isPrivate)
+        public async Task<IActionResult> UploadMultiple(List<IFormFile> files, string? tags, string? authorizedRoles)
         {
             try
             {
-                if (isPrivate == null)
-                    isPrivate = false;
+                if(tags == null)
+                    tags = "";
+                List<string> authorizedRolesList;
+
+                if (string.IsNullOrEmpty(authorizedRoles))
+                {
+                    authorizedRolesList = new List<string>();
+                }
+                else
+                {
+                    authorizedRolesList = authorizedRoles.Split(',').Select(role => role.Trim()).ToList();
+                }
                 foreach (var file in files)
                 {
                     if (file == null || file.Length == 0) continue;
@@ -47,19 +57,19 @@ namespace backend.Controllers
                     switch (fileType.ToLower())
                     {
                         case "image":
-                            await _fileRepository.SaveImage(HttpContext, file, tags, (bool)isPrivate);
+                            await _fileRepository.SaveImage(HttpContext, file, tags, authorizedRolesList);
                             break;
                         case "video":
                             if(await _ffmpegService.Is9_16AspectRatio(file))
-                                await _fileRepository.SaveReel(HttpContext, file, tags, (bool)isPrivate);
+                                await _fileRepository.SaveReel(HttpContext, file, tags, authorizedRolesList);
                             else
-                                await _fileRepository.SaveLongVideo(HttpContext, file, tags, (bool)isPrivate);
+                                await _fileRepository.SaveLongVideo(HttpContext, file, tags, authorizedRolesList);
                             break;
                         case "audio":
-                            await _fileRepository.SaveAudio(HttpContext, file, tags, (bool)isPrivate);
+                            await _fileRepository.SaveAudio(HttpContext, file, tags, authorizedRolesList);
                             break;
                         default:
-                            await _fileRepository.SaveGenericFile(HttpContext, file, tags, (bool)isPrivate);
+                            await _fileRepository.SaveGenericFile(HttpContext, file, tags, authorizedRolesList);
                             break;
                     }
                 }

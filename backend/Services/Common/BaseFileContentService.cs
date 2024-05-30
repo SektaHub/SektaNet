@@ -67,32 +67,15 @@ namespace backend.Services.Common
             var entities = _dbContext.Set<TEntity>().AsQueryable();
 
             var allowedEntities = entities.Where(e =>
-                !e.isPrivate || e.OwnerId == user.Id || e.AuthorizedRoles.Any(role => userRoles.Contains(role)));
+                e.OwnerId == user.Id ||
+                !e.AuthorizedRoles.Any() ||
+                e.AuthorizedRoles.Any(role => userRoles.Contains(role))
+            );
 
             return allowedEntities;
         }
 
         public PaginatedResponseDto<TDto> GetPaginated(int page, int pageSize)
-        {
-            var totalCount = _dbContext.Set<TEntity>().Count();
-
-            var entities = _dbContext.Set<TEntity>()
-                                     .Skip((page - 1) * pageSize)
-                                     .Take(pageSize)
-                                     .ToList();
-
-            var dtoList = _mapper.Map<List<TDto>>(entities);
-
-            var response = new PaginatedResponseDto<TDto>
-            {
-                Items = dtoList,
-                TotalCount = totalCount
-            };
-
-            return response;
-        }
-
-        public PaginatedResponseDto<TDto> GetPaginatedAllowed(int page, int pageSize)
         {
             var allowedEntities = GetAllowed();
 

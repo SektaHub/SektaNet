@@ -38,14 +38,14 @@ namespace backend.Controllers.Common
         }
 
         [HttpGet]
-        [Authorize (Roles = "Sektash, Admin")]
+        [Authorize (Roles = "Admin")]
         public IQueryable<TDto> Get()
         {
             return _fileConentService.GetAll();
         }
 
         [HttpGet("Paginated")]
-        [Authorize(Roles = "Sektash, Admin")]
+        [Authorize]
         public virtual ActionResult<PaginatedResponseDto<TDto>> GetWithPagination(int page, int pageSize)
         {
             return _fileConentService.GetPaginated(page, pageSize);
@@ -70,35 +70,6 @@ namespace backend.Controllers.Common
         {
             return _fileConentService.GetMetaData(id);
         }
-
-        //[HttpDelete("{id}")]
-        //public virtual IActionResult DeleteFileContent(string id)
-        //{
-        //    try
-        //    {
-        //        // Delete file
-        //        var filePath = _fileConentService.GetFilePath(id);
-        //        if (System.IO.File.Exists(filePath))
-        //        {
-        //            System.IO.File.Delete(filePath);
-        //        }
-
-        //        // Delete database entry
-        //        var file = _dbContext.Set<TEntity>().Find(id);
-        //        if (file != null)
-        //        {
-        //            _dbContext.Set<TEntity>().Remove(file);
-        //            _dbContext.SaveChanges();
-        //        }
-
-        //        return Ok("File deleted successfully");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError($"Error deleting File: {ex.Message}");
-        //        return StatusCode(500, "An error occurred while deleting the file");
-        //    }
-        //}
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]

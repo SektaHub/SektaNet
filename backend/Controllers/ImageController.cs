@@ -30,11 +30,8 @@ namespace backend.Controllers
         [HttpGet("PaginatedWithCaption")]
         public async Task<ActionResult<PaginatedResponseDto<ImageDto>>> GetWithPagination(int page, int pageSize, string? captionSearch)
         {
-            // Get the current user's ID from claims
-            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
             // Pass the userId to the service method
-            return await _fileConentService.GetPaginated(page, pageSize, captionSearch, userId);
+            return await _fileConentService.GetPaginated(page, pageSize, captionSearch);
         }
 
 
@@ -43,7 +40,7 @@ namespace backend.Controllers
         {
             string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            return await _fileConentService.GetVisuallySimmilar(id, userId);
+            return await _fileConentService.GetVisuallySimmilar(id);
         }
 
         //[HttpGet("GetImagesByCaption")]

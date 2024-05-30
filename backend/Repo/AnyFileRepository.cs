@@ -26,7 +26,7 @@ namespace backend.Repo
             _ffmpegService = ffmpegService;
         }
 
-        public async Task<Guid> SaveReel(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
+        public async Task<Guid> SaveReel(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -48,7 +48,7 @@ namespace backend.Repo
             int dur = await _ffmpegService.GetVideoDuration(file);
 
             byte[] thumb = await _ffmpegService.GenerateThumbnail(file);
-            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag ,isPrivate);
+            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag, authorizedRoles);
 
             Reel reel = new Reel
             {
@@ -60,7 +60,7 @@ namespace backend.Repo
                 Tags = tag,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
-                isPrivate = isPrivate,
+                AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
                 ThumbnailId = thubnailId,
             };
@@ -72,7 +72,7 @@ namespace backend.Repo
             return reel.Id;
         }
 
-        public async Task<Guid> SaveLongVideo(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
+        public async Task<Guid> SaveLongVideo(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -95,7 +95,7 @@ namespace backend.Repo
             int dur = await _ffmpegService.GetVideoDuration(file);
 
             byte[] thumb = await _ffmpegService.GenerateThumbnail(file);
-            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag, isPrivate);
+            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag, authorizedRoles);
 
             LongVideo video = new LongVideo
             {
@@ -107,7 +107,7 @@ namespace backend.Repo
                 Tags = tag,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
-                isPrivate = isPrivate,
+                AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
                 ThumbnailId = thubnailId,
             };
@@ -164,7 +164,7 @@ namespace backend.Repo
             }
         }
 
-        public async Task<Guid> SaveImage(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
+        public async Task<Guid> SaveImage(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -194,7 +194,7 @@ namespace backend.Repo
                 Tags = tag,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
-                isPrivate = isPrivate,
+                AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
             };
 
@@ -204,7 +204,7 @@ namespace backend.Repo
             return image.Id;
         }
 
-        public async Task<Guid> SaveThumbnail(HttpContext httpContext, byte[] thumbnailBytes, string fileName, string tag, bool isPrivate = false)
+        public async Task<Guid> SaveThumbnail(HttpContext httpContext, byte[] thumbnailBytes, string fileName, string tag, List<string> authorizedRoles)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -229,7 +229,7 @@ namespace backend.Repo
                 Tags = tag,
                 Name = fileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
-                isPrivate = isPrivate,
+                AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
             };
 
@@ -239,7 +239,7 @@ namespace backend.Repo
             return image.Id;
         }
 
-        public async Task<Guid> SaveAudio(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
+        public async Task<Guid> SaveAudio(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -267,7 +267,7 @@ namespace backend.Repo
                 Tags = tag,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
-                isPrivate = isPrivate,
+                AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
             };
 
@@ -277,7 +277,7 @@ namespace backend.Repo
             return audio.Id;
         }
 
-        public async Task<Guid> SaveGenericFile(HttpContext httpContext, IFormFile file, string tag, bool isPrivate = false)
+        public async Task<Guid> SaveGenericFile(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -305,7 +305,7 @@ namespace backend.Repo
                 Tags = tag,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
-                isPrivate = isPrivate,
+                AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
             };
 

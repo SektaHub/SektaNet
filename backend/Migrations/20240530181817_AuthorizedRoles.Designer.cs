@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -13,9 +14,11 @@ using backend;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240530181817_AuthorizedRoles")]
+    partial class AuthorizedRoles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -255,6 +258,9 @@ namespace backend.Migrations
                     b.Property<string>("Tags")
                         .HasColumnType("text");
 
+                    b.Property<bool>("isPrivate")
+                        .HasColumnType("boolean");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
@@ -292,6 +298,9 @@ namespace backend.Migrations
 
                     b.Property<string>("Tags")
                         .HasColumnType("text");
+
+                    b.Property<bool>("isPrivate")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -336,6 +345,9 @@ namespace backend.Migrations
 
                     b.Property<string>("Tags")
                         .HasColumnType("text");
+
+                    b.Property<bool>("isPrivate")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -391,6 +403,9 @@ namespace backend.Migrations
                     b.Property<Guid?>("ThumbnailId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("isPrivate")
+                        .HasColumnType("boolean");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
@@ -440,6 +455,9 @@ namespace backend.Migrations
                     b.Property<Guid?>("ThumbnailId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("isPrivate")
+                        .HasColumnType("boolean");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
@@ -479,6 +497,9 @@ namespace backend.Migrations
 
                     b.Property<string>("Tags")
                         .HasColumnType("text");
+
+                    b.Property<bool>("isPrivate")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
