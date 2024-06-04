@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -13,9 +14,11 @@ using backend;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240604201803_Discord4")]
+    partial class Discord4
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -274,6 +277,31 @@ namespace backend.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("DiscordChannels");
+                });
+
+            modelBuilder.Entity("backend.Models.Discord.DiscordRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DiscordUserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiscordUserId");
+
+                    b.ToTable("DiscordRoles");
                 });
 
             modelBuilder.Entity("backend.Models.Discord.DiscordServer", b =>
@@ -743,6 +771,13 @@ namespace backend.Migrations
                         .HasForeignKey("MessageId");
                 });
 
+            modelBuilder.Entity("backend.Models.Discord.DiscordRole", b =>
+                {
+                    b.HasOne("backend.Models.Discord.DiscordUser", null)
+                        .WithMany("Roles")
+                        .HasForeignKey("DiscordUserId");
+                });
+
             modelBuilder.Entity("backend.Models.Discord.DiscordServer", b =>
                 {
                     b.HasOne("backend.Models.Discord.Channel", "Channel")
@@ -989,6 +1024,11 @@ namespace backend.Migrations
             modelBuilder.Entity("backend.Models.Discord.DiscordServer", b =>
                 {
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("backend.Models.Discord.DiscordUser", b =>
+                {
+                    b.Navigation("Roles");
                 });
 
             modelBuilder.Entity("backend.Models.Discord.Message", b =>

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using backend.Models.Discord;
 using backend.Models.Dto;
 using backend.Models.Entity;
 using System;
@@ -23,6 +24,10 @@ namespace backend.Models
 
             CreateMap<Audio, AudioDto>();
             CreateMap<AudioDto, Audio>();
+
+            CreateMap<DiscordServer, DiscordServerDto>();
+            CreateMap<DiscordServerDto, DiscordServer>();
+
         }
     }
 

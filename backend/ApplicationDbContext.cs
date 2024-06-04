@@ -5,6 +5,7 @@ using System;
 using Pgvector.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using backend.Models;
+using backend.Models.Discord;
 
 namespace backend
 {
@@ -39,5 +40,16 @@ namespace backend
         public DbSet<Audio> Audio { get; set; }
         public DbSet<GenericFile> Files { get; set; }
         public DbSet<Thumbnail> Thumbnails { get; set; }
+
+        //Discord
+        public DbSet<DiscordServer> DiscordServers { get; set; }
+        public DbSet<Message> DiscordMessages { get; set; }
+        public DbSet<Guild> DiscordGuilds { get; set; }
+        public DbSet<Channel> DiscordChannels { get; set; }
+        public DbSet<Emoji> DiscordEmojis { get; set; }
+        //public DbSet<DiscordRole> DiscordRoles { get; set; }
+        public DbSet<DiscordUser> DiscordUsers { get; set; }
+        public DbSet<Attachment> DiscordAttachments { get; set; }
+
     }
 }
