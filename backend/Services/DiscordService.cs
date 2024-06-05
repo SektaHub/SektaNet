@@ -52,95 +52,125 @@ namespace backend.Services
         public DiscordServerDto Create(DiscordServerDto serverDto)
         {
             var serverEntity = _mapper.Map<DiscordServer>(serverDto);
-            // Create a new Guid for the server itself
             serverEntity.Id = Guid.NewGuid();
-            // Handle nested entities
-            ResolveNestedEntities(serverEntity);
-            // Add the server entity
+
+            AttachOrReplaceEntities(serverEntity);
+
             _dbContext.Set<DiscordServer>().Add(serverEntity);
-            // Save changes to the database
             _dbContext.SaveChanges();
-            // Map back to DTO and return
+
             return _mapper.Map<DiscordServerDto>(serverEntity);
         }
 
-        private void ResolveNestedEntities<TEntity>(TEntity entity)
+        private void AttachOrReplaceEntities(DiscordServer serverEntity)
         {
-            var properties = entity.GetType().GetProperties();
-            foreach (var property in properties)
+            if (serverEntity.Guild != null)
             {
-                var propertyType = property.PropertyType;
-                if (propertyType.IsGenericType && typeof(IEnumerable<>).IsAssignableFrom(propertyType.GetGenericTypeDefinition()) && propertyType != typeof(string))
+                var guild = serverEntity.Guild;
+                AttachOrReplaceEntity(ref guild);
+                serverEntity.Guild = guild;
+            }
+
+            if (serverEntity.Channel != null)
+            {
+                var channel = serverEntity.Channel;
+                AttachOrReplaceEntity(ref channel);
+                serverEntity.Channel = channel;
+            }
+
+            if (serverEntity.Messages != null)
+            {
+                for (int i = 0; i < serverEntity.Messages.Count; i++)
                 {
-                    var elementType = propertyType.GetGenericArguments()[0];
-                    var collection = (IEnumerable<object>)property.GetValue(entity);
+                    var message = serverEntity.Messages[i];
+                    AttachOrReplaceEntity(ref message);
+                    serverEntity.Messages[i] = message;
 
-                    if (collection != null)
+                    if (message.Author != null)
                     {
-                        var itemList = collection.Cast<object>().ToList();
-
-                        for (int i = 0; i < itemList.Count; i++)
-                        {
-                            var item = itemList[i];
-                            AttachOrReplaceEntity(ref item, elementType);
-                            itemList[i] = item;
-                        }
-
-                        var typedList = typeof(List<>).MakeGenericType(elementType)
-                                                      .GetConstructor(new[] { typeof(IEnumerable<>) })
-                                                      .Invoke(new object[] { itemList });
-
-                        property.SetValue(entity, typedList);
+                        var author = message.Author;
+                        AttachOrReplaceEntity(ref author);
+                        message.Author = author;
                     }
-                }
-                else if (propertyType.IsClass && propertyType != typeof(string))
-                {
-                    var nestedEntity = property.GetValue(entity);
-                    if (nestedEntity != null)
+
+                    if (message.Attachments != null)
                     {
-                        AttachOrReplaceEntity(ref nestedEntity, propertyType);
-                        property.SetValue(entity, nestedEntity);
+                        for (int j = 0; j < message.Attachments.Count; j++)
+                        {
+                            var attachment = message.Attachments[j];
+                            AttachOrReplaceEntity(ref attachment);
+                            message.Attachments[j] = attachment;
+                        }
+                    }
+
+                    if (message.Embeds != null)
+                    {
+                        for (int j = 0; j < message.Embeds.Count; j++)
+                        {
+                            var embed = message.Embeds[j];
+                            AttachOrReplaceEntity(ref embed);
+                            message.Embeds[j] = embed;
+                        }
+                    }
+
+                    if (message.Reactions != null)
+                    {
+                        for (int j = 0; j < message.Reactions.Count; j++)
+                        {
+                            var reaction = message.Reactions[j];
+                            AttachOrReplaceEntity(ref reaction);
+                            message.Reactions[j] = reaction;
+
+                            if (reaction.Emoji != null)
+                            {
+                                var emoji = reaction.Emoji;
+                                AttachOrReplaceEntity(ref emoji);
+                                reaction.Emoji = emoji;
+                            }
+                        }
+                    }
+
+                    if (message.Mentions != null)
+                    {
+                        for (int j = 0; j < message.Mentions.Count; j++)
+                        {
+                            var mention = message.Mentions[j];
+                            AttachOrReplaceEntity(ref mention);
+                            message.Mentions[j] = mention;
+                        }
                     }
                 }
             }
         }
 
-        private void AttachOrReplaceEntity(ref object entity, Type entityType)
+        private void AttachOrReplaceEntity<T>(ref T entity) where T : class
         {
-            var primaryKeyProperty = GetPrimaryKeyProperty(entityType);
+            var primaryKeyProperty = GetPrimaryKeyProperty(typeof(T));
             if (primaryKeyProperty != null)
             {
                 var primaryKeyValue = primaryKeyProperty.GetValue(entity);
                 if (primaryKeyValue != null && !primaryKeyValue.Equals(GetDefaultValue(primaryKeyProperty.PropertyType)))
                 {
-                    // Check if the entity is already being tracked
                     var trackedEntity = _dbContext.ChangeTracker.Entries()
-                        .FirstOrDefault(e => e.Entity.GetType() == entityType && GetPrimaryKeyProperty(e.Entity.GetType()).GetValue(e.Entity).Equals(primaryKeyValue))
-                        ?.Entity;
+                        .FirstOrDefault(e => e.Entity.GetType() == typeof(T) && GetPrimaryKeyProperty(e.Entity.GetType()).GetValue(e.Entity).Equals(primaryKeyValue))
+                        ?.Entity as T;
 
                     if (trackedEntity != null)
                     {
-                        // Use the tracked entity
                         entity = trackedEntity;
                     }
                     else
                     {
-                        // Look for an existing entity in the database
-                        var dbEntity = _dbContext.Find(entityType, primaryKeyValue);
+                        var dbEntity = _dbContext.Find(typeof(T), primaryKeyValue) as T;
                         if (dbEntity != null)
                         {
-                            // Use the existing entity from the database
                             entity = dbEntity;
                         }
                         else
                         {
-                            // Attach the new entity
                             _dbContext.Attach(entity);
                         }
                     }
-
-                    // Resolve nested entities for the existing or attached entity
-                    ResolveNestedEntities(entity);
                 }
             }
         }
@@ -159,6 +189,7 @@ namespace backend.Services
         {
             return type.IsValueType ? Activator.CreateInstance(type) : null;
         }
+
 
 
     }
