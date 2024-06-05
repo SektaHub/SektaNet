@@ -46,7 +46,7 @@ namespace backend
         public DbSet<Message> DiscordMessages { get; set; }
         public DbSet<Guild> DiscordGuilds { get; set; }
         public DbSet<Channel> DiscordChannels { get; set; }
-        public DbSet<Emoji> DiscordEmojis { get; set; }
+        //public DbSet<Emoji> DiscordEmojis { get; set; }
         //public DbSet<DiscordRole> DiscordRoles { get; set; }
         public DbSet<DiscordUser> DiscordUsers { get; set; }
         public DbSet<Attachment> DiscordAttachments { get; set; }

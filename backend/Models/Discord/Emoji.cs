@@ -1,5 +1,9 @@
-﻿namespace backend.Models.Discord
+﻿
+using Microsoft.EntityFrameworkCore;
+
+namespace backend.Models.Discord
 {
+    [Owned]
     public class Emoji
     {
         public string Id { get; set; }

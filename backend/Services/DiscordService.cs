@@ -54,61 +54,97 @@ namespace backend.Services
             var serverEntity = _mapper.Map<DiscordServer>(serverDto);
             serverEntity.Id = Guid.NewGuid();
 
-            ResolveNestedEntities(serverEntity);
+            // Add related entities first
+            AddUsers(serverEntity);
+            AddAttachments(serverEntity);
+            //AddEmbeds(serverEntity);
+            //AddReactions(serverEntity);
+            //AddMentions(serverEntity);
 
+            // Add the server entity
             _dbContext.Set<DiscordServer>().Add(serverEntity);
             _dbContext.SaveChanges();
 
             return _mapper.Map<DiscordServerDto>(serverEntity);
         }
 
-        private void ResolveNestedEntities(DiscordServer serverEntity)
+        private void AddUsers(DiscordServer serverEntity)
         {
-            serverEntity.Guild = GetOrAttachEntity(serverEntity.Guild);
-            serverEntity.Channel = GetOrAttachEntity(serverEntity.Channel);
-
-            if (serverEntity.Messages != null)
+            foreach (var message in serverEntity.Messages)
             {
-                for (int i = 0; i < serverEntity.Messages.Count; i++)
+                if (message.Author != null)
                 {
-                    var message = GetOrAttachEntity(serverEntity.Messages[i]);
-                    serverEntity.Messages[i] = message;
-
                     message.Author = GetOrAttachEntity(message.Author);
+                }
 
-                    if (message.Attachments != null)
+                if (message.Mentions != null)
+                {
+                    for (int i = 0; i < message.Mentions.Count; i++)
                     {
-                        for (int j = 0; j < message.Attachments.Count; j++)
-                        {
-                            message.Attachments[j] = GetOrAttachEntity(message.Attachments[j]);
-                        }
+                        message.Mentions[i] = GetOrAttachEntity(message.Mentions[i]);
                     }
+                }
+            }
+        }
 
-                    if (message.Embeds != null)
+        private void AddAttachments(DiscordServer serverEntity)
+        {
+            foreach (var message in serverEntity.Messages)
+            {
+                if (message.Attachments != null)
+                {
+                    for (int i = 0; i < message.Attachments.Count; i++)
                     {
-                        for (int j = 0; j < message.Embeds.Count; j++)
-                        {
-                            message.Embeds[j] = GetOrAttachEntity(message.Embeds[j]);
-                        }
+                        message.Attachments[i] = GetOrAttachEntity(message.Attachments[i]);
                     }
+                }
+            }
+        }
 
-                    if (message.Reactions != null)
+        private void AddEmbeds(DiscordServer serverEntity)
+        {
+            foreach (var message in serverEntity.Messages)
+            {
+                if (message.Embeds != null)
+                {
+                    for (int i = 0; i < message.Embeds.Count; i++)
                     {
-                        for (int j = 0; j < message.Reactions.Count; j++)
-                        {
-                            var reaction = GetOrAttachEntity(message.Reactions[j]);
-                            message.Reactions[j] = reaction;
+                        message.Embeds[i] = GetOrAttachEntity(message.Embeds[i]);
+                    }
+                }
+            }
+        }
 
+        private void AddReactions(DiscordServer serverEntity)
+        {
+            foreach (var message in serverEntity.Messages)
+            {
+                if (message.Reactions != null)
+                {
+                    for (int i = 0; i < message.Reactions.Count; i++)
+                    {
+                        var reaction = message.Reactions[i];
+                        reaction = GetOrAttachEntity(reaction);
+                        message.Reactions[i] = reaction;
+
+                        if (reaction.Emoji != null)
+                        {
                             reaction.Emoji = GetOrAttachEntity(reaction.Emoji);
                         }
                     }
+                }
+            }
+        }
 
-                    if (message.Mentions != null)
+        private void AddMentions(DiscordServer serverEntity)
+        {
+            foreach (var message in serverEntity.Messages)
+            {
+                if (message.Mentions != null)
+                {
+                    for (int i = 0; i < message.Mentions.Count; i++)
                     {
-                        for (int j = 0; j < message.Mentions.Count; j++)
-                        {
-                            message.Mentions[j] = GetOrAttachEntity(message.Mentions[j]);
-                        }
+                        message.Mentions[i] = GetOrAttachEntity(message.Mentions[i]);
                     }
                 }
             }
