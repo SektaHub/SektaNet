@@ -39,6 +39,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="ChatExports\" />
     <Folder Include="wwwroot\Images\" />
     <Folder Include="wwwroot\Thumbnails\" />
   </ItemGroup>
