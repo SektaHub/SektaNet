@@ -12,7 +12,7 @@ namespace backend.Models.Discord
         public string Url { get; set; }
         public DateTime? TimeStamp { get; set; }
         public string? Description { get; set; }
-        public DiscordUser? Author { get; set; }
+        public EmbedAuthor? Author { get; set; }
         public EmbedThumbnail? Thumbnail { get; set; }
         public EmbedVideo? EmbedVideo { get; set; }
         //public List<EmbedImage> Images { get; set; }
