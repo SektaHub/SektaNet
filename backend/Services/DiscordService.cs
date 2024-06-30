@@ -108,7 +108,7 @@ public class DiscordService
             });
 
         // Use asynchronous streaming
-        await foreach (var batch in BatchAsync(messagesQuery, 100))
+        await foreach (var batch in BatchAsync(messagesQuery, 20000))
         {
             var chatData = new ConcurrentDictionary<DateTime, ConcurrentBag<string>>();
 
