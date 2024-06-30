@@ -77,6 +77,26 @@ public class DiscordService
         return result.ToString();
     }
 
+    public string GenerateAttachmentUrlsJson(string channelId)
+    {
+        var server = _dbContext.DiscordServers
+            .Include(s => s.Messages)
+                .ThenInclude(m => m.Attachments)
+            .FirstOrDefault(s => s.Channel.Id == channelId);
+
+        if (server == null)
+        {
+            return JsonConvert.SerializeObject(new { error = "Server not found" });
+        }
+
+        var attachmentUrls = server.Messages
+            .SelectMany(m => m.Attachments)
+            .Select(a => a.Url)
+            .ToList();
+
+        return JsonConvert.SerializeObject(attachmentUrls, Formatting.Indented);
+    }
+
     public IQueryable<DiscordServerDto> GetAll()
     {
         var entities = _dbContext.Set<DiscordServer>();

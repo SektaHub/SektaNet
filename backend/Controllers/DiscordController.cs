@@ -51,6 +51,13 @@ namespace backend.Controllers
             return Ok(chatjson);
         }
 
+        [HttpGet("{id}/AttachmentUrlExport")]
+        public ActionResult<DiscordServerDto> GenerateChatAttachments(string id)
+        {
+            var chatjson = _discordService.GenerateAttachmentUrlsJson(id);
+            return Ok(chatjson);
+        }
+
         //[HttpPost]
         //public async Task<IActionResult> Create()
         //{
