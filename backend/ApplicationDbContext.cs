@@ -43,6 +43,22 @@ namespace backend
                 .HasMany(m => m.Mentions)
                 .WithMany()
                 .UsingEntity(j => j.ToTable("MessageMentions"));
+
+            modelBuilder.Entity<Guild>()
+                .HasKey(g => g.Id);
+
+            modelBuilder.Entity<Channel>()
+                .HasKey(c => c.Id);
+
+            modelBuilder.Entity<DiscordServer>()
+                .HasOne(ds => ds.Guild)
+                .WithMany()
+                .HasForeignKey("GuildId");
+
+            modelBuilder.Entity<DiscordServer>()
+                .HasOne(ds => ds.Channel)
+                .WithMany()
+                .HasForeignKey("ChannelId");
         }
 
         public DbSet<Reel> Reels { get; set; }

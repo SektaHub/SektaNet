@@ -67,7 +67,8 @@ public class DiscordService
             var serverEntity = _mapper.Map<DiscordServer>(serverDto);
             serverEntity.Id = Guid.NewGuid();
 
-            ProcessMessages(serverEntity);  // Add this line
+            ProcessGuild(serverEntity);
+            ProcessMessages(serverEntity);
             ProcessUsers(serverEntity);
             ProcessAttachments(serverEntity);
             ProcessEmbeds(serverEntity);
@@ -84,6 +85,23 @@ public class DiscordService
         {
             transaction.Rollback();
             throw;
+        }
+    }
+
+    private void ProcessGuild(DiscordServer serverEntity)
+    {
+        var existingGuild = _dbContext.Set<Guild>().FirstOrDefault(g => g.Id == serverEntity.Guild.Id);
+        if (existingGuild != null)
+        {
+            // Update existing guild if necessary
+            existingGuild.Name = serverEntity.Guild.Name;
+            existingGuild.IconUrl = serverEntity.Guild.IconUrl;
+            serverEntity.Guild = existingGuild;
+        }
+        else
+        {
+            // Add new guild
+            _dbContext.Set<Guild>().Add(serverEntity.Guild);
         }
     }
 
