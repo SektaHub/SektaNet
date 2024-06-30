@@ -54,14 +54,14 @@ public class DiscordService
                 dayBoundary = dayBoundary.AddDays(-1);
             }
 
-            var key = $"{server.Guild.Name}\n{server.Channel.Name}\n{dayBoundary:yyyy-MM}";
+            var key = $"Server: {server.Guild.Name}\nChannel: {server.Channel.Name}\nDate: {dayBoundary:yyyy-MM}\n\n";
 
             if (!chatData.ContainsKey(key))
             {
                 chatData[key] = new List<string>();
             }
 
-            chatData[key].Add($"{message.Author.Name}:\n{message.Content}");
+            chatData[key].Add($"{message.Author.Name}:\n{message.Content}\n");
         }
 
         var result = new StringBuilder();

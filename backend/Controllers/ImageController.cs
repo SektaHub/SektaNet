@@ -17,6 +17,9 @@ using Microsoft.AspNetCore.Authorization;
 using backend.Models.Common;
 using System.Security.Claims;
 
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Jpeg;
+
 namespace backend.Controllers
 {
     [ApiController]
@@ -88,6 +91,53 @@ namespace backend.Controllers
             {
                 _logger.LogError($"An error occurred while attempting to read the image file: {ex.Message}");
                 return StatusCode(500, "An error occurred while attempting to read the image file.");
+            }
+        }
+
+        [HttpGet("{id}/Thumbnail", Name = "GetImageThumbnail")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetImageThumbnail(Guid id)
+        {
+            try
+            {
+                var imageEntity = _fileConentService.GetById(id);
+                if (imageEntity == null)
+                {
+                    return NotFound();
+                }
+
+                var imageStream = await _fileConentService.GetFileStreamAsync(imageEntity.ContentId);
+                if (imageStream.Length == 0)
+                {
+                    return NotFound();
+                }
+
+                using (var image = SixLabors.ImageSharp.Image.Load(imageStream))
+                {
+                    // Crop to square
+                    image.Mutate(x => x.Crop(new SixLabors.ImageSharp.Rectangle(
+                        (image.Width - Math.Min(image.Width, image.Height)) / 2,
+                        (image.Height - Math.Min(image.Width, image.Height)) / 2,
+                        Math.Min(image.Width, image.Height),
+                        Math.Min(image.Width, image.Height)
+                    )));
+
+                    // Resize to 150x150
+                    image.Mutate(x => x.Resize(150, 150));
+
+                    // Save to a new MemoryStream
+                    var thumbnailStream = new MemoryStream();
+                    image.Save(thumbnailStream, new JpegEncoder());
+                    thumbnailStream.Position = 0;
+
+                    // Return the thumbnail
+                    return File(thumbnailStream, "image/jpeg");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred while creating the thumbnail: {ex.Message}");
+                return StatusCode(500, "An error occurred while creating the thumbnail.");
             }
         }
 
