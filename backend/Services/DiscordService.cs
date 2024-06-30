@@ -81,21 +81,20 @@ public class DiscordService
         return result.ToString();
     }
 
-    public async Task<List<string>> GenerateChatJsonFiles(string channelId, string directory)
+    public async Task<List<string>> GenerateChatJsonFiles(string channelId, string directory, int daysPerFile = 10000)
     {
         var fileNames = new ConcurrentBag<string>();
 
         var server = await _dbContext.DiscordServers
-            .Include(ds => ds.Guild)
-            .Include(ds => ds.Channel)
-            .FirstOrDefaultAsync(ds => ds.Channel.Id == channelId);
+            .Include(s => s.Guild)
+            .Include(s => s.Channel)
+            .FirstOrDefaultAsync(s => s.Channel.Id == channelId);
 
         if (server == null)
         {
             throw new Exception("Server not found for the given channel ID");
         }
 
-        // Optimize database query
         var messagesQuery = _dbContext.DiscordMessages
             .Where(m => m.DiscordServerId == server.Id)
             .Where(m => (m.Embeds == null || !m.Embeds.Any()) && (m.Attachments == null || !m.Attachments.Any()))
@@ -107,12 +106,10 @@ public class DiscordService
                 m.Content
             });
 
-        // Use asynchronous streaming
+        var chatData = new ConcurrentDictionary<DateTime, ConcurrentBag<string>>();
+
         await foreach (var batch in BatchAsync(messagesQuery, 20000))
         {
-            var chatData = new ConcurrentDictionary<DateTime, ConcurrentBag<string>>();
-
-            // Process batch in parallel
             Parallel.ForEach(batch, message =>
             {
                 var localTimestamp = message.TimeStamp.ToLocalTime();
@@ -125,35 +122,36 @@ public class DiscordService
                 var messageEntry = $"{message.AuthorName ?? "Unknown"}:\n{message.Content}\n";
                 chatData.GetOrAdd(dayBoundary, _ => new ConcurrentBag<string>()).Add(messageEntry);
             });
-
-            // Group days into chunks of approximately 100
-            var groupedData = chatData.GroupBy(kvp => kvp.Key.ToString("yyyy-MM"))
-                                      .SelectMany(g => g.Chunk(10000))
-                                      .ToList();
-
-            // Write files in parallel
-            Parallel.ForEach(groupedData, chunk =>
-            {
-                var startDate = chunk.First().Key;
-                var endDate = chunk.Last().Key;
-                var fileName = $"ChatExport_{server.Guild.Name}_{server.Channel.Name}_{startDate:yyyyMMdd}-{endDate:yyyyMMdd}.json";
-                var filePath = Path.Combine(directory, fileName);
-
-                var jsonObject = new
-                {
-                    Server = server.Guild.Name,
-                    Channel = server.Channel.Name,
-                    DateRange = $"{startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}",
-                    Messages = chunk.ToDictionary(
-                        day => day.Key.ToString("yyyy-MM-dd"),
-                        day => day.Value.ToArray()
-                    )
-                };
-
-                File.WriteAllText(filePath, JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions { WriteIndented = true }));
-                fileNames.Add(fileName);
-            });
         }
+
+        var sortedDays = chatData.OrderBy(kvp => kvp.Key).ToList();
+        var dayChunks = sortedDays.Chunk(daysPerFile);
+
+        Parallel.ForEach(dayChunks, (chunk, _, chunkIndex) =>
+        {
+            var startDate = chunk.First().Key;
+            var endDate = chunk.Last().Key;
+            var fileName = $"ChatExport_{server.Guild.Name}_{server.Channel.Name}_{startDate:yyyyMMdd}-{endDate:yyyyMMdd}.json";
+            var filePath = Path.Combine(directory, fileName);
+
+            var result = new StringBuilder();
+            result.AppendLine("{");
+
+            foreach (var day in chunk)
+            {
+                var key = $"Server: {server.Guild.Name}\nChannel: {server.Channel.Name}\nDate: {day.Key:yyyy-MM}\n\n";
+                result.AppendLine($"\"{key}");
+                result.AppendLine(string.Join("\n", day.Value));
+                result.AppendLine("\",");
+            }
+
+            // Remove the last comma and close the JSON object
+            result.Length -= 3;
+            result.AppendLine("\n}");
+
+            File.WriteAllText(filePath, result.ToString());
+            fileNames.Add(fileName);
+        });
 
         return fileNames.ToList();
     }
