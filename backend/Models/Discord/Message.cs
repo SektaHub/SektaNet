@@ -11,13 +11,14 @@ namespace backend.Models.Discord
         public DateTime? CallEndedTimeStamp { get; set; }
         public bool IsPinned { get; set; }
         public string Content { get; set; }
-
         public string? AuthorId { get; set; }
         public DiscordUser? Author { get; set; }
-
         public List<Attachment> Attachments { get; set; }
         public List<Embed> Embeds { get; set; }
         public List<Reaction> Reactions { get; set; }
         public List<DiscordUser> Mentions { get; set; }
+
+        public Guid DiscordServerId { get; set; }  // Add this line
+        public DiscordServer DiscordServer { get; set; }
     }
 }

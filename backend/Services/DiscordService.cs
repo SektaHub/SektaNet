@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 public class DiscordService
 {
@@ -80,77 +83,94 @@ public class DiscordService
 
     public async Task<List<string>> GenerateChatJsonFiles(string channelId, string directory)
     {
+        var fileNames = new ConcurrentBag<string>();
+
         var server = await _dbContext.DiscordServers
-            .Include(s => s.Guild)
-            .Include(s => s.Channel)
-            .Include(s => s.Messages)
-                .ThenInclude(m => m.Author)
-            .Include(s => s.Messages)
-                .ThenInclude(m => m.Embeds)
-            .Include(s => s.Messages)
-                .ThenInclude(m => m.Attachments)
-            .FirstOrDefaultAsync(s => s.Channel.Id == channelId);
+            .Include(ds => ds.Guild)
+            .Include(ds => ds.Channel)
+            .FirstOrDefaultAsync(ds => ds.Channel.Id == channelId);
 
         if (server == null)
         {
-            throw new Exception("Server not found");
+            throw new Exception("Server not found for the given channel ID");
         }
 
-        var messages = server.Messages
-            .Where(m => (m.Embeds == null || !m.Embeds.Any()) && (m.Attachments == null || !m.Attachments.Any()));
-
-        var chatData = new ConcurrentDictionary<DateTime, ConcurrentBag<string>>();
-        var fileNames = new ConcurrentBag<string>();
-
-        // Process messages in parallel
-        await Parallel.ForEachAsync(messages, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, async (message, token) =>
-        {
-            var localTimestamp = message.TimeStamp.ToLocalTime();
-            var dayBoundary = localTimestamp.Date.AddHours(5);
-            if (localTimestamp.Hour < 5)
+        // Optimize database query
+        var messagesQuery = _dbContext.DiscordMessages
+            .Where(m => m.DiscordServerId == server.Id)
+            .Where(m => (m.Embeds == null || !m.Embeds.Any()) && (m.Attachments == null || !m.Attachments.Any()))
+            .OrderBy(m => m.TimeStamp)
+            .Select(m => new
             {
-                dayBoundary = dayBoundary.AddDays(-1);
-            }
+                m.TimeStamp,
+                AuthorName = m.Author.Name,
+                m.Content
+            });
 
-            var messageEntry = $"{message.Author?.Name ?? "Unknown"}:\n{message.Content}\n";
-
-            chatData.GetOrAdd(dayBoundary, _ => new ConcurrentBag<string>()).Add(messageEntry);
-        });
-
-        // Group days into chunks of approximately 10000
-        var groupedData = chatData.GroupBy(kvp => kvp.Key.ToString("yyyy-MM"))
-                                  .SelectMany(g => g.Chunk(10000))
-                                  .ToList();
-
-        // Write files in parallel
-        await Parallel.ForEachAsync(groupedData, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, async (chunk, token) =>
+        // Use asynchronous streaming
+        await foreach (var batch in BatchAsync(messagesQuery, 100))
         {
-            var startDate = chunk.First().Key;
-            var endDate = chunk.Last().Key;
-            var fileName = $"ChatExport_{server.Guild.Name}_{server.Channel.Name}_{startDate:yyyyMMdd}-{endDate:yyyyMMdd}.json";
-            var filePath = Path.Combine(directory, fileName);
+            var chatData = new ConcurrentDictionary<DateTime, ConcurrentBag<string>>();
 
-            var result = new StringBuilder();
-            result.AppendLine("{");
-            result.AppendLine($"Server: {server.Guild.Name}");
-            result.AppendLine($"Channel: {server.Channel.Name}");
-            result.AppendLine($"Date Range: {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
-            result.AppendLine();
-
-            foreach (var day in chunk)
+            // Process batch in parallel
+            Parallel.ForEach(batch, message =>
             {
-                result.AppendLine($"Date: {day.Key:yyyy-MM-dd}");
-                result.AppendLine(string.Join("\n", day.Value));
-                result.AppendLine();
-            }
+                var localTimestamp = message.TimeStamp.ToLocalTime();
+                var dayBoundary = localTimestamp.Date.AddHours(5);
+                if (localTimestamp.Hour < 5)
+                {
+                    dayBoundary = dayBoundary.AddDays(-1);
+                }
 
-            result.AppendLine("}");
+                var messageEntry = $"{message.AuthorName ?? "Unknown"}:\n{message.Content}\n";
+                chatData.GetOrAdd(dayBoundary, _ => new ConcurrentBag<string>()).Add(messageEntry);
+            });
 
-            await File.WriteAllTextAsync(filePath, result.ToString(), token);
-            fileNames.Add(fileName);
-        });
+            // Group days into chunks of approximately 100
+            var groupedData = chatData.GroupBy(kvp => kvp.Key.ToString("yyyy-MM"))
+                                      .SelectMany(g => g.Chunk(10000))
+                                      .ToList();
+
+            // Write files in parallel
+            Parallel.ForEach(groupedData, chunk =>
+            {
+                var startDate = chunk.First().Key;
+                var endDate = chunk.Last().Key;
+                var fileName = $"ChatExport_{server.Guild.Name}_{server.Channel.Name}_{startDate:yyyyMMdd}-{endDate:yyyyMMdd}.json";
+                var filePath = Path.Combine(directory, fileName);
+
+                var jsonObject = new
+                {
+                    Server = server.Guild.Name,
+                    Channel = server.Channel.Name,
+                    DateRange = $"{startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}",
+                    Messages = chunk.ToDictionary(
+                        day => day.Key.ToString("yyyy-MM-dd"),
+                        day => day.Value.ToArray()
+                    )
+                };
+
+                File.WriteAllText(filePath, JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions { WriteIndented = true }));
+                fileNames.Add(fileName);
+            });
+        }
 
         return fileNames.ToList();
+    }
+
+    private static async IAsyncEnumerable<List<T>> BatchAsync<T>(IQueryable<T> query, int batchSize, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        int skip = 0;
+        List<T> batch;
+        do
+        {
+            batch = await query.Skip(skip).Take(batchSize).ToListAsync(cancellationToken);
+            if (batch.Any())
+            {
+                yield return batch;
+                skip += batchSize;
+            }
+        } while (batch.Count == batchSize);
     }
 
     public string GenerateAttachmentUrlsJson(string channelId)
