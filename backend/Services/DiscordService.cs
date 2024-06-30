@@ -83,7 +83,7 @@ public class DiscordService
 
     public async Task<List<string>> GenerateChatJsonFiles(string channelId, string directory, int daysPerFile = 10000)
     {
-        var fileNames = new ConcurrentBag<string>();
+        var fileNames = new List<string>();
 
         var server = await _dbContext.DiscordServers
             .Include(s => s.Guild)
@@ -106,11 +106,11 @@ public class DiscordService
                 m.Content
             });
 
-        var chatData = new ConcurrentDictionary<DateTime, ConcurrentBag<string>>();
+        var chatData = new Dictionary<DateTime, List<string>>();
 
         await foreach (var batch in BatchAsync(messagesQuery, 20000))
         {
-            Parallel.ForEach(batch, message =>
+            foreach (var message in batch)
             {
                 var localTimestamp = message.TimeStamp.ToLocalTime();
                 var dayBoundary = localTimestamp.Date.AddHours(5);
@@ -120,14 +120,18 @@ public class DiscordService
                 }
 
                 var messageEntry = $"{message.AuthorName ?? "Unknown"}:\n{message.Content}\n";
-                chatData.GetOrAdd(dayBoundary, _ => new ConcurrentBag<string>()).Add(messageEntry);
-            });
+                if (!chatData.ContainsKey(dayBoundary))
+                {
+                    chatData[dayBoundary] = new List<string>();
+                }
+                chatData[dayBoundary].Add(messageEntry);
+            }
         }
 
         var sortedDays = chatData.OrderBy(kvp => kvp.Key).ToList();
         var dayChunks = sortedDays.Chunk(daysPerFile);
 
-        Parallel.ForEach(dayChunks, (chunk, _, chunkIndex) =>
+        foreach (var chunk in dayChunks)
         {
             var startDate = chunk.First().Key;
             var endDate = chunk.Last().Key;
@@ -146,14 +150,17 @@ public class DiscordService
             }
 
             // Remove the last comma and close the JSON object
-            result.Length -= 3;
+            if (result.Length > 2)
+            {
+                result.Length -= 3;
+            }
             result.AppendLine("\n}");
 
             File.WriteAllText(filePath, result.ToString());
             fileNames.Add(fileName);
-        });
+        }
 
-        return fileNames.ToList();
+        return fileNames;
     }
 
     private static async IAsyncEnumerable<List<T>> BatchAsync<T>(IQueryable<T> query, int batchSize, [EnumeratorCancellation] CancellationToken cancellationToken = default)
