@@ -2,6 +2,7 @@
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
@@ -42,6 +43,37 @@ namespace backend.Controllers
         {
             DiscordServerDto dto = _discordService.Create(createDto);
             return Ok(dto);
+        }
+
+        [HttpPost("upload")]
+        [RequestSizeLimit(2_147_483_648_0)]
+        public async Task<IActionResult> UploadAndProcess(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("File is empty");
+
+            using var stream = file.OpenReadStream();
+            using var reader = new StreamReader(stream);
+            using var jsonReader = new JsonTextReader(reader);
+
+            var serializer = new JsonSerializer();
+
+            // Process the JSON in chunks
+            while (await jsonReader.ReadAsync())
+            {
+                if (jsonReader.TokenType == JsonToken.StartObject)
+                {
+                    var serverDto = serializer.Deserialize<DiscordServerDto>(jsonReader);
+                    await ProcessServerDto(serverDto);
+                }
+            }
+
+            return Ok("Processing complete");
+        }
+
+        private async Task ProcessServerDto(DiscordServerDto serverDto)
+        {
+            _discordService.Create(serverDto);
         }
 
         [HttpGet("{id}/ChatExport")]
