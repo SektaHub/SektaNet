@@ -44,6 +44,13 @@ namespace backend.Controllers
             return Ok(dto);
         }
 
+        [HttpGet("{id}/ChatExport")]
+        public ActionResult<DiscordServerDto> GenerateChat(string id)
+        {
+            var chatjson = _discordService.GenerateChatJson(id);
+            return Ok(chatjson);
+        }
+
         //[HttpPost]
         //public async Task<IActionResult> Create()
         //{

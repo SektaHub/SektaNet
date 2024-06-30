@@ -2,6 +2,7 @@
 
 namespace backend.Models.Discord
 {
+    //Refers to the export, needs rename
     public class DiscordServer
     {
         public Guid Id { get; set; }

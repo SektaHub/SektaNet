@@ -1,6 +1,9 @@
 ﻿using AutoMapper;
 using backend.Models.Discord;
 using backend;
+using Microsoft.EntityFrameworkCore;
+using System.Text;
+using Newtonsoft.Json;
 
 public class DiscordService
 {
@@ -11,6 +14,67 @@ public class DiscordService
     {
         _dbContext = dbContext;
         _mapper = mapper;
+    }
+
+    public string GenerateChatJson(string channelId)
+    {
+        var server = _dbContext.DiscordServers
+            .Include(s => s.Guild)
+            .Include(s => s.Channel)
+            .Include(s => s.Messages)
+                .ThenInclude(m => m.Author)
+            .Include(s => s.Messages)
+                .ThenInclude(m => m.Embeds)
+            .Include(s => s.Messages)
+                .ThenInclude(m => m.Attachments)
+            .FirstOrDefault(s => s.Channel.Id == channelId);
+
+        if (server == null)
+        {
+            return JsonConvert.SerializeObject(new { error = "Server not found" });
+        }
+
+        var chatData = new Dictionary<string, List<string>>();
+
+        foreach (var message in server.Messages.OrderBy(m => m.TimeStamp))
+        {
+            // Skip messages with embeds or attachments
+            if (message.Embeds.Any() || message.Attachments.Any())
+            {
+                continue;
+            }
+
+            // Adjust timestamp to local time (assuming server time is UTC)
+            var localTimestamp = message.TimeStamp.ToLocalTime();
+
+            // Adjust day boundary to 5 AM
+            var dayBoundary = localTimestamp.Date.AddHours(5);
+            if (localTimestamp.Hour < 5)
+            {
+                dayBoundary = dayBoundary.AddDays(-1);
+            }
+
+            var key = $"{server.Guild.Name}\n{server.Channel.Name}\n{dayBoundary:yyyy-MM}";
+
+            if (!chatData.ContainsKey(key))
+            {
+                chatData[key] = new List<string>();
+            }
+
+            chatData[key].Add($"{message.Author.Name}:\n{message.Content}");
+        }
+
+        var result = new StringBuilder();
+        foreach (var entry in chatData)
+        {
+            result.AppendLine("{");
+            result.AppendLine(entry.Key);
+            result.AppendLine(string.Join("\n", entry.Value));
+            result.AppendLine("}");
+            result.AppendLine();
+        }
+
+        return result.ToString();
     }
 
     public IQueryable<DiscordServerDto> GetAll()
@@ -202,4 +266,6 @@ public class DiscordService
             }
         }
     }
+
+
 }
