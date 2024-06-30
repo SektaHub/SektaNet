@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -13,9 +14,11 @@ using backend;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240630091352_Discord10")]
+    partial class Discord10
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -27,15 +30,15 @@ namespace backend.Migrations
 
             modelBuilder.Entity("DiscordUserMessage", b =>
                 {
+                    b.Property<string>("MentioningMessagesId")
+                        .HasColumnType("text");
+
                     b.Property<string>("MentionsId")
                         .HasColumnType("text");
 
-                    b.Property<string>("MessageId")
-                        .HasColumnType("text");
+                    b.HasKey("MentioningMessagesId", "MentionsId");
 
-                    b.HasKey("MentionsId", "MessageId");
-
-                    b.HasIndex("MessageId");
+                    b.HasIndex("MentionsId");
 
                     b.ToTable("MessageMentions", (string)null);
                 });
@@ -370,6 +373,7 @@ namespace backend.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("AuthorId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("CallEndedTimeStamp")
@@ -672,15 +676,15 @@ namespace backend.Migrations
 
             modelBuilder.Entity("DiscordUserMessage", b =>
                 {
-                    b.HasOne("backend.Models.Discord.DiscordUser", null)
+                    b.HasOne("backend.Models.Discord.Message", null)
                         .WithMany()
-                        .HasForeignKey("MentionsId")
+                        .HasForeignKey("MentioningMessagesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("backend.Models.Discord.Message", null)
+                    b.HasOne("backend.Models.Discord.DiscordUser", null)
                         .WithMany()
-                        .HasForeignKey("MessageId")
+                        .HasForeignKey("MentionsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -765,9 +769,10 @@ namespace backend.Migrations
             modelBuilder.Entity("backend.Models.Discord.Message", b =>
                 {
                     b.HasOne("backend.Models.Discord.DiscordUser", "Author")
-                        .WithMany()
+                        .WithMany("AuthoredMessages")
                         .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("backend.Models.Discord.DiscordServer", null)
                         .WithMany("Messages")
@@ -1014,6 +1019,11 @@ namespace backend.Migrations
             modelBuilder.Entity("backend.Models.Discord.DiscordServer", b =>
                 {
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("backend.Models.Discord.DiscordUser", b =>
+                {
+                    b.Navigation("AuthoredMessages");
                 });
 
             modelBuilder.Entity("backend.Models.Discord.Message", b =>

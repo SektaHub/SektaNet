@@ -32,6 +32,17 @@ namespace backend
                 .HasOperators("vector_l2_ops")
                 .HasStorageParameter("m", 16)
                 .HasStorageParameter("ef_construction", 64);
+
+            modelBuilder.Entity<Message>()
+            .HasOne(m => m.Author)
+            .WithMany()
+            .HasForeignKey(m => m.AuthorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Message>()
+                .HasMany(m => m.Mentions)
+                .WithMany()
+                .UsingEntity(j => j.ToTable("MessageMentions"));
         }
 
         public DbSet<Reel> Reels { get; set; }

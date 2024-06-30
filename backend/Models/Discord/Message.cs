@@ -11,12 +11,13 @@ namespace backend.Models.Discord
         public DateTime? CallEndedTimeStamp { get; set; }
         public bool IsPinned { get; set; }
         public string Content { get; set; }
-        public DiscordUser Author { get; set; }
+
+        public string? AuthorId { get; set; }
+        public DiscordUser? Author { get; set; }
+
         public List<Attachment> Attachments { get; set; }
         public List<Embed> Embeds { get; set; }
-        //public List<Sticker> Stickers { get; set; }
         public List<Reaction> Reactions { get; set; }
-        //I don't think this contains the roles
         public List<DiscordUser> Mentions { get; set; }
     }
 }

@@ -67,14 +67,15 @@ public class DiscordService
 
         foreach (var message in serverEntity.Messages)
         {
-            message.Author = GetOrCreateUser(message.Author, processedUsers);
+            if (message.Author != null)
+            {
+                message.Author = GetOrCreateUser(message.Author, processedUsers);
+                message.AuthorId = message.Author.Id;
+            }
 
             if (message.Mentions != null)
             {
-                for (int i = 0; i < message.Mentions.Count; i++)
-                {
-                    message.Mentions[i] = GetOrCreateUser(message.Mentions[i], processedUsers);
-                }
+                message.Mentions = message.Mentions.Select(u => GetOrCreateUser(u, processedUsers)).ToList();
             }
         }
     }
@@ -104,6 +105,7 @@ public class DiscordService
         processedUsers[user.Id] = dbUser;
         return dbUser;
     }
+
 
     private void ProcessAttachments(DiscordServer serverEntity)
     {
