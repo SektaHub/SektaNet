@@ -10,7 +10,7 @@ namespace backend.Models.Discord
         public Guid Id { get; set; }
         public string Title { get; set; }
         public string Url { get; set; }
-        public DateTime? TimeStamp { get; set; }
+        public string? TimeStamp { get; set; }
         public string? Description { get; set; }
         public EmbedAuthor? Author { get; set; }
         public EmbedThumbnail? Thumbnail { get; set; }

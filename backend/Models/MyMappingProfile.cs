@@ -28,6 +28,7 @@ namespace backend.Models
             CreateMap<DiscordServer, DiscordServerDto>();
             CreateMap<DiscordServerDto, DiscordServer>();
 
+
         }
     }
 

@@ -33,6 +33,31 @@ public class DiscordService
         return dto;
     }
 
+    private void ProcessMessages(DiscordServer serverEntity)
+    {
+        foreach (var message in serverEntity.Messages)
+        {
+            message.TimeStamp = ConvertToUtc(message.TimeStamp);
+            if (message.TimeStampEdited.HasValue)
+                message.TimeStampEdited = ConvertToUtc(message.TimeStampEdited.Value);
+            if (message.CallEndedTimeStamp.HasValue)
+                message.CallEndedTimeStamp = ConvertToUtc(message.CallEndedTimeStamp.Value);
+        }
+    }
+
+    private DateTime ConvertToUtc(DateTime dateTime)
+    {
+        if (dateTime.Kind == DateTimeKind.Utc)
+            return dateTime;
+
+        // If it's local, convert to UTC
+        if (dateTime.Kind == DateTimeKind.Local)
+            return dateTime.ToUniversalTime();
+
+        // If it's unspecified, assume it's UTC
+        return DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
+    }
+
     public DiscordServerDto Create(DiscordServerDto serverDto)
     {
         using var transaction = _dbContext.Database.BeginTransaction();
@@ -42,6 +67,7 @@ public class DiscordService
             var serverEntity = _mapper.Map<DiscordServer>(serverDto);
             serverEntity.Id = Guid.NewGuid();
 
+            ProcessMessages(serverEntity);  // Add this line
             ProcessUsers(serverEntity);
             ProcessAttachments(serverEntity);
             ProcessEmbeds(serverEntity);
