@@ -8,8 +8,8 @@ namespace backend.Models.Discord
     {
         //Added for 
         public Guid Id { get; set; }
-        public string Title { get; set; }
-        public string Url { get; set; }
+        public string? Title { get; set; }
+        public string? Url { get; set; }
         public string? TimeStamp { get; set; }
         public string? Description { get; set; }
         public EmbedAuthor? Author { get; set; }

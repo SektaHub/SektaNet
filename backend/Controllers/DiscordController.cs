@@ -83,6 +83,33 @@ namespace backend.Controllers
             return Ok(chatjson);
         }
 
+        [HttpGet("{id}/ChatExportFile")]
+        public IActionResult GenerateChatFile(string id)
+        {
+            var chatJson = _discordService.GenerateChatJson(id);
+
+            // Generate a unique filename
+            string fileName = $"ChatExport_{id}_{DateTime.Now:yyyyMMddHHmmss}.json";
+
+            // Specify the directory where you want to save the file
+            string directory = Path.Combine(Directory.GetCurrentDirectory(), "ChatExports");
+
+            // Ensure the directory exists
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            // Combine the directory and filename
+            string filePath = Path.Combine(directory, fileName);
+
+            // Write the JSON to the file
+            System.IO.File.WriteAllText(filePath, chatJson);
+
+            // Return a success message with the file path
+            return Ok($"Chat export saved to: {filePath}");
+        }
+
         [HttpGet("{id}/AttachmentUrlExport")]
         public ActionResult<DiscordServerDto> GenerateChatAttachments(string id)
         {
