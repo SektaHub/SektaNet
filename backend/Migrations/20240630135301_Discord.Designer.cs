@@ -14,8 +14,8 @@ using backend;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240630092404_Discord12")]
-    partial class Discord12
+    [Migration("20240630135301_Discord")]
+    partial class Discord
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,6 +27,21 @@ namespace backend.Migrations
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("DiscordUserMessage", b =>
+                {
+                    b.Property<string>("MentionsId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MessageId")
+                        .HasColumnType("text");
+
+                    b.HasKey("MentionsId", "MessageId");
+
+                    b.HasIndex("MessageId");
+
+                    b.ToTable("MessageMentions", (string)null);
+                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
@@ -256,11 +271,9 @@ namespace backend.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Category")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("CategoryId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
@@ -289,8 +302,9 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("ExportedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("ExportedAt")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("GuildId")
                         .IsRequired()
@@ -322,9 +336,6 @@ namespace backend.Migrations
                     b.Property<bool>("IsBot")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("MessageId")
-                        .HasColumnType("text");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -333,8 +344,6 @@ namespace backend.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("MessageId");
 
                     b.ToTable("DiscordUsers");
                 });
@@ -425,6 +434,9 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("OriginalSource")
+                        .HasColumnType("text");
+
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
@@ -461,6 +473,9 @@ namespace backend.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OriginalSource")
                         .HasColumnType("text");
 
                     b.Property<string>("OwnerId")
@@ -505,6 +520,9 @@ namespace backend.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OriginalSource")
                         .HasColumnType("text");
 
                     b.Property<string>("OwnerId")
@@ -558,6 +576,9 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("OriginalSource")
+                        .HasColumnType("text");
+
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
@@ -607,6 +628,9 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("OriginalSource")
+                        .HasColumnType("text");
+
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
@@ -650,6 +674,9 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("OriginalSource")
+                        .HasColumnType("text");
+
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
@@ -661,6 +688,21 @@ namespace backend.Migrations
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Thumbnails");
+                });
+
+            modelBuilder.Entity("DiscordUserMessage", b =>
+                {
+                    b.HasOne("backend.Models.Discord.DiscordUser", null)
+                        .WithMany()
+                        .HasForeignKey("MentionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.Discord.Message", null)
+                        .WithMany()
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -740,18 +782,12 @@ namespace backend.Migrations
                     b.Navigation("Guild");
                 });
 
-            modelBuilder.Entity("backend.Models.Discord.DiscordUser", b =>
-                {
-                    b.HasOne("backend.Models.Discord.Message", null)
-                        .WithMany("Mentions")
-                        .HasForeignKey("MessageId");
-                });
-
             modelBuilder.Entity("backend.Models.Discord.Message", b =>
                 {
                     b.HasOne("backend.Models.Discord.DiscordUser", "Author")
                         .WithMany()
-                        .HasForeignKey("AuthorId");
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("backend.Models.Discord.DiscordServer", null)
                         .WithMany("Messages")
@@ -769,8 +805,8 @@ namespace backend.Migrations
                             b1.Property<string>("Description")
                                 .HasColumnType("text");
 
-                            b1.Property<DateTime?>("TimeStamp")
-                                .HasColumnType("timestamp with time zone");
+                            b1.Property<string>("TimeStamp")
+                                .HasColumnType("text");
 
                             b1.Property<string>("Title")
                                 .IsRequired()
@@ -1003,8 +1039,6 @@ namespace backend.Migrations
             modelBuilder.Entity("backend.Models.Discord.Message", b =>
                 {
                     b.Navigation("Attachments");
-
-                    b.Navigation("Mentions");
                 });
 #pragma warning restore 612, 618
         }

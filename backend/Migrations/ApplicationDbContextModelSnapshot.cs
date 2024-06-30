@@ -431,6 +431,9 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("OriginalSource")
+                        .HasColumnType("text");
+
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
@@ -467,6 +470,9 @@ namespace backend.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OriginalSource")
                         .HasColumnType("text");
 
                     b.Property<string>("OwnerId")
@@ -511,6 +517,9 @@ namespace backend.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OriginalSource")
                         .HasColumnType("text");
 
                     b.Property<string>("OwnerId")
@@ -564,6 +573,9 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("OriginalSource")
+                        .HasColumnType("text");
+
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
@@ -613,6 +625,9 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("OriginalSource")
+                        .HasColumnType("text");
+
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
@@ -654,6 +669,9 @@ namespace backend.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OriginalSource")
                         .HasColumnType("text");
 
                     b.Property<string>("OwnerId")

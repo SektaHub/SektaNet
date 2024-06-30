@@ -26,7 +26,7 @@ namespace backend.Repo
             _ffmpegService = ffmpegService;
         }
 
-        public async Task<Guid> SaveReel(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles)
+        public async Task<Guid> SaveReel(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource = null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -63,6 +63,7 @@ namespace backend.Repo
                 AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
                 ThumbnailId = thubnailId,
+                OriginalSource = originalSource,
             };
 
             _dbContext.Reels.Add(reel);
@@ -72,7 +73,7 @@ namespace backend.Repo
             return reel.Id;
         }
 
-        public async Task<Guid> SaveLongVideo(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles)
+        public async Task<Guid> SaveLongVideo(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource = null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -110,6 +111,7 @@ namespace backend.Repo
                 AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
                 ThumbnailId = thubnailId,
+                OriginalSource = originalSource,
             };
 
             _dbContext.LongVideos.Add(video);
@@ -164,7 +166,7 @@ namespace backend.Repo
             }
         }
 
-        public async Task<Guid> SaveImage(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles)
+        public async Task<Guid> SaveImage(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource =null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -196,6 +198,7 @@ namespace backend.Repo
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
+                OriginalSource = originalSource,
             };
 
             _dbContext.Images.Add(image);
@@ -239,7 +242,7 @@ namespace backend.Repo
             return image.Id;
         }
 
-        public async Task<Guid> SaveAudio(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles)
+        public async Task<Guid> SaveAudio(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource = null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -269,6 +272,7 @@ namespace backend.Repo
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
+                OriginalSource = originalSource,
             };
 
             _dbContext.Audio.Add(audio);
@@ -277,7 +281,7 @@ namespace backend.Repo
             return audio.Id;
         }
 
-        public async Task<Guid> SaveGenericFile(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles)
+        public async Task<Guid> SaveGenericFile(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource = null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -307,6 +311,7 @@ namespace backend.Repo
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
+                OriginalSource = originalSource,
             };
 
             _dbContext.Files.Add(fil);

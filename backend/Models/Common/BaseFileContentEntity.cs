@@ -14,5 +14,6 @@ namespace backend.Models.Common
         public string? OwnerId { get; set; }
         public ApplicationUser? Owner { get; set; }
         public List<string> AuthorizedRoles { get; set; } = new List<string>();
+        public string? OriginalSource { get; set; }
     }
 }

@@ -13,6 +13,7 @@ namespace backend.Models.Common
         public bool isPrivate { get; set; }
         public ApplicationUser? Owner { get; set; }
         public List<string> AuthorizedRoles { get; set; } = new List<string>();
+        public string? OriginalSource { get; set; }
     }
 
 }
