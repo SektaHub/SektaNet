@@ -61,7 +61,7 @@ public class DiscordService
                 dayBoundary = dayBoundary.AddDays(-1);
             }
 
-            var key = $"Server: {server.Guild.Name}\nChannel: {server.Channel.Name}\nDate: {dayBoundary:yyyy-MM}\n\n";
+            var key = $"SERVER: {server.Guild.Name}\nCHANNEL: {server.Channel.Name}\nDATE: {dayBoundary:yyyy-MM}\n\n";
 
             if (!chatData.ContainsKey(key))
             {
@@ -146,7 +146,7 @@ public class DiscordService
 
             foreach (var day in chunk)
             {
-                var key = $"Server: {server.Guild.Name}\nChannel: {server.Channel.Name}\nDate: {day.Key:yyyy-MM}\n\n";
+                var key = $"SERVER: {server.Guild.Name}\nCHANNEL: {server.Channel.Name}\nDATE: {day.Key:yyyy-MM}\n\n";
                 result.AppendLine($"\"{key}");
                 result.AppendLine(string.Join("\n", day.Value));
                 result.AppendLine("\",");
@@ -220,7 +220,7 @@ public class DiscordService
                     }
                     else
                     {
-                        messageContent.AppendLine($"<Image>Image not found</Image>");
+                        messageContent.AppendLine($"<Image>IMAGE_NOT_FOUND</Image>");
                     }
                 }
 
@@ -228,7 +228,7 @@ public class DiscordService
                 foreach (var embed in message.Embeds)
                 {
                     if(string.IsNullOrEmpty(embed.Title) || string.IsNullOrEmpty(embed.Description))
-                        messageContent.AppendLine($"<Embed>Error</Embed>");
+                        messageContent.AppendLine($"<Embed>EMBED_ERROR</Embed>");
                     else
                         messageContent.AppendLine($"<Embed>\n{embed.Title}\n{embed.Description}\n</Embed>");
 
@@ -241,7 +241,7 @@ public class DiscordService
                         }
                         else
                         {
-                            messageContent.AppendLine($"<Image>Image not found</Image>");
+                            messageContent.AppendLine($"<Image>IMAGE_NOT_FOUND</Image>");
                         }
                     }
                 }
