@@ -129,6 +129,25 @@ namespace backend.Controllers
             return Ok($"Chat exports saved to: {string.Join(", ", fileNames)}");
         }
 
+        [HttpGet("{id}/ChatExportFilesWithAttachments")]
+        public async Task<IActionResult> GenerateChatFilesWithAttachments(string id)
+        {
+            // Specify the directory where you want to save the files
+            string directory = Path.Combine(Directory.GetCurrentDirectory(), "ChatExports", id);
+
+            // Ensure the directory exists
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            // Generate the chat files
+            var fileNames = await _discordService.GenerateChatJsonFilesWithAttachments(id, directory);
+
+            // Return a success message with the file paths
+            return Ok($"Chat exports saved to: {string.Join(", ", fileNames)}");
+        }
+
         [HttpGet("{id}/AttachmentUrlExport")]
         public ActionResult<DiscordServerDto> GenerateChatAttachments(string id)
         {

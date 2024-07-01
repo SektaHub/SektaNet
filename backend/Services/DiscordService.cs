@@ -8,16 +8,19 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using backend.Services;
 
 public class DiscordService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly IMapper _mapper;
+    private readonly ImageService _imageService;
 
-    public DiscordService(ApplicationDbContext dbContext, IMapper mapper)
+    public DiscordService(ApplicationDbContext dbContext, IMapper mapper, ImageService imageService)
     {
         _dbContext = dbContext;
         _mapper = mapper;
+        _imageService = imageService;
     }
 
     public string GenerateChatJson(string channelId)
@@ -160,6 +163,123 @@ public class DiscordService
             fileNames.Add(fileName);
         }
 
+        return fileNames;
+    }
+
+    public async Task<List<string>> GenerateChatJsonFilesWithAttachments(string channelId, string directory, int daysPerFile = 10000)
+    {
+        var fileNames = new List<string>();
+        var server = await _dbContext.DiscordServers
+            .Include(s => s.Guild)
+            .Include(s => s.Channel)
+            .FirstOrDefaultAsync(s => s.Channel.Id == channelId);
+        if (server == null)
+        {
+            throw new Exception("Server not found for the given channel ID");
+        }
+
+        var messagesQuery = _dbContext.DiscordMessages
+            .Where(m => m.DiscordServerId == server.Id)
+            .OrderBy(m => m.TimeStamp)
+            .Select(m => new
+            {
+                m.TimeStamp,
+                AuthorName = m.Author.Name,
+                m.Content,
+                m.Attachments,
+                m.Embeds
+            });
+
+        var chatData = new Dictionary<DateTime, List<string>>();
+        await foreach (var batch in BatchAsync(messagesQuery, 20000))
+        {
+            foreach (var message in batch)
+            {
+                var localTimestamp = message.TimeStamp.ToLocalTime();
+                var dayBoundary = localTimestamp.Date.AddHours(5);
+                if (localTimestamp.Hour < 5)
+                {
+                    dayBoundary = dayBoundary.AddDays(-1);
+                }
+
+                var messageContent = new StringBuilder();
+                messageContent.AppendLine($"{message.AuthorName ?? "Unknown"}:");
+                if (!(message.Embeds.Any() /*|| message.Attachments.Any()*/))
+                {
+                    if(!string.IsNullOrEmpty(message.Content))
+                        messageContent.AppendLine(message.Content);
+                }
+
+                // Process attachments
+                foreach (var attachment in message.Attachments)
+                {
+                    var image = await _imageService.FindImageByOriginalSource(attachment.Url);
+                    if (image != null &&  !string.IsNullOrEmpty(image.GeneratedCaption))
+                    {
+                        messageContent.AppendLine($"<Image>{image.GeneratedCaption}</Image>");
+                    }
+                    else
+                    {
+                        messageContent.AppendLine($"<Image>Image not found</Image>");
+                    }
+                }
+
+                // Process embeds
+                foreach (var embed in message.Embeds)
+                {
+                    if(string.IsNullOrEmpty(embed.Title) || string.IsNullOrEmpty(embed.Description))
+                        messageContent.AppendLine($"<Embed>Error</Embed>");
+                    else
+                        messageContent.AppendLine($"<Embed>\n{embed.Title}\n{embed.Description}\n</Embed>");
+
+                    if (embed.Thumbnail != null && !string.IsNullOrEmpty(embed.Thumbnail.Url))
+                    {
+                        var image = await _imageService.FindImageByOriginalSource(embed.Thumbnail.Url);
+                        if (image != null && !string.IsNullOrEmpty(image.GeneratedCaption))
+                        {
+                            messageContent.AppendLine($"<Image>{image.GeneratedCaption}</Image>");
+                        }
+                        else
+                        {
+                            messageContent.AppendLine($"<Image>Image not found</Image>");
+                        }
+                    }
+                }
+
+                if (!chatData.ContainsKey(dayBoundary))
+                {
+                    chatData[dayBoundary] = new List<string>();
+                }
+                chatData[dayBoundary].Add(messageContent.ToString());
+            }
+        }
+
+        var sortedDays = chatData.OrderBy(kvp => kvp.Key).ToList();
+        var dayChunks = sortedDays.Chunk(daysPerFile);
+        foreach (var chunk in dayChunks)
+        {
+            var startDate = chunk.First().Key;
+            var endDate = chunk.Last().Key;
+            var fileName = $"ChatExport_{server.Guild.Name}_{server.Channel.Name}_{startDate:yyyyMMdd}-{endDate:yyyyMMdd}.json";
+            var filePath = Path.Combine(directory, fileName);
+            var result = new StringBuilder();
+            result.AppendLine("{");
+            foreach (var day in chunk)
+            {
+                var key = $"Server: {server.Guild.Name}\nChannel: {server.Channel.Name}\nDate: {day.Key:yyyy-MM}\n\n";
+                result.AppendLine($"\"{key}");
+                result.AppendLine(string.Join("\n", day.Value));
+                result.AppendLine("\",");
+            }
+            // Remove the last comma and close the JSON object
+            if (result.Length > 2)
+            {
+                result.Length -= 3;
+            }
+            result.AppendLine("\n}");
+            File.WriteAllText(filePath, result.ToString());
+            fileNames.Add(fileName);
+        }
         return fileNames;
     }
 

@@ -110,5 +110,11 @@ namespace backend.Services
             await _anyFileRepository.DeleteImage(id);
         }
 
+        public async Task<Image> FindImageByOriginalSource(string originalSource)
+        {
+            return await _dbContext.Set<Image>()
+                .FirstOrDefaultAsync(image => image.OriginalSource == originalSource);
+        }
+
     }
 }
