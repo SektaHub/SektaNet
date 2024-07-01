@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -13,9 +14,11 @@ using backend;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240701160824_Discord3")]
+    partial class Discord3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -370,7 +373,7 @@ namespace backend.Migrations
 
                     b.HasIndex("MessageId");
 
-                    b.ToTable("DiscordEmbeds");
+                    b.ToTable("Embed");
                 });
 
             modelBuilder.Entity("backend.Models.Discord.Guild", b =>
@@ -820,7 +823,7 @@ namespace backend.Migrations
 
                             b1.HasKey("EmbedId");
 
-                            b1.ToTable("DiscordEmbeds");
+                            b1.ToTable("Embed");
 
                             b1.WithOwner()
                                 .HasForeignKey("EmbedId");
@@ -843,7 +846,7 @@ namespace backend.Migrations
 
                             b1.HasKey("EmbedId");
 
-                            b1.ToTable("DiscordEmbeds");
+                            b1.ToTable("Embed");
 
                             b1.WithOwner()
                                 .HasForeignKey("EmbedId");
@@ -866,7 +869,7 @@ namespace backend.Migrations
 
                             b1.HasKey("EmbedId");
 
-                            b1.ToTable("DiscordEmbeds");
+                            b1.ToTable("Embed");
 
                             b1.WithOwner()
                                 .HasForeignKey("EmbedId");

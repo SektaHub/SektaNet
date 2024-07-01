@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace backend.Models.Discord
 {
-    [Owned]
     public class Embed
     {
         //Added for 

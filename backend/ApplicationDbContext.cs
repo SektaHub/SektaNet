@@ -77,6 +77,7 @@ namespace backend
         //public DbSet<DiscordRole> DiscordRoles { get; set; }
         public DbSet<DiscordUser> DiscordUsers { get; set; }
         public DbSet<Attachment> DiscordAttachments { get; set; }
+        public DbSet<Embed> DiscordEmbeds { get; set; }
 
     }
 }
