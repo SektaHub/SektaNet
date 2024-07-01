@@ -146,6 +146,70 @@ namespace backend.Controllers
             }
         }
 
+        [RequestSizeLimit(536_870_912_000)]
+        [HttpPost("upload-from-directory")]
+        [AllowAnonymous]
+        public async Task<IActionResult> UploadFromDirectory(string directory, string? tags, string? authorizedRoles, bool addOriginalSource = false)
+        {
+            try
+            {
+                if (tags == null)
+                    tags = "";
+
+                List<string> authorizedRolesList = string.IsNullOrEmpty(authorizedRoles)
+                    ? new List<string>()
+                    : authorizedRoles.Split(',').Select(role => role.Trim()).ToList();
+
+                string baseDirectory = Path.Combine(Directory.GetCurrentDirectory(), "MassImports", directory);
+                if (!Directory.Exists(baseDirectory))
+                    return NotFound("Specified directory does not exist");
+
+                var files = Directory.GetFiles(baseDirectory);
+                foreach (var filePath in files)
+                {
+                    if (string.IsNullOrEmpty(filePath)) continue;
+
+                    var fileName = Path.GetFileName(filePath);
+                    var fileType = MimeMapping.MimeUtility.GetMimeMapping(fileName).Split('/')[0];
+                    var fileContent = await System.IO.File.ReadAllBytesAsync(filePath);
+                    var stream = new MemoryStream(fileContent);
+                    var formFile = new FormFile(stream, 0, fileContent.Length, fileName, fileName)
+                    {
+                        Headers = new HeaderDictionary(),
+                        ContentType = MimeMapping.MimeUtility.GetMimeMapping(fileName)
+                    };
+
+                    string originalSource = addOriginalSource ? Path.Combine(directory, fileName) : null;
+
+                    switch (fileType.ToLower())
+                    {
+                        case "image":
+                            await _fileRepository.SaveImage(HttpContext, formFile, tags, authorizedRolesList, originalSource);
+                            break;
+                        case "video":
+                            if (await _ffmpegService.Is9_16AspectRatio(formFile))
+                                await _fileRepository.SaveReel(HttpContext, formFile, tags, authorizedRolesList, originalSource);
+                            else
+                                await _fileRepository.SaveLongVideo(HttpContext, formFile, tags, authorizedRolesList, originalSource);
+                            break;
+                        case "audio":
+                            await _fileRepository.SaveAudio(HttpContext, formFile, tags, authorizedRolesList, originalSource);
+                            break;
+                        default:
+                            await _fileRepository.SaveGenericFile(HttpContext, formFile, tags, authorizedRolesList, originalSource);
+                            break;
+                    }
+                }
+                return Ok("Files from directory uploaded and saved successfully");
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine($"Error uploading files from directory: {ex}");
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
 
     }
 }
