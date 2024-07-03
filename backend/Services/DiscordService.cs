@@ -166,25 +166,36 @@ public class DiscordService
         return fileNames;
     }
 
-    public async Task<List<string>> GenerateChatJsonFilesWithAttachments(string channelId, string directory, bool includeAttachments=false, bool IncludeEmbeds=false, int daysPerFile = 10000)
+    public async Task<List<string>> GenerateChatJsonFilesWithAttachments(string channelId, string directory, bool includeAttachments=false, bool includeEmbeds=false, int daysPerFile = 10000)
     {
         var fileNames = new List<string>();
-        var server = await _dbContext.DiscordServers
+        var server = _dbContext.DiscordServers
             .Include(s => s.Guild)
             .Include(s => s.Channel)
-            .FirstOrDefaultAsync(s => s.Channel.Id == channelId);
+            .FirstOrDefault(s => s.Channel.Id == channelId);
         if (server == null)
         {
             throw new Exception("Server not found for the given channel ID");
         }
 
         var messagesQuery = _dbContext.DiscordMessages
-            .Where(m => m.DiscordServerId == server.Id)
+         .Include(m => m.Author)
+         .Where(m => m.DiscordServerId == server.Id);
+
+        if (!includeAttachments)
+        {
+            messagesQuery = messagesQuery.Where(m => m.Attachments == null || !m.Attachments.Any());
+        }
+        if (!includeEmbeds)
+        {
+            messagesQuery = messagesQuery.Where(m => m.Embeds == null || !m.Embeds.Any());
+        }
+        var finalQuery = messagesQuery
             .OrderBy(m => m.TimeStamp)
             .Select(m => new
             {
                 m.TimeStamp,
-                AuthorName = m.Author.Name,
+                m.Author,
                 m.Content,
                 m.Attachments,
                 m.Embeds
@@ -203,12 +214,14 @@ public class DiscordService
                 }
 
                 var messageContent = new StringBuilder();
-                messageContent.AppendLine($"{message.AuthorName ?? "Unknown"}:");
-                if (!(message.Embeds.Any() /*|| message.Attachments.Any()*/))
+                messageContent.AppendLine($"{message.Author!.Name ?? "Unknown"}:");
+
+                if (message.Embeds == null || !message.Embeds.Any())
                 {
-                    if(!string.IsNullOrEmpty(message.Content))
+                    if (!string.IsNullOrEmpty(message.Content))
                         messageContent.AppendLine(message.Content);
                 }
+                messageContent.Append("\n");
 
                 // Process attachments
                 if (includeAttachments)
@@ -228,7 +241,7 @@ public class DiscordService
                 }
 
                 // Process embeds
-                if (IncludeEmbeds)
+                if (includeEmbeds)
                 {
                     foreach (var embed in message.Embeds)
                     {
