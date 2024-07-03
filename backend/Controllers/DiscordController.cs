@@ -163,7 +163,6 @@ namespace backend.Controllers
             try
             {
                 var filePaths = new List<string>();
-
                 // Save uploaded files to temporary directory
                 foreach (var file in files)
                 {
@@ -180,19 +179,18 @@ namespace backend.Controllers
 
                 // Generate output file path
                 var outputFileName = $"CombinedRandomized_{DateTime.Now:yyyyMMddHHmmss}.json";
-                var outputFilePath = Path.Combine(tempDirectory, outputFileName);
+                var outputDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Preprocessed");
+                Directory.CreateDirectory(outputDirectory); // Ensure the output directory exists
+                var outputFilePath = Path.Combine(outputDirectory, outputFileName);
 
                 // Call the CombineAndRandomizeJsonFiles method
                 _discordService.CombineAndRandomizeJsonFiles(filePaths, outputFilePath);
 
-                // Read the combined file
-                var combinedContent = await System.IO.File.ReadAllTextAsync(outputFilePath);
-
                 // Clean up temporary files
                 Directory.Delete(tempDirectory, true);
 
-                // Return the combined content
-                return Ok(combinedContent);
+                // Return the file path of the saved JSON
+                return Ok($"Combined and randomized JSON saved to: {outputFilePath}");
             }
             catch (Exception ex)
             {
