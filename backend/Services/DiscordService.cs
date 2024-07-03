@@ -166,7 +166,7 @@ public class DiscordService
         return fileNames;
     }
 
-    public async Task<List<string>> GenerateChatJsonFilesWithAttachments(string channelId, string directory, int daysPerFile = 10000)
+    public async Task<List<string>> GenerateChatJsonFilesWithAttachments(string channelId, string directory, bool includeAttachments=false, bool IncludeEmbeds=false, int daysPerFile = 10000)
     {
         var fileNames = new List<string>();
         var server = await _dbContext.DiscordServers
@@ -211,41 +211,47 @@ public class DiscordService
                 }
 
                 // Process attachments
-                foreach (var attachment in message.Attachments)
+                if (includeAttachments)
                 {
-                    var image = await _imageService.FindImageByOriginalSource(attachment.Url);
-                    if (image != null &&  !string.IsNullOrEmpty(image.GeneratedCaption))
+                    foreach (var attachment in message.Attachments)
                     {
-                        messageContent.AppendLine($"<Image>{image.GeneratedCaption}</Image>");
-                    }
-                    else
-                    {
-                        messageContent.AppendLine($"<Image>IMAGE_NOT_FOUND</Image>");
-                    }
-                }
-
-                // Process embeds
-                foreach (var embed in message.Embeds)
-                {
-                    if(string.IsNullOrEmpty(embed.Title) || string.IsNullOrEmpty(embed.Description))
-                        messageContent.AppendLine($"<Embed>EMBED_ERROR</Embed>");
-                    else
-                        messageContent.AppendLine($"<Embed>\n{embed.Title}\n{embed.Description}\n</Embed>");
-
-                    if (embed.Thumbnail != null && !string.IsNullOrEmpty(embed.Thumbnail.Url))
-                    {
-                        var image = await _imageService.FindImageByOriginalSource(embed.Thumbnail.Url);
+                        var image = await _imageService.FindImageByOriginalSource(attachment.Url);
                         if (image != null && !string.IsNullOrEmpty(image.GeneratedCaption))
                         {
                             messageContent.AppendLine($"<Image>{image.GeneratedCaption}</Image>");
                         }
                         else
                         {
-                            //messageContent.AppendLine($"<Image>IMAGE_NOT_FOUND</Image>");
+                            messageContent.AppendLine($"<Image>IMAGE_NOT_FOUND</Image>");
                         }
                     }
                 }
 
+                // Process embeds
+                if (IncludeEmbeds)
+                {
+                    foreach (var embed in message.Embeds)
+                    {
+                        if (string.IsNullOrEmpty(embed.Title) || string.IsNullOrEmpty(embed.Description))
+                            messageContent.AppendLine($"<Embed>EMBED_ERROR</Embed>");
+                        else
+                            messageContent.AppendLine($"<Embed>\n{embed.Title}\n{embed.Description}\n</Embed>");
+
+                        if (embed.Thumbnail != null && !string.IsNullOrEmpty(embed.Thumbnail.Url))
+                        {
+                            var image = await _imageService.FindImageByOriginalSource(embed.Thumbnail.Url);
+                            if (image != null && !string.IsNullOrEmpty(image.GeneratedCaption))
+                            {
+                                messageContent.AppendLine($"<Image>{image.GeneratedCaption}</Image>");
+                            }
+                            else if(includeAttachments)
+                            {
+                                messageContent.AppendLine($"<Image>IMAGE_NOT_FOUND</Image>");
+                            }
+                        }
+                    }
+                }
+                
                 if (!chatData.ContainsKey(dayBoundary))
                 {
                     chatData[dayBoundary] = new List<string>();

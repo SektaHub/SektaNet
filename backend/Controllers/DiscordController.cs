@@ -130,7 +130,7 @@ namespace backend.Controllers
         }
 
         [HttpGet("{id}/ChatExportFilesWithAttachments")]
-        public async Task<IActionResult> GenerateChatFilesWithAttachments(string id)
+        public async Task<IActionResult> GenerateChatFilesWithAttachments(string id, bool includeAttachments=false, bool includeEmbeds=false)
         {
             // Specify the directory where you want to save the files
             string directory = Path.Combine(Directory.GetCurrentDirectory(), "ChatExports", id);
@@ -142,7 +142,7 @@ namespace backend.Controllers
             }
 
             // Generate the chat files
-            var fileNames = await _discordService.GenerateChatJsonFilesWithAttachments(id, directory);
+            var fileNames = await _discordService.GenerateChatJsonFilesWithAttachments(id, directory, includeAttachments, includeEmbeds);
 
             // Return a success message with the file paths
             return Ok($"Chat exports saved to: {string.Join(", ", fileNames)}");
