@@ -241,7 +241,7 @@ public class DiscordService
                         }
                         else
                         {
-                            messageContent.AppendLine($"<Image>IMAGE_NOT_FOUND</Image>");
+                            //messageContent.AppendLine($"<Image>IMAGE_NOT_FOUND</Image>");
                         }
                     }
                 }
@@ -263,24 +263,37 @@ public class DiscordService
             var fileName = $"ChatExport_{server.Guild.Name}_{server.Channel.Name}_{startDate:yyyyMMdd}-{endDate:yyyyMMdd}.json";
             var filePath = Path.Combine(directory, fileName);
             var result = new StringBuilder();
-            result.AppendLine("{");
+            result.AppendLine("[");
             foreach (var day in chunk)
             {
                 var key = $"Server: {server.Guild.Name}\nChannel: {server.Channel.Name}\nDate: {day.Key:yyyy-MM}\n\n";
-                result.AppendLine($"\"{key}");
-                result.AppendLine(string.Join("\n", day.Value));
-                result.AppendLine("\",");
+                var content = new StringBuilder(key);
+                foreach (var message in day.Value)
+                {
+                    content.Append(message);
+                }
+
+                // Standardize all newlines to '\n' and remove the final trailing newline
+                string standardizedContent = content.ToString().Replace("\r\n", "\n").Replace("\r", "\n").TrimEnd('\n');
+
+                result.AppendLine($"  {{\"text\": {JsonConvert.SerializeObject(standardizedContent)}}},");
             }
-            // Remove the last comma and close the JSON object
+            // Remove the last comma and close the JSON array
             if (result.Length > 2)
             {
-                result.Length -= 3;
+                result.Length -= 2;
             }
-            result.AppendLine("\n}");
+            result.AppendLine("\n]");
             File.WriteAllText(filePath, result.ToString());
             fileNames.Add(fileName);
         }
         return fileNames;
+    }
+
+    // Helper method to properly escape JSON string content
+    private string JsonEncode(string content)
+    {
+        return JsonConvert.ToString(content).Trim('"');
     }
 
     private static async IAsyncEnumerable<List<T>> BatchAsync<T>(IQueryable<T> query, int batchSize, [EnumeratorCancellation] CancellationToken cancellationToken = default)
