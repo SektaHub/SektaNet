@@ -148,6 +148,64 @@ namespace backend.Controllers
             return Ok($"Chat exports saved to: {string.Join(", ", fileNames)}");
         }
 
+        [HttpPost("Preprocess")]
+        [RequestSizeLimit(2_147_483_648)]
+        public async Task<IActionResult> CombineAndRandomizeFiles([FromForm] List<IFormFile> files)
+        {
+            if (files == null || !files.Any())
+            {
+                return BadRequest("No files were uploaded.");
+            }
+
+            var tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(tempDirectory);
+
+            try
+            {
+                var filePaths = new List<string>();
+
+                // Save uploaded files to temporary directory
+                foreach (var file in files)
+                {
+                    if (file.Length > 0)
+                    {
+                        var filePath = Path.Combine(tempDirectory, file.FileName);
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await file.CopyToAsync(stream);
+                        }
+                        filePaths.Add(filePath);
+                    }
+                }
+
+                // Generate output file path
+                var outputFileName = $"CombinedRandomized_{DateTime.Now:yyyyMMddHHmmss}.json";
+                var outputFilePath = Path.Combine(tempDirectory, outputFileName);
+
+                // Call the CombineAndRandomizeJsonFiles method
+                _discordService.CombineAndRandomizeJsonFiles(filePaths, outputFilePath);
+
+                // Read the combined file
+                var combinedContent = await System.IO.File.ReadAllTextAsync(outputFilePath);
+
+                // Clean up temporary files
+                Directory.Delete(tempDirectory, true);
+
+                // Return the combined content
+                return Ok(combinedContent);
+            }
+            catch (Exception ex)
+            {
+                // Clean up temporary files in case of error
+                if (Directory.Exists(tempDirectory))
+                {
+                    Directory.Delete(tempDirectory, true);
+                }
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
+
         [HttpGet("{id}/AttachmentUrlExport")]
         public ActionResult<DiscordServerDto> GenerateChatAttachments(string id)
         {

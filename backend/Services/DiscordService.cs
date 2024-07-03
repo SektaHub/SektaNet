@@ -302,6 +302,29 @@ public class DiscordService
         return JsonConvert.ToString(content).Trim('"');
     }
 
+    public void CombineAndRandomizeJsonFiles(List<string> inputFiles, string outputFilePath)
+    {
+        var random = new Random();
+        var allTexts = new List<string>();
+
+        // Read all texts from input files
+        foreach (var file in inputFiles)
+        {
+            string jsonContent = File.ReadAllText(file);
+            var texts = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(jsonContent);
+            allTexts.AddRange(texts.Select(t => t["text"]));
+        }
+
+        // Randomize the order
+        var randomizedTexts = allTexts.OrderBy(x => random.Next()).ToList();
+
+        // Create the new JSON structure
+        var randomizedJson = randomizedTexts.Select(text => new Dictionary<string, string> { { "text", text } }).ToList();
+
+        // Write to the output file
+        File.WriteAllText(outputFilePath, JsonConvert.SerializeObject(randomizedJson, Formatting.Indented));
+    }
+
     private static async IAsyncEnumerable<List<T>> BatchAsync<T>(IQueryable<T> query, int batchSize, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         int skip = 0;
