@@ -150,11 +150,9 @@ using (var scope = app.Services.CreateScope())
 app.MapGroup("/api/identity").MapIdentityApi<ApplicationUser>();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+
 
 app.UseHttpsRedirection();
 
