@@ -1,0 +1,26 @@
+.navBarContainer {
+    padding-left: 30px;
+    padding-top: 20px;
+
+    .logo {
+        font-size: 3rem;
+        margin-bottom: 20px;
+    }
+
+    .navContainer {
+        display: flex;
+        height: 100%;
+        justify-content: left;
+        align-items: start;
+        flex-direction: column;
+
+        .navItems {
+            padding: 15px 0;
+        }
+
+        .navItems:hover {
+            transition: all 0.3s linear;
+            color: rgba(255, 255, 255, 0.534);
+        }
+    }
+}
