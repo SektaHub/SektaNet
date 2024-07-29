@@ -1,4 +1,10 @@
-export const ReelsTab = () => {
+import { TabData } from "../page";
+
+interface Props {
+  tabData?: TabData;
+}
+
+export const ReelsTab = ({ tabData }: Props) => {
   const reels = {
     page: 1,
     per_page: 1,

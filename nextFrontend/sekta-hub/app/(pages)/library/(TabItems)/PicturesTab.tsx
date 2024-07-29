@@ -1,17 +1,34 @@
 import { Image } from "antd";
+import { TabData } from "../page";
+import NoImageFound from "../../../assets/csm_no-image_d5c4ab1322.png";
+import classNames from "classnames";
+import "../styles.css";
 
-export const PicturesTab = () => {
-  const pictures = ["1", "2", "3", "4", "5"];
-
+interface Props {
+  tabData?: TabData;
+}
+export const PicturesTab = ({ tabData }: Props) => {
   return (
     <div>
-      {pictures.map((picture) => (
-        <Image
-          key={picture}
-          src={`https://picsum.photos/id/${picture}/200/300`}
-          alt="Picture"
-        />
-      ))}
+      {tabData?.items?.map((item) => {
+        const isValidImage = ["jpeg", "png", "jpg"].includes(
+          item.fileExtension
+        );
+        return (
+          <span key={item.id} className="images">
+            <Image
+              className={classNames({ noImageFound: !isValidImage })}
+              src={
+                isValidImage
+                  ? `https://www.cicki.gratis/api/Image/${item.id}/Thumbnail`
+                  : NoImageFound.src
+              }
+              alt="Picture"
+              preview={false}
+            />
+          </span>
+        );
+      })}
     </div>
   );
 };

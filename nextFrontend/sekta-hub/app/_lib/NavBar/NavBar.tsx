@@ -1,7 +1,12 @@
 import Link from "next/link";
 import React from "react";
 import "./NavBar.css";
-const NavBar = () => {
+
+interface Props {
+  isLoggedIn: boolean;
+}
+const NavBar = ({ isLoggedIn }: Props) => {
+  console.log(isLoggedIn, "isLoggedIn");
   const navBarItems = [
     {
       title: "Home",
@@ -11,27 +16,17 @@ const NavBar = () => {
     {
       title: "Library",
       link: "/library",
-      active: false,
-    },
-    {
-      title: "Reels",
-      link: "/reels",
-      active: false,
-    },
-    {
-      title: "Videos",
-      link: "/videos",
-      active: false,
+      active: isLoggedIn,
     },
     {
       title: "Files",
       link: "/files",
-      active: false,
+      active: isLoggedIn,
     },
     {
       title: "Upload",
       link: "/upload",
-      active: false,
+      active: isLoggedIn,
     },
     {
       title: "Login",
