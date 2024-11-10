@@ -5,9 +5,14 @@ using backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,22 +21,16 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(
         policy =>
         {
-            policy.AllowAnyOrigin() // Allow any origin to connect
+            policy.AllowAnyOrigin()
                 .AllowAnyHeader()
-                .AllowAnyMethod(); // Allow any HTTP method
+                .AllowAnyMethod();
         });
 });
 
-
-
-// Add services to the container.
-
 builder.Services.AddControllers().AddNewtonsoftJson();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(setup =>
 {
-    // Include 'SecurityScheme' to use JWT Authentication
     var jwtSecurityScheme = new OpenApiSecurityScheme
     {
         BearerFormat = "JWT",
@@ -49,33 +48,49 @@ builder.Services.AddSwaggerGen(setup =>
     };
 
     setup.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
-
     setup.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         { jwtSecurityScheme, Array.Empty<string>() }
     });
-
 });
 
-// Register HttpClient
 builder.Services.AddHttpClient();
-
-//builder.Services.AddDbContext<ApplicationDbContext>();
 
 var configuration = builder.Configuration;
 
-builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
+    options.SignIn.RequireConfirmedAccount = false;
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequiredLength = 8;
+})
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
-builder.Services.ConfigureApplicationCookie(options =>
+builder.Services.AddAuthentication(options =>
 {
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // Set session timeout to 30 minutes
-    options.SlidingExpiration = true; // Enable sliding expiration
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
 });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),  o => o.UseVector()));
+    options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), o => o.UseVector()));
 
 builder.Services.AddScoped<MongoDBRepository>(provider =>
 {
@@ -85,7 +100,6 @@ builder.Services.AddScoped<MongoDBRepository>(provider =>
 });
 
 builder.Services.AddScoped<AnyFileRepository>();
-
 builder.Services.AddScoped<ReelService>();
 builder.Services.AddScoped<ImageService>();
 builder.Services.AddScoped<FfmpegService>();
@@ -95,44 +109,25 @@ builder.Services.AddScoped<LongVideoService>();
 builder.Services.AddScoped<AudioService>();
 builder.Services.AddScoped<DiscordService>();
 
-//builder.Services.AddScoped<MongoDBService>();
-
-
 builder.Services.AddAutoMapper(typeof(MyMappingProfile));
 
 builder.Services.Configure<FormOptions>(options =>
 {
-    //// Set various options to their maximum values
     options.MultipartBodyLengthLimit = long.MaxValue;
-    //options.MultipartBoundaryLengthLimit = int.MaxValue;
-    //options.MultipartHeadersLengthLimit = int.MaxValue;
-    //options.MultipartHeadersCountLimit = int.MaxValue;
-    //options.BufferBodyLengthLimit = long.MaxValue;
     options.ValueCountLimit = 5000;
-    //options.ValueLengthLimit = int.MaxValue;
-}
-);;
-
-
+});
 
 var app = builder.Build();
 
-// Resolve the service to call the method
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-    // Check if migrations have been applied
     if (!dbContext.Database.GetAppliedMigrations().Any())
     {
-        // Migrations haven't been applied, you may choose to handle this case accordingly
-        // For example, you might throw an exception, log an error, or perform migrations here
-        // Here, I'm just logging a message, you can replace it with your desired action
         Console.WriteLine("Migrations have not been applied. Please run migrations.");
-        return; // Stop further execution as migrations are not applied
+        return;
     }
-
-    // Migrations have been applied, proceed with the rest of the code
 
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var roles = new[] { "Admin", "Sektash", "User" };
@@ -147,21 +142,69 @@ using (var scope = app.Services.CreateScope())
     ffmpegService.SetFFmpegPermissions();
 }
 
-app.MapGroup("/api/identity").MapIdentityApi<ApplicationUser>();
+var identityGroup = app.MapGroup("/api/identity");
 
-// Configure the HTTP request pipeline.
+identityGroup.MapPost("/login", async (
+    UserManager<ApplicationUser> userManager,
+    IConfiguration config,
+    LoginRequest request) =>
+{
+    var user = await userManager.FindByEmailAsync(request.Email);
+    if (user == null)
+    {
+        return Results.NotFound(new { Message = "User not found" });
+    }
+
+    if (!await userManager.CheckPasswordAsync(user, request.Password))
+    {
+        return Results.Unauthorized();
+    }
+
+    var userRoles = await userManager.GetRolesAsync(user);
+
+    var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.Id),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+    };
+
+    foreach (var role in userRoles)
+    {
+        claims.Add(new Claim(ClaimTypes.Role, role));
+    }
+
+    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]));
+    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+    var token = new JwtSecurityToken(
+        issuer: config["Jwt:Issuer"],
+        audience: config["Jwt:Audience"],
+        claims: claims,
+        expires: DateTime.Now.AddHours(3),
+        signingCredentials: creds
+    );
+
+    return Results.Ok(new
+    {
+        token = new JwtSecurityTokenHandler().WriteToken(token),
+        expiration = token.ValidTo
+    });
+});
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
-
 app.UseHttpsRedirection();
-
 app.UseCors();
-
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
-
-
 app.Run();
+
+public class LoginRequest
+{
+    public string Email { get; set; }
+    public string Password { get; set; }
+}
