@@ -211,24 +211,5 @@ namespace backend.Controllers
             return Ok(chatjson);
         }
 
-        //[HttpPost]
-        //public async Task<IActionResult> Create()
-        //{
-        //    try
-        //    {
-        //        using (var reader = new StreamReader(Request.Body))
-        //        {
-        //            var jsonString = await reader.ReadToEndAsync();
-        //            var serverDto = JsonConvert.DeserializeObject<DiscordServerDto>(jsonString);
-        //            var createdDto = _discordService.Create(serverDto);
-        //            return Ok(createdDto);
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Handle potential errors during deserialization or service call
-        //        return BadRequest(ex.Message);
-        //    }
-        //}
     }
 }

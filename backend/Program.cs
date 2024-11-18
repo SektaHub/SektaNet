@@ -94,6 +94,7 @@ builder.Services.AddScoped<GenericFileService>();
 builder.Services.AddScoped<LongVideoService>();
 builder.Services.AddScoped<AudioService>();
 builder.Services.AddScoped<DiscordService>();
+builder.Services.AddScoped<AIService>();
 
 //builder.Services.AddScoped<MongoDBService>();
 

@@ -195,5 +195,23 @@ namespace backend.Controllers
             return Ok(dtoToPatch);
         }
 
+
+        [HttpPost("/embed")]
+        //[Authorize(Roles = "Admin")]
+        public async Task<IActionResult> EmbedImagesBatch(int count)
+        {
+            var result = await _fileConentService.ProcessAndEmbedImages(count);
+
+            try
+            {
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error: {ex.Message}");
+                return StatusCode(500, "An error occurred");
+            }
+        }
+
     }
 }

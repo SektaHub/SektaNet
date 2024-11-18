@@ -16,12 +16,18 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Web;
+using static System.Net.WebRequestMethods;
+using Pgvector;
 
 namespace backend.Services
 {
     public class ImageService : BaseFileContentService<Image, ImageDto>
     {
-        public ImageService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager, IdentityService identityService, IHttpContextAccessor httpContextAccessor) : base(env, mapper, dbContext, mongoRepo, anyFileRepository, userManager, identityService, httpContextAccessor)
+
+        private readonly AIService _aiService;
+
+        public ImageService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager, IdentityService identityService, IHttpContextAccessor httpContextAccessor, AIService aiService)
+            : base(env, mapper, dbContext, mongoRepo, anyFileRepository, userManager, identityService, httpContextAccessor)
         {
 
         }
@@ -115,6 +121,47 @@ namespace backend.Services
             return await _dbContext.Set<Image>()
                 .FirstOrDefaultAsync(image => image.OriginalSource == originalSource);
         }
+
+        public async Task<List<Vector>> ProcessAndEmbedImages(int count = 100)
+        {
+            try
+            {
+                // Select the first 'count' image IDs from the database
+                List<string> imageIds = await _dbContext.Set<Image>()
+                                         .OrderBy(image => image.Id) // Ensure there is a defined order
+                                         .Take(count)
+                                         .Select(image => image.Id.ToString())
+                                         .ToListAsync();
+
+
+                if (imageIds == null || imageIds.Count == 0)
+                {
+                    Console.WriteLine("No image IDs found.");
+                    return null;  // Return early if no image IDs are found.
+                }
+
+                // Build image URLs
+                var imageUrls = imageIds.Select(id => $"http://127.0.0.1:8081/api/Image/{id}/Content").ToList();
+
+                // Call the AI service to embed images
+                var embeddings = await _aiService.EmbedImagesAsync(imageUrls);
+
+                if (embeddings == null || !embeddings.Any())
+                {
+                    Console.WriteLine("No embeddings returned.");
+                    return null;  // Handle the case where embeddings are not returned.
+                }
+
+                // Process further logic here (e.g., save embeddings in the database)
+                return embeddings;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex.Message}");
+                return null;
+            }
+        }
+
 
     }
 }
