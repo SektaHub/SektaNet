@@ -198,6 +198,7 @@ namespace backend.Controllers
 
         [HttpPost("/embed")]
         //[Authorize(Roles = "Admin")]
+        [AllowAnonymous]
         public async Task<IActionResult> EmbedImagesBatch(int count)
         {
             var result = await _fileConentService.ProcessAndEmbedImages(count);

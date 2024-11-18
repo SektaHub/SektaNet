@@ -27,9 +27,10 @@ namespace backend.Services
         private readonly AIService _aiService;
 
         public ImageService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager, IdentityService identityService, IHttpContextAccessor httpContextAccessor, AIService aiService)
-            : base(env, mapper, dbContext, mongoRepo, anyFileRepository, userManager, identityService, httpContextAccessor)
+        : base(env, mapper, dbContext, mongoRepo, anyFileRepository, userManager, identityService, httpContextAccessor)
         {
-
+            // Assign the AIService to the field
+            _aiService = aiService ?? throw new ArgumentNullException(nameof(aiService));
         }
 
         public IQueryable<ImageDto> GetImagesByCaption(string caption)
@@ -126,6 +127,7 @@ namespace backend.Services
         {
             try
             {
+
                 // Select the first 'count' image IDs from the database
                 List<string> imageIds = await _dbContext.Set<Image>()
                                          .OrderBy(image => image.Id) // Ensure there is a defined order
@@ -133,8 +135,8 @@ namespace backend.Services
                                          .Select(image => image.Id.ToString())
                                          .ToListAsync();
 
-
-                if (imageIds == null || imageIds.Count == 0)
+                // Check if the imageIds list is empty or null
+                if (imageIds == null || !imageIds.Any())
                 {
                     Console.WriteLine("No image IDs found.");
                     return null;  // Return early if no image IDs are found.
@@ -143,9 +145,11 @@ namespace backend.Services
                 // Build image URLs
                 var imageUrls = imageIds.Select(id => $"http://127.0.0.1:8081/api/Image/{id}/Content").ToList();
 
+
                 // Call the AI service to embed images
                 var embeddings = await _aiService.EmbedImagesAsync(imageUrls);
 
+                // Check if the embeddings are null or empty
                 if (embeddings == null || !embeddings.Any())
                 {
                     Console.WriteLine("No embeddings returned.");
@@ -157,10 +161,11 @@ namespace backend.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Exception: {ex.Message}");
+                Console.WriteLine($"Exception in ImageService: {ex.Message}");
                 return null;
             }
         }
+
 
 
     }

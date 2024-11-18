@@ -259,7 +259,7 @@ namespace backend.Migrations
 
                     b.HasIndex("MessageId");
 
-                    b.ToTable("DiscordAttachments");
+                    b.ToTable("DiscordAttachments", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Discord.Channel", b =>
@@ -286,7 +286,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DiscordChannels");
+                    b.ToTable("DiscordChannels", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Discord.DiscordServer", b =>
@@ -313,7 +313,7 @@ namespace backend.Migrations
 
                     b.HasIndex("GuildId");
 
-                    b.ToTable("DiscordServers");
+                    b.ToTable("DiscordServers", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Discord.DiscordUser", b =>
@@ -342,7 +342,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DiscordUsers");
+                    b.ToTable("DiscordUsers", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Discord.Embed", b =>
@@ -370,7 +370,7 @@ namespace backend.Migrations
 
                     b.HasIndex("MessageId");
 
-                    b.ToTable("DiscordEmbeds");
+                    b.ToTable("DiscordEmbeds", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Discord.Guild", b =>
@@ -388,7 +388,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DiscordGuilds");
+                    b.ToTable("DiscordGuilds", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Discord.Message", b =>
@@ -428,7 +428,7 @@ namespace backend.Migrations
 
                     b.HasIndex("DiscordServerId");
 
-                    b.ToTable("DiscordMessages");
+                    b.ToTable("DiscordMessages", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Entity.Audio", b =>
@@ -472,7 +472,7 @@ namespace backend.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Audio");
+                    b.ToTable("Audio", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Entity.GenericFile", b =>
@@ -513,7 +513,7 @@ namespace backend.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Files");
+                    b.ToTable("Files", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Entity.Image", b =>
@@ -527,7 +527,7 @@ namespace backend.Migrations
                         .HasColumnType("text[]");
 
                     b.Property<Vector>("ClipEmbedding")
-                        .HasColumnType("vector(512)");
+                        .HasColumnType("vector(768)");
 
                     b.Property<string>("ContentId")
                         .IsRequired()
@@ -567,7 +567,7 @@ namespace backend.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Images");
+                    b.ToTable("Images", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Entity.LongVideo", b =>
@@ -619,7 +619,7 @@ namespace backend.Migrations
 
                     b.HasIndex("ThumbnailId");
 
-                    b.ToTable("LongVideos");
+                    b.ToTable("LongVideos", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Entity.Reel", b =>
@@ -671,7 +671,7 @@ namespace backend.Migrations
 
                     b.HasIndex("ThumbnailId");
 
-                    b.ToTable("Reels");
+                    b.ToTable("Reels", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Entity.Thumbnail", b =>
@@ -712,7 +712,7 @@ namespace backend.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Thumbnails");
+                    b.ToTable("Thumbnails", (string)null);
                 });
 
             modelBuilder.Entity("DiscordUserMessage", b =>
@@ -813,20 +813,20 @@ namespace backend.Migrations
                         .WithMany("Embeds")
                         .HasForeignKey("MessageId");
 
-                    b.OwnsOne("backend.Models.Discord.EmbedAuthor", "Author", b1 =>
+                    b.OwnsOne("backend.Models.Discord.Embed.Author#backend.Models.Discord.EmbedAuthor", "Author", b1 =>
                         {
                             b1.Property<Guid>("EmbedId")
                                 .HasColumnType("uuid");
 
                             b1.HasKey("EmbedId");
 
-                            b1.ToTable("DiscordEmbeds");
+                            b1.ToTable("DiscordEmbeds", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("EmbedId");
                         });
 
-                    b.OwnsOne("backend.Models.Discord.EmbedThumbnail", "Thumbnail", b1 =>
+                    b.OwnsOne("backend.Models.Discord.Embed.EmbedVideo#backend.Models.Discord.EmbedVideo", "EmbedVideo", b1 =>
                         {
                             b1.Property<Guid>("EmbedId")
                                 .HasColumnType("uuid");
@@ -843,13 +843,13 @@ namespace backend.Migrations
 
                             b1.HasKey("EmbedId");
 
-                            b1.ToTable("DiscordEmbeds");
+                            b1.ToTable("DiscordEmbeds", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("EmbedId");
                         });
 
-                    b.OwnsOne("backend.Models.Discord.EmbedVideo", "EmbedVideo", b1 =>
+                    b.OwnsOne("backend.Models.Discord.Embed.Thumbnail#backend.Models.Discord.EmbedThumbnail", "Thumbnail", b1 =>
                         {
                             b1.Property<Guid>("EmbedId")
                                 .HasColumnType("uuid");
@@ -866,7 +866,7 @@ namespace backend.Migrations
 
                             b1.HasKey("EmbedId");
 
-                            b1.ToTable("DiscordEmbeds");
+                            b1.ToTable("DiscordEmbeds", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("EmbedId");
@@ -892,7 +892,7 @@ namespace backend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsMany("backend.Models.Discord.Reaction", "Reactions", b1 =>
+                    b.OwnsMany("backend.Models.Discord.Message.Reactions#backend.Models.Discord.Reaction", "Reactions", b1 =>
                         {
                             b1.Property<string>("MessageId")
                                 .HasColumnType("text");
@@ -908,12 +908,12 @@ namespace backend.Migrations
 
                             b1.HasKey("MessageId", "Id");
 
-                            b1.ToTable("Reaction");
+                            b1.ToTable("Reaction", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("MessageId");
 
-                            b1.OwnsOne("backend.Models.Discord.Emoji", "Emoji", b2 =>
+                            b1.OwnsOne("backend.Models.Discord.Message.Reactions#backend.Models.Discord.Reaction.Emoji#backend.Models.Discord.Emoji", "Emoji", b2 =>
                                 {
                                     b2.Property<string>("ReactionMessageId")
                                         .HasColumnType("text");
@@ -942,7 +942,7 @@ namespace backend.Migrations
 
                                     b2.HasKey("ReactionMessageId", "ReactionId");
 
-                                    b2.ToTable("Reaction");
+                                    b2.ToTable("Reaction", (string)null);
 
                                     b2.WithOwner()
                                         .HasForeignKey("ReactionMessageId", "ReactionId");
