@@ -22,7 +22,7 @@ const ImageList: React.FC = () => {
   const itemsPerPage = 14; // Items per page, could be configurable
 
   useEffect(() => {
-    let url = `${API_URL}/Image/PaginatedWithCaption`;
+    let url = `${API_URL}/Image/PaginatedSemantic`;
 
     const queryParams = [`page=${currentPage}`, `pageSize=${itemsPerPage}`];
     if (searchCaption) {

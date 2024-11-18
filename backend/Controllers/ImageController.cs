@@ -37,6 +37,13 @@ namespace backend.Controllers
             return await _fileConentService.GetPaginated(page, pageSize, captionSearch);
         }
 
+        [HttpGet("PaginatedSemantic")]
+        public async Task<ActionResult<PaginatedResponseDto<ImageDto>>> GetSemantic(int page, int pageSize, string? captionSearch)
+        {
+            // Pass the userId to the service method
+            return await _fileConentService.GetPaginatedBySemanticAsync(page, pageSize, captionSearch);
+        }
+
 
         [HttpGet("{id}/GetVisuallySimmilarImages")]
         public async Task<IEnumerable<ImageDto>> GetVisuallySimmilarImages(Guid id)
@@ -205,7 +212,7 @@ namespace backend.Controllers
 
             try
             {
-                return Ok(result);
+                return Ok("Embedded: " + result.Count + " Images");
             }
             catch (Exception ex)
             {
