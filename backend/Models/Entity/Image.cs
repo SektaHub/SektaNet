@@ -10,7 +10,7 @@ namespace backend.Models.Entity
         public string? GeneratedCaption { get; set; }
 
         //Embedding for clip large
-        [Column(TypeName = "vector(512)")]
+        [Column(TypeName = "vector(768)")]
         public Vector? ClipEmbedding { get; set; }
     }
 }

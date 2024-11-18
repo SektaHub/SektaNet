@@ -90,7 +90,6 @@ namespace backend.Services
                 }
 
                 allowedEntities = allowedEntities.Where(image => image.ClipEmbedding != null)
-                                .Where(image => image.ClipEmbedding!.CosineDistance(queryVector) < 0.84)
                                 .OrderBy(image => image.ClipEmbedding!.CosineDistance(queryVector));
             }
 
@@ -169,6 +168,7 @@ namespace backend.Services
             {
                 // Select the first 'count' image IDs from the database
                 List<string> imageIds = await _dbContext.Set<Image>()
+                                             .Where(image => image.ClipEmbedding == null)
                                              .Where(image => new[] { "jpeg", "jpg", "png" }.Contains(image.FileExtension.ToLower())) // Filter by file extension
                                              .Take(count)
                                              .Select(image => image.Id.ToString())
