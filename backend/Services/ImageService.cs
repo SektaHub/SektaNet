@@ -115,6 +115,83 @@ namespace backend.Services
 
         }
 
+        public static Vector Subtract(Vector vector1, Vector vector2)
+        {
+            if (vector1.Memory.Length != vector2.Memory.Length)
+            {
+                throw new ArgumentException("Vectors must have the same dimensions for subtraction.");
+            }
+
+            // Get spans for efficient access to the underlying data
+            ReadOnlySpan<float> span1 = vector1.Memory.Span;
+            ReadOnlySpan<float> span2 = vector2.Memory.Span;
+
+            // Perform element-wise subtraction
+            float[] resultArray = new float[span1.Length];
+            for (int i = 0; i < span1.Length; i++)
+            {
+                resultArray[i] = span1[i] - span2[i];
+            }
+
+            // Create a new Vector from the result array
+            return new Vector(resultArray);
+        }
+
+
+        public async Task<PaginatedResponseDto<ImageDto>> GetPaginatedBySemanticRecommendAsync(int page, int pageSize, string? captionSearch, string? negativeCaption)
+        {
+
+            // Use GetAllowed to get the queryable list of allowed entities
+            var allowedEntities = GetAllowed();
+
+            // Apply additional filtering based on query parameters
+            if (!string.IsNullOrEmpty(captionSearch))
+            {
+
+                var queryVector = await _aiService.EmbedTextAsync(captionSearch);
+                var negativeVector = await _aiService.EmbedTextAsync(negativeCaption);
+
+                if (queryVector != null && negativeVector != null)
+                {
+                    // Adjust the query vector to account for the negative prompt
+                    queryVector = Subtract(queryVector, negativeVector);
+                }
+
+                if (queryVector == null)
+                {
+                    return new PaginatedResponseDto<ImageDto>
+                    {
+                        Items = new List<ImageDto>(),
+                        TotalCount = 0
+                    };
+                }
+
+                allowedEntities = allowedEntities.Where(image => image.ClipEmbedding != null)
+                                .OrderBy(image => image.ClipEmbedding!.CosineDistance(queryVector));
+            }
+
+            // Get the total count of filtered entities
+            var totalCount = await allowedEntities.CountAsync();
+
+            // Apply pagination
+            var paginatedEntities = await allowedEntities.Skip((page - 1) * pageSize)
+                                                         .Take(pageSize)
+                                                         .ToListAsync();
+
+            // Map entities to DTOs
+            var dtoList = _mapper.Map<List<ImageDto>>(paginatedEntities);
+
+            // Create the paginated response
+            var response = new PaginatedResponseDto<ImageDto>
+            {
+                Items = dtoList,
+                TotalCount = totalCount
+            };
+
+            return response;
+
+        }
+
         public async Task<List<ImageDto>> GetVisuallySimmilar(Guid id)
         {
             // Find the image by id
