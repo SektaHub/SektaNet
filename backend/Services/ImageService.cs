@@ -16,95 +16,47 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Web;
+using static System.Net.WebRequestMethods;
+using Pgvector;
+using SharpCompress.Common;
 
 namespace backend.Services
 {
     public class ImageService : BaseFileContentService<Image, ImageDto>
     {
-        public ImageService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager) : base(env, mapper, dbContext, mongoRepo, anyFileRepository, userManager)
-        {
 
+        private readonly AIService _aiService;
+
+        public ImageService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager, IdentityService identityService, IHttpContextAccessor httpContextAccessor, AIService aiService)
+        : base(env, mapper, dbContext, mongoRepo, anyFileRepository, userManager, identityService, httpContextAccessor)
+        {
+            // Assign the AIService to the field
+            _aiService = aiService ?? throw new ArgumentNullException(nameof(aiService));
         }
 
-
-        //public async override Task<List<ImageDto>> UploadMultiple(List<IFormFile> files)
-        //{
-        //    // ...omitting initial checks and try-catch for brevity
-
-        //    List<string> imagePaths = new List<string>();
-        //    List<ImageDto> imageDtos = new List<ImageDto>();
-
-        //    foreach (var imageFile in files)
-        //    {
-        //        if (imageFile == null || imageFile.Length == 0) continue;
-
-        //        string imageId = ObjectId.GenerateNewId().ToString();
-
-        //        var imageDto = new ImageDto
-        //        {
-        //            Id = imageId,
-        //            FileExtension = imageFile.ContentType.Split('/')[1],
-        //            generatedCaption = null,
-        //            CaptionEmbedding = null,
-        //        };
-        //        imageDtos.Add(imageDto);
-
-        //        var imagePath = await SaveFile(imageFile, imageId, imageDto.FileExtension);
-        //        imagePaths.Add(imagePath);
-        //    }
-
-        //    // Ensure all files are saved before proceeding
-        //    for (int i = 0; i < imagePaths.Count; i++)
-        //    {
-        //        var imageDto = imageDtos[i];
-        //        var imagePath = imagePaths[i];
-
-        //        // Additional processing or actions after successful image uploads
-
-        //        // Save the Image entity to the database
-        //        var newImage = _mapper.Map<Image>(imageDto);
-        //        _dbContext.Images.Add(newImage);
-        //    }
-        //    _dbContext.SaveChanges();
-
-        //    // Additional processing or actions after saving images to the database
-        //    return imageDtos;
-        //}
-
-        public IQueryable<ImageDto> GetImagesByCaption(string caption)
+        public async Task<PaginatedResponseDto<ImageDto>> GetPaginated(int page, int pageSize, string? captionSearch)
         {
-            // Filter images based on the provided caption (case-insensitive)
-            var filteredEntities = _dbContext.Set<Image>()
-                .Where(image => image.GeneratedCaption != null && image.GeneratedCaption.ToLower().Contains(caption.ToLower()))
-                .AsQueryable();
+            // Use GetAllowed to get the queryable list of allowed entities
+            var allowedEntities = GetAllowed();
 
-            var filteredDtoList = _mapper.ProjectTo<ImageDto>(filteredEntities);
-            return filteredDtoList;
-        }
-
-        public async Task<PaginatedResponseDto<ImageDto>> GetPaginated(int page, int pageSize, string? captionSearch, string? userId)
-        {
-            IQueryable<Image> query = _dbContext.Set<Image>();
-
+            // Apply additional filtering based on query parameters
             if (!string.IsNullOrEmpty(captionSearch))
             {
-                query = query.Where(image => image.GeneratedCaption != null && image.GeneratedCaption.ToLower().Contains(captionSearch.ToLower()));
+                allowedEntities = allowedEntities.Where(image => image.GeneratedCaption != null && image.GeneratedCaption.ToLower().Contains(captionSearch.ToLower()));
             }
 
-            var user = await _userManager.FindByIdAsync(userId);
-            bool isAdmin = await _userManager.IsInRoleAsync(user, "admin") || await _userManager.IsInRoleAsync(user, "sektash");
+            // Get the total count of filtered entities
+            var totalCount = await allowedEntities.CountAsync();
 
-            // Filter images based on ownership or not private
-            query = query.Where(image => !image.isPrivate || image.OwnerId == userId || isAdmin);
+            // Apply pagination
+            var paginatedEntities = await allowedEntities.Skip((page - 1) * pageSize)
+                                                         .Take(pageSize)
+                                                         .ToListAsync();
 
-            var totalCount = query.Count();
-            
-            var entities = query.Skip((page - 1) * pageSize)
-                                .Take(pageSize)
-                                .ToList();
+            // Map entities to DTOs
+            var dtoList = _mapper.Map<List<ImageDto>>(paginatedEntities);
 
-            var dtoList = _mapper.Map<List<ImageDto>>(entities);
-
+            // Create the paginated response
             var response = new PaginatedResponseDto<ImageDto>
             {
                 Items = dtoList,
@@ -115,54 +67,155 @@ namespace backend.Services
         }
 
 
-        public async Task<List<ImageDto>> GetVisuallySimmilar(string id, string? userId)
+        public async Task<PaginatedResponseDto<ImageDto>> GetPaginatedBySemanticAsync(int page, int pageSize, string? captionSearch)
         {
-            var entity = await _dbContext.Set<Image>().FindAsync(id); // Ensure asynchronous operation
+
+            // Use GetAllowed to get the queryable list of allowed entities
+            var allowedEntities = GetAllowed();
+
+            // Apply additional filtering based on query parameters
+            if (!string.IsNullOrEmpty(captionSearch))
+            {
+
+                // Generate the query vector for the user query (caption or other text)
+                var queryVector = await _aiService.EmbedTextAsync(captionSearch);
+
+                if (queryVector == null)
+                {
+                    return new PaginatedResponseDto<ImageDto>
+                    {
+                        Items = new List<ImageDto>(),
+                        TotalCount = 0
+                    };
+                }
+
+                allowedEntities = allowedEntities.Where(image => image.ClipEmbedding != null)
+                                .OrderBy(image => image.ClipEmbedding!.CosineDistance(queryVector));
+            }
+
+            // Get the total count of filtered entities
+            var totalCount = await allowedEntities.CountAsync();
+
+            // Apply pagination
+            var paginatedEntities = await allowedEntities.Skip((page - 1) * pageSize)
+                                                         .Take(pageSize)
+                                                         .ToListAsync();
+
+            // Map entities to DTOs
+            var dtoList = _mapper.Map<List<ImageDto>>(paginatedEntities);
+
+            // Create the paginated response
+            var response = new PaginatedResponseDto<ImageDto>
+            {
+                Items = dtoList,
+                TotalCount = totalCount
+            };
+
+            return response;
+
+        }
+
+        public static Vector Subtract(Vector vector1, Vector vector2)
+        {
+            if (vector1.Memory.Length != vector2.Memory.Length)
+            {
+                throw new ArgumentException("Vectors must have the same dimensions for subtraction.");
+            }
+
+            // Get spans for efficient access to the underlying data
+            ReadOnlySpan<float> span1 = vector1.Memory.Span;
+            ReadOnlySpan<float> span2 = vector2.Memory.Span;
+
+            // Perform element-wise subtraction
+            float[] resultArray = new float[span1.Length];
+            for (int i = 0; i < span1.Length; i++)
+            {
+                resultArray[i] = span1[i] - span2[i];
+            }
+
+            // Create a new Vector from the result array
+            return new Vector(resultArray);
+        }
+
+
+        public async Task<PaginatedResponseDto<ImageDto>> GetPaginatedBySemanticRecommendAsync(int page, int pageSize, string? captionSearch, string? negativeCaption)
+        {
+
+            // Use GetAllowed to get the queryable list of allowed entities
+            var allowedEntities = GetAllowed();
+
+            // Apply additional filtering based on query parameters
+            if (!string.IsNullOrEmpty(captionSearch))
+            {
+
+                var queryVector = await _aiService.EmbedTextAsync(captionSearch);
+                var negativeVector = await _aiService.EmbedTextAsync(negativeCaption);
+
+                if (queryVector != null && negativeVector != null)
+                {
+                    // Adjust the query vector to account for the negative prompt
+                    queryVector = Subtract(queryVector, negativeVector);
+                }
+
+                if (queryVector == null)
+                {
+                    return new PaginatedResponseDto<ImageDto>
+                    {
+                        Items = new List<ImageDto>(),
+                        TotalCount = 0
+                    };
+                }
+
+                allowedEntities = allowedEntities.Where(image => image.ClipEmbedding != null)
+                                .OrderBy(image => image.ClipEmbedding!.CosineDistance(queryVector));
+            }
+
+            // Get the total count of filtered entities
+            var totalCount = await allowedEntities.CountAsync();
+
+            // Apply pagination
+            var paginatedEntities = await allowedEntities.Skip((page - 1) * pageSize)
+                                                         .Take(pageSize)
+                                                         .ToListAsync();
+
+            // Map entities to DTOs
+            var dtoList = _mapper.Map<List<ImageDto>>(paginatedEntities);
+
+            // Create the paginated response
+            var response = new PaginatedResponseDto<ImageDto>
+            {
+                Items = dtoList,
+                TotalCount = totalCount
+            };
+
+            return response;
+
+        }
+
+        public async Task<List<ImageDto>> GetVisuallySimmilar(Guid id)
+        {
+            // Find the image by id
+            var entity = await _dbContext.Set<Image>().FindAsync(id);
 
             if (entity == null)
             {
                 return null;
             }
 
-            var imageDto = _mapper.Map<ImageDto>(entity);
+            // Use GetAllowed to get the queryable list of allowed entities
+            var allowedEntities = GetAllowed();
 
-            var user = await _userManager.FindByIdAsync(userId);
-            bool isAdmin = await _userManager.IsInRoleAsync(user, "admin") || await _userManager.IsInRoleAsync(user, "sektash");
-
-            // Retrieve images that the user can access
-            var entities = await _dbContext.Set<Image>()
-                .Where(x => x.Id != id && (!x.isPrivate || x.OwnerId == userId || isAdmin))
-                .OrderBy(x => x.ClipEmbedding!.L2Distance(imageDto.ClipEmbedding))
+            // Filter out the current image and order by similarity
+            var similarEntities = await allowedEntities
+                .Where(x => x.Id != id)
+                .OrderBy(x => x.ClipEmbedding!.L2Distance(entity.ClipEmbedding))
                 .Take(4)
                 .ToListAsync();
 
             // Map List<Image> to List<ImageDto>
-            var dtos = _mapper.Map<List<ImageDto>>(entities);
+            var dtos = _mapper.Map<List<ImageDto>>(similarEntities);
             return dtos;
         }
-
-
-        //public async Task<List<ImageDto>> GetVisuallySimmilar(string id, float maxDistance)
-        //{
-        //    var entity = await _dbContext.Set<Image>().FindAsync(id); // Ensure asynchronous operation
-
-        //    if (entity == null)
-        //    {
-        //        return null;
-        //    }
-
-        //    var imageDto = _mapper.Map<ImageDto>(entity);
-
-        //    var entities = await _dbContext.Set<Image>()
-        //        .Where(x => x.Id != id && x.ClipEmbedding != null && x.ClipEmbedding.L2Distance(imageDto.ClipEmbedding) <= maxDistance)
-        //        .OrderBy(x => x.ClipEmbedding!.L2Distance(imageDto.ClipEmbedding))
-        //        .Take(4)
-        //        .ToListAsync();
-
-        //    // Map List<Image> to List<ImageDto>
-        //    var dtos = _mapper.Map<List<ImageDto>>(entities);
-        //    return dtos;
-        //}
 
         public IQueryable<ImageDto> GetImagesWithoutCaption()
         {
@@ -175,15 +228,80 @@ namespace backend.Services
             return filteredDtoList;
         }
 
-        //public async Task<string> UploadImage(IFormFile image)
-        //{
-        //    return await _anyFileRepository.SaveImage(image);
-        //}
-
         public async Task DeleteImage(string id)
         {
             await _anyFileRepository.DeleteImage(id);
         }
+
+        public async Task<Image> FindImageByOriginalSource(string originalSource)
+        {
+            return await _dbContext.Set<Image>()
+                .FirstOrDefaultAsync(image => image.OriginalSource == originalSource);
+        }
+
+        public async Task<List<Vector>> ProcessAndEmbedImages(int count = 100)
+        {
+            try
+            {
+                // Select the first 'count' image IDs from the database
+                List<string> imageIds = await _dbContext.Set<Image>()
+                                             .Where(image => image.ClipEmbedding == null)
+                                             .Where(image => new[] { "jpeg", "jpg", "png" }.Contains(image.FileExtension.ToLower())) // Filter by file extension
+                                             .Take(count)
+                                             .Select(image => image.Id.ToString())
+                                             .ToListAsync();
+
+                // Check if the imageIds list is empty or null
+                if (imageIds == null || !imageIds.Any())
+                {
+                    Console.WriteLine("No image IDs found.");
+                    return null;  // Return early if no image IDs are found.
+                }
+
+                // Build image URLs
+                var imageUrls = imageIds.Select(id => $"http://127.0.0.1:8081/api/Image/{id}/Content").ToList();
+
+                // Call the AI service to embed images
+                var embeddings = await _aiService.EmbedImagesAsync(imageUrls);
+
+                // Check if the embeddings are null or empty
+                if (embeddings == null || !embeddings.Any())
+                {
+                    Console.WriteLine("No embeddings returned.");
+                    return null;  // Handle the case where embeddings are not returned.
+                }
+
+                // Retrieve the images from the database by their IDs
+                var images = await _dbContext.Set<Image>()
+                                              .Where(image => imageIds.Contains(image.Id.ToString()))
+                                              .ToListAsync();
+
+                if (images.Count != embeddings.Count)
+                {
+                    Console.WriteLine("Mismatch between the number of images and embeddings.");
+                    return null;  // Ensure that the number of images matches the number of embeddings
+                }
+
+                // Update each image's ClipEmbedding with the corresponding embedding
+                for (int i = 0; i < images.Count; i++)
+                {
+                    images[i].ClipEmbedding = embeddings[i];
+                }
+
+                // Save the changes to the database
+                await _dbContext.SaveChangesAsync();
+
+                // Return the embeddings (or perform additional logic as needed)
+                return embeddings;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in ImageService: {ex.Message}");
+                return null;
+            }
+        }
+
+
 
     }
 }

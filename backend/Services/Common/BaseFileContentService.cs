@@ -36,8 +36,10 @@ namespace backend.Services.Common
         protected readonly MongoDBRepository _mongoRepo;
         protected readonly AnyFileRepository _anyFileRepository;
         protected readonly UserManager<ApplicationUser> _userManager;
+        protected readonly IdentityService _identityService;
+        protected readonly IHttpContextAccessor _httpContextAccessor;
 
-        public BaseFileContentService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager)
+        public BaseFileContentService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager, IdentityService identityService, IHttpContextAccessor httpContextAccessor)
         {
             _env = env;
             _mapper = mapper;
@@ -45,6 +47,8 @@ namespace backend.Services.Common
             _mongoRepo = mongoRepo;
             _anyFileRepository = anyFileRepository;
             _userManager = userManager;
+            _identityService = identityService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public IQueryable<TDto> GetAll()
@@ -54,16 +58,35 @@ namespace backend.Services.Common
             return dtos;
         }
 
+        public IQueryable<TEntity> GetAllowed()
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            var user = _identityService.GetCurrentUser(httpContext);
+            var userRoles = _identityService.GetCurrentUserRoles(httpContext);
+
+            var entities = _dbContext.Set<TEntity>().AsQueryable();
+
+            var allowedEntities = entities.Where(e =>
+                e.OwnerId == user.Id ||
+                !e.AuthorizedRoles.Any() ||
+                e.AuthorizedRoles.Any(role => userRoles.Contains(role))
+            );
+
+            return allowedEntities;
+        }
+
         public PaginatedResponseDto<TDto> GetPaginated(int page, int pageSize)
         {
-            var totalCount = _dbContext.Set<TEntity>().Count();
+            var allowedEntities = GetAllowed();
 
-            var entities = _dbContext.Set<TEntity>()
-                                     .Skip((page - 1) * pageSize)
-                                     .Take(pageSize)
-                                     .ToList();
+            var totalCount = allowedEntities.Count();
 
-            var dtoList = _mapper.Map<List<TDto>>(entities);
+            var paginatedEntities = allowedEntities
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var dtoList = _mapper.Map<List<TDto>>(paginatedEntities);
 
             var response = new PaginatedResponseDto<TDto>
             {
@@ -74,7 +97,7 @@ namespace backend.Services.Common
             return response;
         }
 
-        public TDto GetDtoById(string id)
+        public TDto GetDtoById(Guid id)
         {
             var entity = _dbContext.Set<TEntity>().Find(id);
 
@@ -88,7 +111,7 @@ namespace backend.Services.Common
             return dto;
         }
 
-        public TEntity GetById(string id)
+        public TEntity GetById(Guid id)
         {
             var entity = _dbContext.Set<TEntity>().Find(id);
 
@@ -101,7 +124,7 @@ namespace backend.Services.Common
             return entity;
         }
 
-        public TDto GetMetaData(string id)
+        public TDto GetMetaData(Guid id)
         {
             var entity = _dbContext.Set<TEntity>().Find(id);
 
@@ -115,7 +138,7 @@ namespace backend.Services.Common
             return imageDto;
         }
 
-        public TDto Put(string fileId, TDto updatedDto)
+        public TDto Put(Guid fileId, TDto updatedDto)
         {
             if (updatedDto == null || fileId != updatedDto.Id)
             {
@@ -150,35 +173,6 @@ namespace backend.Services.Common
         public virtual async Task<List<TDto>> UploadMultiple(List<IFormFile> files)
         {
             throw new NotImplementedException();
-        }
-
-        public async Task<string> UploadAsync(IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-            {
-                //return BadRequest("No file uploaded.");
-                return null;
-            }
-
-            try
-            {
-                using (var stream = file.OpenReadStream())
-                {
-                    // Assuming you've injected MongoDBService as _mongoDBService
-                    var fileId = await _mongoRepo.UploadFileAsync(stream, file.FileName);
-
-                    // Here you can link fileId with your reel entity if necessary
-
-                    //return Ok(new { Message = "Video uploaded successfully", FileId = fileId });
-                    return fileId.ToString();
-                }
-            }
-            catch (Exception ex)
-            {
-                //_logger.LogError($"Error uploading video: {ex.Message}");
-                //return StatusCode(500, "An error occurred while uploading the video.");
-            }
-            return null;
         }
 
         public async Task<Stream> GetFileStreamAsync(string id)

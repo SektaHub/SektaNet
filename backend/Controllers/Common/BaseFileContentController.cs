@@ -18,7 +18,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers.Common
 {
-
+    [Authorize]
     public class BaseFileContentController<TEntity, TDto, FileConentService> : ControllerBase
         where TEntity : BaseFileContentEntity
         where TDto : BaseFileContentDto
@@ -38,14 +38,14 @@ namespace backend.Controllers.Common
         }
 
         [HttpGet]
-        [Authorize (Roles = "Sektash, Admin")]
+        [Authorize (Roles = "Admin")]
         public IQueryable<TDto> Get()
         {
             return _fileConentService.GetAll();
         }
 
         [HttpGet("Paginated")]
-        [Authorize(Roles = "Sektash, Admin")]
+        [Authorize]
         public virtual ActionResult<PaginatedResponseDto<TDto>> GetWithPagination(int page, int pageSize)
         {
             return _fileConentService.GetPaginated(page, pageSize);
@@ -59,65 +59,36 @@ namespace backend.Controllers.Common
 
         [HttpGet("{id}/Content")]
         [AllowAnonymous]
-        public virtual async Task<IActionResult> GetFileContent(string id)
+        public virtual async Task<IActionResult> GetFileContent(Guid id)
         {
-            return StatusCode(501, "UploadMultiple method not implemented in the derived class.");
+            return StatusCode(501, "GetFileContent method not implemented in the derived class.");
         }
 
         [HttpGet("{id}/MetaData")]
         [AllowAnonymous]
-        public ActionResult<TDto> GetFileMetadata(string id)
+        public ActionResult<TDto> GetFileMetadata(Guid id)
         {
             return _fileConentService.GetMetaData(id);
         }
 
-        //[HttpDelete("{id}")]
-        //public virtual IActionResult DeleteFileContent(string id)
-        //{
-        //    try
-        //    {
-        //        // Delete file
-        //        var filePath = _fileConentService.GetFilePath(id);
-        //        if (System.IO.File.Exists(filePath))
-        //        {
-        //            System.IO.File.Delete(filePath);
-        //        }
-
-        //        // Delete database entry
-        //        var file = _dbContext.Set<TEntity>().Find(id);
-        //        if (file != null)
-        //        {
-        //            _dbContext.Set<TEntity>().Remove(file);
-        //            _dbContext.SaveChanges();
-        //        }
-
-        //        return Ok("File deleted successfully");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError($"Error deleting File: {ex.Message}");
-        //        return StatusCode(500, "An error occurred while deleting the file");
-        //    }
-        //}
-
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        public async virtual Task<IActionResult> DeleteFileContent(string id)
+        public async virtual Task<IActionResult> DeleteFileContent(Guid id)
         {
             throw new NotImplementedException("DeleteFileContent method not implemented in the derived class.");
         }
 
         [HttpPut("{fileId}")]
         [Authorize(Roles = "Admin")]
-        public IActionResult Put(string fileId, TDto updatedDto)
+        public IActionResult Put(Guid fileId, TDto updatedDto)
         {
             _fileConentService.Put(fileId, updatedDto);
             return Ok();
         }
 
         [HttpPatch("{id}")]
-        [AllowAnonymous]
-        public IActionResult Patch(string id, JsonPatchDocument<TDto> patchDocument)
+        [Authorize(Roles = "Admin")]
+        public IActionResult Patch(Guid id, JsonPatchDocument<TDto> patchDocument)
         {
             if (patchDocument == null)
             {

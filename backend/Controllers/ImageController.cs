@@ -17,11 +17,13 @@ using Microsoft.AspNetCore.Authorization;
 using backend.Models.Common;
 using System.Security.Claims;
 
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Jpeg;
+
 namespace backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class ImageController : BaseFileContentController<Image, ImageDto, ImageService>
     {
         public ImageController(IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<BaseFileContentController<Image, ImageDto, ImageService>> logger, ImageService fileConentService) : base(mapper, webHostEnvironment, logger, fileConentService)
@@ -31,20 +33,24 @@ namespace backend.Controllers
         [HttpGet("PaginatedWithCaption")]
         public async Task<ActionResult<PaginatedResponseDto<ImageDto>>> GetWithPagination(int page, int pageSize, string? captionSearch)
         {
-            // Get the current user's ID from claims
-            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
             // Pass the userId to the service method
-            return await _fileConentService.GetPaginated(page, pageSize, captionSearch, userId);
+            return await _fileConentService.GetPaginated(page, pageSize, captionSearch);
+        }
+
+        [HttpGet("PaginatedSemantic")]
+        public async Task<ActionResult<PaginatedResponseDto<ImageDto>>> GetSemantic(int page, int pageSize, string? captionSearch)
+        {
+            // Pass the userId to the service method
+            return await _fileConentService.GetPaginatedBySemanticAsync(page, pageSize, captionSearch);
         }
 
 
         [HttpGet("{id}/GetVisuallySimmilarImages")]
-        public async Task<IEnumerable<ImageDto>> GetVisuallySimmilarImages(string id)
+        public async Task<IEnumerable<ImageDto>> GetVisuallySimmilarImages(Guid id)
         {
             string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            return await _fileConentService.GetVisuallySimmilar(id, userId);
+            return await _fileConentService.GetVisuallySimmilar(id);
         }
 
         //[HttpGet("GetImagesByCaption")]
@@ -54,7 +60,6 @@ namespace backend.Controllers
         //}
 
         [HttpGet("GetImagesWithoutCaption")]
-        [AllowAnonymous]
         public IQueryable<ImageDto> GetImagesWithoutCaption()
         {
             return _fileConentService.GetImagesWithoutCaption();
@@ -63,12 +68,12 @@ namespace backend.Controllers
 
         [HttpGet("{id}/Content", Name = "GetImageStream")]
         [AllowAnonymous]
-        public async override Task<IActionResult> GetFileContent(string id)
+        public async override Task<IActionResult> GetFileContent(Guid id)
         {
-            if (string.IsNullOrEmpty(id))
-            {
-                return NotFound();
-            }
+            //if (string.IsNullOrEmpty(id))
+            //{
+            //    return NotFound();
+            //}
 
             try
             {
@@ -79,7 +84,7 @@ namespace backend.Controllers
                     return NotFound();
                 }
 
-                var imageStream = await _fileConentService.GetFileStreamAsync(id);
+                var imageStream = await _fileConentService.GetFileStreamAsync(imageEntity.ContentId);
 
                 if (imageStream.Length == 0)
                 {
@@ -96,48 +101,62 @@ namespace backend.Controllers
             }
         }
 
-        //[HttpPost("upload")]
-        //public async Task<IActionResult> Upload(IFormFile imageFile)
-        //{
-        //    if (imageFile == null || imageFile.Length == 0)
-        //    {
-        //        return BadRequest("No file uploaded.");
-        //    }
-
-        //    try
-        //    {
-
-        //        // Assuming you've injected MongoDBService as _mongoDBService
-        //        var fileId = await _fileConentService.UploadImage(imageFile);
-
-        //        // Here you can link fileId with your reel entity if necessary
-
-        //        return Ok(new { Message = "Image uploaded successfully", FileId = fileId });
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError($"Error uploading image: {ex.Message}");
-        //        return StatusCode(500, "An error occurred while uploading the image.");
-        //    }
-        //}
-
-        //[HttpPost("upload-multiple")]
-        //public async override Task<IActionResult> UploadMultiple(List<IFormFile> files)
-        //{
-
-        //    var imageDtos = await _fileConentService.UploadImage(files);
-
-        //    return Ok(new { Message = "Images uploaded and saved successfully", UploadedFiles = imageDtos });
-        //}
-
-        [HttpDelete("{imageId}")]
-        [Authorize(Roles ="Admin")]
-        public async override Task<IActionResult> DeleteFileContent(string imageId)
+        [HttpGet("{id}/Thumbnail", Name = "GetImageThumbnail")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetImageThumbnail(Guid id)
         {
             try
             {
-                await _fileConentService.DeleteImage(imageId);
+                var imageEntity = _fileConentService.GetById(id);
+                if (imageEntity == null)
+                {
+                    return NotFound();
+                }
+
+                var imageStream = await _fileConentService.GetFileStreamAsync(imageEntity.ContentId);
+                if (imageStream.Length == 0)
+                {
+                    return NotFound();
+                }
+
+                using (var image = SixLabors.ImageSharp.Image.Load(imageStream))
+                {
+                    // Crop to square
+                    image.Mutate(x => x.Crop(new SixLabors.ImageSharp.Rectangle(
+                        (image.Width - Math.Min(image.Width, image.Height)) / 2,
+                        (image.Height - Math.Min(image.Width, image.Height)) / 2,
+                        Math.Min(image.Width, image.Height),
+                        Math.Min(image.Width, image.Height)
+                    )));
+
+                    // Resize to 150x150
+                    image.Mutate(x => x.Resize(150, 150));
+
+                    // Save to a new MemoryStream
+                    var thumbnailStream = new MemoryStream();
+                    image.Save(thumbnailStream, new JpegEncoder());
+                    thumbnailStream.Position = 0;
+
+                    // Return the thumbnail
+                    return File(thumbnailStream, "image/jpeg");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred while creating the thumbnail: {ex.Message}");
+                return StatusCode(500, "An error occurred while creating the thumbnail.");
+            }
+        }
+
+        [HttpDelete("{imageId}")]
+        [Authorize(Roles ="Admin")]
+        public async override Task<IActionResult> DeleteFileContent(Guid imageId)
+        {
+            var image = _fileConentService.GetById(imageId);
+
+            try
+            {
+                await _fileConentService.DeleteImage(image.ContentId);
                 return Ok();
             }
             catch (Exception ex)
@@ -148,8 +167,8 @@ namespace backend.Controllers
         }
 
         [HttpPatch("{fileId}/PatchClipEmbedding")]
-        [AllowAnonymous]
-        public IActionResult Patch(string fileId, EmbeddingDto embedding)
+        [Authorize(Roles = "Admin")]
+        public IActionResult Patch(Guid fileId, EmbeddingDto embedding)
         {
             if (embedding == null)
             {
@@ -181,6 +200,25 @@ namespace backend.Controllers
             // Additional processing or actions after successful patch
 
             return Ok(dtoToPatch);
+        }
+
+
+        [HttpPost("/embed")]
+        //[Authorize(Roles = "Admin")]
+        [AllowAnonymous]
+        public async Task<IActionResult> EmbedImagesBatch(int count)
+        {
+            var result = await _fileConentService.ProcessAndEmbedImages(count);
+
+            try
+            {
+                return Ok("Embedded: " + result.Count + " Images");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error: {ex.Message}");
+                return StatusCode(500, "An error occurred");
+            }
         }
 
     }

@@ -24,6 +24,7 @@ namespace backend.Controllers
 
 
         [HttpGet("GetReelsWithoutTranscription")]
+        [Authorize(Roles = "Admin")]
         public IQueryable<ReelDto> GetReelsWithoutTranscription()
         {
             return _fileConentService.GetReelsWithoutTranscription();
@@ -87,17 +88,20 @@ namespace backend.Controllers
 
 
         [HttpGet("{videoId}/Content")]
-        public async override Task<IActionResult> GetFileContent(string videoId) // Assuming videoId is the string representation of MongoDB's ObjectId
+        [AllowAnonymous]
+        public async override Task<IActionResult> GetFileContent(Guid videoId) // Assuming videoId is the string representation of MongoDB's ObjectId
         {
-            if (string.IsNullOrEmpty(videoId))
-            {
-                return NotFound();
-            }
+            //if (string.IsNullOrEmpty(videoId))
+            //{
+            //    return NotFound();
+            //}
+
+            var videoEntity = _fileConentService.GetById(videoId);
 
             try
             {
                 // Assuming `_mongoDBService` is already injected and accessible in your controller
-                var videoStream = await _fileConentService.GetFileStreamAsync(videoId);
+                var videoStream = await _fileConentService.GetFileStreamAsync(videoEntity.ContentId);
 
                 if (videoStream.Length == 0)
                 {
@@ -116,18 +120,18 @@ namespace backend.Controllers
 
         [HttpGet("{id}/Thumbnail")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetThumbnail(string id)
+        public async Task<IActionResult> GetThumbnail(Guid id)
         {
-            if (string.IsNullOrEmpty(id))
-            {
-                return NotFound();
-            }
+            //if (string.IsNullOrEmpty(id))
+            //{
+            //    return NotFound();
+            //}
 
             try
             {
                 var reelEntity = _fileConentService.GetById(id);
 
-                string? thumbnailId = reelEntity.ThumbnailId;
+                string? thumbnailId = reelEntity.Thumbnail.ContentId;
 
                 if (thumbnailId.IsNullOrEmpty())
                 {
@@ -152,7 +156,8 @@ namespace backend.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async override Task<IActionResult> DeleteFileContent(string id)
+        [Authorize(Roles = "Admin")]
+        public async override Task<IActionResult> DeleteFileContent(Guid id)
         {
             try
             {

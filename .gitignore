@@ -1,2 +1,4 @@
 /mongodb_data
 /docker-entrypoint-initdb.d
+/backend/ChatExports
+/backend/MassImports

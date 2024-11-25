@@ -39,5 +39,19 @@ namespace backend.Services
 
             return user;
         }
+        
+        public List<string> GetCurrentUserRoles(HttpContext httpContext)
+        {
+            // Retrieve the current user's claims
+            var userClaims = httpContext.User.Claims;
+
+            // Retrieve role claims
+            var roleClaims = userClaims.Where(c => c.Type == ClaimTypes.Role);
+
+            // Extract role values
+            var roles = roleClaims.Select(c => c.Value).ToList();
+
+            return roles;
+        }
     }
 }

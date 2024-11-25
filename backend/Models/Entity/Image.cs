@@ -6,8 +6,10 @@ namespace backend.Models.Entity
 {
     public class Image : BaseFileContentEntity
     {
+        //Florence2 caption
         public string? GeneratedCaption { get; set; }
 
+        //Embedding for clip large
         [Column(TypeName = "vector(768)")]
         public Vector? ClipEmbedding { get; set; }
     }
