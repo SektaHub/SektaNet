@@ -148,7 +148,7 @@ namespace backend.Controllers
 
         [RequestSizeLimit(536_870_912_000)]
         [HttpPost("upload-from-directory")]
-        [AllowAnonymous] // Migh cause security issues
+        [Authorize("Admin")]
         public async Task<IActionResult> UploadFromDirectory(string directory, string? tags, string? authorizedRoles, bool addOriginalSource = false)
         {
             try

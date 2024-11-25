@@ -2,7 +2,7 @@
 
 namespace backend.Models.Discord
 {
-    public class DiscordServerDto
+    public class DiscordChannelExportDto
     {
         public Guid Id { get; set; }
         public Guild Guild { get; set; }

@@ -25,8 +25,8 @@ namespace backend.Models
             CreateMap<Audio, AudioDto>();
             CreateMap<AudioDto, Audio>();
 
-            CreateMap<DiscordServer, DiscordServerDto>();
-            CreateMap<DiscordServerDto, DiscordServer>();
+            CreateMap<DiscordChannelExport, DiscordChannelExportDto>();
+            CreateMap<DiscordChannelExportDto, DiscordChannelExport>();
 
 
         }

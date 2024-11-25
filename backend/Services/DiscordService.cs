@@ -25,7 +25,7 @@ public class DiscordService
 
     public string GenerateChatJson(string channelId)
     {
-        var server = _dbContext.DiscordServers
+        var server = _dbContext.DiscordChannelExports
             .Include(s => s.Guild)
             .Include(s => s.Channel)
             .Include(s => s.Messages)
@@ -88,7 +88,7 @@ public class DiscordService
     {
         var fileNames = new List<string>();
 
-        var server = await _dbContext.DiscordServers
+        var server = await _dbContext.DiscordChannelExports
             .Include(s => s.Guild)
             .Include(s => s.Channel)
             .FirstOrDefaultAsync(s => s.Channel.Id == channelId);
@@ -169,7 +169,7 @@ public class DiscordService
     public async Task<List<string>> GenerateChatJsonFilesWithAttachments(string channelId, string directory, bool includeAttachments=false, bool includeEmbeds=false, int daysPerFile = 10000)
     {
         var fileNames = new List<string>();
-        var server = _dbContext.DiscordServers
+        var server = _dbContext.DiscordChannelExports
             .Include(s => s.Guild)
             .Include(s => s.Channel)
             .FirstOrDefault(s => s.Channel.Id == channelId);
@@ -355,7 +355,7 @@ public class DiscordService
 
     public string GenerateAttachmentUrlsJson(string channelId)
     {
-        var server = _dbContext.DiscordServers
+        var server = _dbContext.DiscordChannelExports
             .Include(s => s.Messages)
                 .ThenInclude(m => m.Attachments)
             .FirstOrDefault(s => s.Channel.Id == channelId);
@@ -375,27 +375,27 @@ public class DiscordService
 
     //UPSERT CODE BEGINS HERE
 
-    public IQueryable<DiscordServerDto> GetAll()
+    public IQueryable<DiscordChannelExportDto> GetAll()
     {
-        var entities = _dbContext.Set<DiscordServer>();
-        var dtos = _mapper.ProjectTo<DiscordServerDto>(entities);
+        var entities = _dbContext.Set<DiscordChannelExport>();
+        var dtos = _mapper.ProjectTo<DiscordChannelExportDto>(entities);
         return dtos;
     }
 
-    public DiscordServerDto GetDtoById(Guid id)
+    public DiscordChannelExportDto GetDtoById(Guid id)
     {
-        var entity = _dbContext.Set<DiscordServer>().Find(id);
+        var entity = _dbContext.Set<DiscordChannelExport>().Find(id);
 
         if (entity == null)
         {
             throw new Exception($"DiscordServer with ID '{id}' not found.");
         }
 
-        var dto = _mapper.Map<DiscordServerDto>(entity);
+        var dto = _mapper.Map<DiscordChannelExportDto>(entity);
         return dto;
     }
 
-    private void ProcessMessages(DiscordServer serverEntity)
+    private void ProcessMessages(DiscordChannelExport serverEntity)
     {
         foreach (var message in serverEntity.Messages)
         {
@@ -420,13 +420,13 @@ public class DiscordService
         return DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
     }
 
-    public DiscordServerDto Create(DiscordServerDto serverDto)
+    public DiscordChannelExportDto Create(DiscordChannelExportDto serverDto)
     {
         using var transaction = _dbContext.Database.BeginTransaction();
 
         try
         {
-            var serverEntity = _mapper.Map<DiscordServer>(serverDto);
+            var serverEntity = _mapper.Map<DiscordChannelExport>(serverDto);
             serverEntity.Id = Guid.NewGuid();
 
             ProcessGuild(serverEntity);
@@ -436,12 +436,12 @@ public class DiscordService
             ProcessEmbeds(serverEntity);
             ProcessReactions(serverEntity);
 
-            _dbContext.Set<DiscordServer>().Add(serverEntity);
+            _dbContext.Set<DiscordChannelExport>().Add(serverEntity);
             _dbContext.SaveChanges();
 
             transaction.Commit();
 
-            return _mapper.Map<DiscordServerDto>(serverEntity);
+            return _mapper.Map<DiscordChannelExportDto>(serverEntity);
         }
         catch (Exception)
         {
@@ -450,7 +450,7 @@ public class DiscordService
         }
     }
 
-    private void ProcessGuild(DiscordServer serverEntity)
+    private void ProcessGuild(DiscordChannelExport serverEntity)
     {
         var existingGuild = _dbContext.Set<Guild>().FirstOrDefault(g => g.Id == serverEntity.Guild.Id);
         if (existingGuild != null)
@@ -467,7 +467,7 @@ public class DiscordService
         }
     }
 
-    private void ProcessUsers(DiscordServer serverEntity)
+    private void ProcessUsers(DiscordChannelExport serverEntity)
     {
         var processedUsers = new Dictionary<string, DiscordUser>();
 
@@ -513,7 +513,7 @@ public class DiscordService
     }
 
 
-    private void ProcessAttachments(DiscordServer serverEntity)
+    private void ProcessAttachments(DiscordChannelExport serverEntity)
     {
         foreach (var message in serverEntity.Messages)
         {
@@ -531,7 +531,7 @@ public class DiscordService
         }
     }
 
-    private void ProcessEmbeds(DiscordServer serverEntity)
+    private void ProcessEmbeds(DiscordChannelExport serverEntity)
     {
         foreach (var message in serverEntity.Messages)
         {
@@ -547,7 +547,7 @@ public class DiscordService
         }
     }
 
-    private void ProcessReactions(DiscordServer serverEntity)
+    private void ProcessReactions(DiscordChannelExport serverEntity)
     {
         foreach (var message in serverEntity.Messages)
         {

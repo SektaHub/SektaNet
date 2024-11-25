@@ -50,12 +50,12 @@ namespace backend
             modelBuilder.Entity<Channel>()
                 .HasKey(c => c.Id);
 
-            modelBuilder.Entity<DiscordServer>()
+            modelBuilder.Entity<DiscordChannelExport>()
                 .HasOne(ds => ds.Guild)
                 .WithMany()
                 .HasForeignKey("GuildId");
 
-            modelBuilder.Entity<DiscordServer>()
+            modelBuilder.Entity<DiscordChannelExport>()
                 .HasOne(ds => ds.Channel)
                 .WithMany()
                 .HasForeignKey("ChannelId");
@@ -69,7 +69,7 @@ namespace backend
         public DbSet<Thumbnail> Thumbnails { get; set; }
 
         //Discord
-        public DbSet<DiscordServer> DiscordServers { get; set; }
+        public DbSet<DiscordChannelExport> DiscordChannelExports { get; set; }
         public DbSet<Message> DiscordMessages { get; set; }
         public DbSet<Guild> DiscordGuilds { get; set; }
         public DbSet<Channel> DiscordChannels { get; set; }

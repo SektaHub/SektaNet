@@ -19,6 +19,6 @@ namespace backend.Models.Discord
         public List<DiscordUser> Mentions { get; set; }
 
         public Guid DiscordServerId { get; set; }  // Add this line
-        public DiscordServer DiscordServer { get; set; }
+        public DiscordChannelExport DiscordServer { get; set; }
     }
 }

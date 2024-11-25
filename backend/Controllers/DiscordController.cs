@@ -28,7 +28,7 @@ namespace backend.Controllers
         }
 
         [HttpGet("{id}")]
-        public ActionResult<DiscordServerDto> Get(Guid id)
+        public ActionResult<DiscordChannelExportDto> Get(Guid id)
         {
             var dto = _discordService.GetDtoById(id);
             if (dto == null)
@@ -39,9 +39,9 @@ namespace backend.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(DiscordServerDto createDto)
+        public IActionResult Create(DiscordChannelExportDto createDto)
         {
-            DiscordServerDto dto = _discordService.Create(createDto);
+            DiscordChannelExportDto dto = _discordService.Create(createDto);
             return Ok(dto);
         }
 
@@ -63,7 +63,7 @@ namespace backend.Controllers
             {
                 if (jsonReader.TokenType == JsonToken.StartObject)
                 {
-                    var serverDto = serializer.Deserialize<DiscordServerDto>(jsonReader);
+                    var serverDto = serializer.Deserialize<DiscordChannelExportDto>(jsonReader);
                     await ProcessServerDto(serverDto);
                 }
             }
@@ -71,13 +71,13 @@ namespace backend.Controllers
             return Ok("Processing complete");
         }
 
-        private async Task ProcessServerDto(DiscordServerDto serverDto)
+        private async Task ProcessServerDto(DiscordChannelExportDto serverDto)
         {
             _discordService.Create(serverDto);
         }
 
         [HttpGet("{id}/ChatExport")]
-        public ActionResult<DiscordServerDto> GenerateChat(string id)
+        public ActionResult<DiscordChannelExportDto> GenerateChat(string id)
         {
             var chatjson = _discordService.GenerateChatJson(id);
             return Ok(chatjson);
@@ -205,7 +205,7 @@ namespace backend.Controllers
 
 
         [HttpGet("{id}/AttachmentUrlExport")]
-        public ActionResult<DiscordServerDto> GenerateChatAttachments(string id)
+        public ActionResult<DiscordChannelExportDto> GenerateChatAttachments(string id)
         {
             var chatjson = _discordService.GenerateAttachmentUrlsJson(id);
             return Ok(chatjson);
