@@ -67,6 +67,7 @@ namespace backend
         public DbSet<Audio> Audio { get; set; }
         public DbSet<GenericFile> Files { get; set; }
         public DbSet<Thumbnail> Thumbnails { get; set; }
+        public DbSet<Blogpost> Blogposts { get; set; }
 
         //Discord
         public DbSet<DiscordChannelExport> DiscordChannelExports { get; set; }

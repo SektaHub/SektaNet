@@ -28,6 +28,10 @@ namespace backend.Models
             CreateMap<DiscordChannelExport, DiscordChannelExportDto>();
             CreateMap<DiscordChannelExportDto, DiscordChannelExport>();
 
+            CreateMap<Blogpost, BlogpostResponse>()
+               .ForMember(dest => dest.PublisherName, opt => opt.MapFrom(src => src.Publisher.UserName));
+
+            CreateMap<BlogpostRequest, Blogpost>();
 
         }
     }

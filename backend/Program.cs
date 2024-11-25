@@ -95,6 +95,7 @@ builder.Services.AddScoped<LongVideoService>();
 builder.Services.AddScoped<AudioService>();
 builder.Services.AddScoped<DiscordService>();
 builder.Services.AddScoped<AIService>();
+builder.Services.AddScoped<BlogpostService>();
 
 //builder.Services.AddScoped<MongoDBService>();
 
@@ -136,7 +137,7 @@ using (var scope = app.Services.CreateScope())
     // Migrations have been applied, proceed with the rest of the code
 
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var roles = new[] { "Admin", "Sektash", "User" };
+    var roles = new[] { "Admin", "Sektash", "Discord", "Viber", "Totkash", "Boki", "SektaGpt", "Blogposter" };
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))
