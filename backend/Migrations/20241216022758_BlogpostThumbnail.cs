@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,23 +6,23 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace backend.Migrations
 {
     /// <inheritdoc />
-    public partial class Blogposts2 : Migration
+    public partial class BlogpostThumbnail : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<List<string>>(
-                name: "AuthorizedRoles",
+            migrationBuilder.AddColumn<Guid>(
+                name: "ThumbnailId",
                 table: "Blogposts",
-                type: "text[]",
-                nullable: false);
+                type: "uuid",
+                nullable: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "AuthorizedRoles",
+                name: "ThumbnailId",
                 table: "Blogposts");
         }
     }

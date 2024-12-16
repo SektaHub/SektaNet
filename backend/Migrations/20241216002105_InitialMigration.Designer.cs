@@ -14,8 +14,8 @@ using backend;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241125152048_Blogposts")]
-    partial class Blogposts
+    [Migration("20241216002105_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -468,8 +468,9 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
@@ -484,6 +485,10 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<List<string>>("AuthorizedRoles")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
@@ -494,8 +499,9 @@ namespace backend.Migrations
                     b.Property<string>("PublisherId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -539,8 +545,9 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
@@ -586,8 +593,9 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
@@ -633,8 +641,9 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<Guid?>("ThumbnailId")
                         .HasColumnType("uuid");
@@ -685,8 +694,9 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<Guid?>("ThumbnailId")
                         .HasColumnType("uuid");
@@ -731,8 +741,9 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 

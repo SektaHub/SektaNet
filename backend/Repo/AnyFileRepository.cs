@@ -26,7 +26,7 @@ namespace backend.Repo
             _ffmpegService = ffmpegService;
         }
 
-        public async Task<Guid> SaveReel(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource = null)
+        public async Task<Guid> SaveReel(HttpContext httpContext, IFormFile file, List<string> tags, List<string> authorizedRoles, string? originalSource = null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -48,7 +48,7 @@ namespace backend.Repo
             int dur = await _ffmpegService.GetVideoDuration(file);
 
             byte[] thumb = await _ffmpegService.GenerateThumbnail(file);
-            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag, authorizedRoles);
+            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tags, authorizedRoles);
 
             Reel reel = new Reel
             {
@@ -57,7 +57,7 @@ namespace backend.Repo
                 FileExtension = file.ContentType.Split('/')[1],
                 AudioTranscription = null,
                 Duration = dur, // Will be set after getting duration
-                Tags = tag,
+                Tags = tags,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 AuthorizedRoles = authorizedRoles,
@@ -73,7 +73,7 @@ namespace backend.Repo
             return reel.Id;
         }
 
-        public async Task<Guid> SaveLongVideo(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource = null)
+        public async Task<Guid> SaveLongVideo(HttpContext httpContext, IFormFile file, List<string> tags, List<string> authorizedRoles, string? originalSource = null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -96,7 +96,7 @@ namespace backend.Repo
             int dur = await _ffmpegService.GetVideoDuration(file);
 
             byte[] thumb = await _ffmpegService.GenerateThumbnail(file);
-            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag, authorizedRoles);
+            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tags, authorizedRoles);
 
             LongVideo video = new LongVideo
             {
@@ -105,7 +105,7 @@ namespace backend.Repo
                 FileExtension = file.ContentType.Split('/')[1],
                 AudioTranscription = null,
                 Duration = dur, // Will be set after getting duration
-                Tags = tag,
+                Tags = tags,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 AuthorizedRoles = authorizedRoles,
@@ -166,7 +166,7 @@ namespace backend.Repo
             }
         }
 
-        public async Task<Guid> SaveImage(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource =null)
+        public async Task<Guid> SaveImage(HttpContext httpContext, IFormFile file, List<string> tags, List<string> authorizedRoles, string? originalSource =null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -193,7 +193,7 @@ namespace backend.Repo
                 FileExtension = file.ContentType.Split('/')[1],
                 GeneratedCaption = null,
                 ClipEmbedding = null,
-                Tags = tag,
+                Tags = tags,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 AuthorizedRoles = authorizedRoles,
@@ -207,7 +207,7 @@ namespace backend.Repo
             return image.Id;
         }
 
-        public async Task<Guid> SaveThumbnail(HttpContext httpContext, byte[] thumbnailBytes, string fileName, string tag, List<string> authorizedRoles)
+        public async Task<Guid> SaveThumbnail(HttpContext httpContext, byte[] thumbnailBytes, string fileName, List<string> tags, List<string> authorizedRoles)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -229,7 +229,7 @@ namespace backend.Repo
                 Id = RandomBytesGenerator.GenerateGuid(),
                 ContentId = fileId.ToString(),
                 FileExtension = Path.GetExtension(fileName).TrimStart('.'),
-                Tags = tag,
+                Tags = tags,
                 Name = fileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 AuthorizedRoles = authorizedRoles,
@@ -242,7 +242,7 @@ namespace backend.Repo
             return image.Id;
         }
 
-        public async Task<Guid> SaveAudio(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource = null)
+        public async Task<Guid> SaveAudio(HttpContext httpContext, IFormFile file, List<string> tags, List<string> authorizedRoles, string? originalSource = null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -267,7 +267,7 @@ namespace backend.Repo
                 Id = RandomBytesGenerator.GenerateGuid(),
                 ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
-                Tags = tag,
+                Tags = tags,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 AuthorizedRoles = authorizedRoles,
@@ -281,7 +281,7 @@ namespace backend.Repo
             return audio.Id;
         }
 
-        public async Task<Guid> SaveGenericFile(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource = null)
+        public async Task<Guid> SaveGenericFile(HttpContext httpContext, IFormFile file, List<string> tags, List<string> authorizedRoles, string? originalSource = null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -306,7 +306,7 @@ namespace backend.Repo
                 Id = Guid.NewGuid(),
                 ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
-                Tags = tag,
+                Tags = tags,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 AuthorizedRoles = authorizedRoles,

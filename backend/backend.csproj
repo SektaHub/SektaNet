@@ -41,6 +41,7 @@
 
   <ItemGroup>
     <Folder Include="ChatExports\" />
+    <Folder Include="Migrations\" />
     <Folder Include="wwwroot\Images\" />
     <Folder Include="wwwroot\Thumbnails\" />
   </ItemGroup>

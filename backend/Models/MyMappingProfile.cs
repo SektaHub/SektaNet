@@ -31,7 +31,11 @@ namespace backend.Models
             CreateMap<Blogpost, BlogpostResponse>()
                .ForMember(dest => dest.PublisherName, opt => opt.MapFrom(src => src.Publisher.UserName));
 
-            CreateMap<BlogpostRequest, Blogpost>();
+            CreateMap<BlogpostRequest, Blogpost>()
+                .ForMember(dest => dest.Tags,
+                           opt => opt.MapFrom(src => string.IsNullOrWhiteSpace(src.Tags)
+                                                      ? new List<string>()
+                                                      : src.Tags.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList()));
 
         }
     }

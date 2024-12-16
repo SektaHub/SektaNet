@@ -259,7 +259,7 @@ namespace backend.Migrations
 
                     b.HasIndex("MessageId");
 
-                    b.ToTable("DiscordAttachments", (string)null);
+                    b.ToTable("DiscordAttachments");
                 });
 
             modelBuilder.Entity("backend.Models.Discord.Channel", b =>
@@ -286,7 +286,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DiscordChannels", (string)null);
+                    b.ToTable("DiscordChannels");
                 });
 
             modelBuilder.Entity("backend.Models.Discord.DiscordChannelExport", b =>
@@ -313,7 +313,7 @@ namespace backend.Migrations
 
                     b.HasIndex("GuildId");
 
-                    b.ToTable("DiscordChannelExports", (string)null);
+                    b.ToTable("DiscordChannelExports");
                 });
 
             modelBuilder.Entity("backend.Models.Discord.DiscordUser", b =>
@@ -342,7 +342,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DiscordUsers", (string)null);
+                    b.ToTable("DiscordUsers");
                 });
 
             modelBuilder.Entity("backend.Models.Discord.Embed", b =>
@@ -370,7 +370,7 @@ namespace backend.Migrations
 
                     b.HasIndex("MessageId");
 
-                    b.ToTable("DiscordEmbeds", (string)null);
+                    b.ToTable("DiscordEmbeds");
                 });
 
             modelBuilder.Entity("backend.Models.Discord.Guild", b =>
@@ -388,7 +388,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DiscordGuilds", (string)null);
+                    b.ToTable("DiscordGuilds");
                 });
 
             modelBuilder.Entity("backend.Models.Discord.Message", b =>
@@ -428,7 +428,7 @@ namespace backend.Migrations
 
                     b.HasIndex("DiscordServerId");
 
-                    b.ToTable("DiscordMessages", (string)null);
+                    b.ToTable("DiscordMessages");
                 });
 
             modelBuilder.Entity("backend.Models.Entity.Audio", b =>
@@ -465,14 +465,15 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Audio", (string)null);
+                    b.ToTable("Audio");
                 });
 
             modelBuilder.Entity("backend.Models.Entity.Blogpost", b =>
@@ -495,8 +496,12 @@ namespace backend.Migrations
                     b.Property<string>("PublisherId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<Guid?>("ThumbnailId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -506,7 +511,7 @@ namespace backend.Migrations
 
                     b.HasIndex("PublisherId");
 
-                    b.ToTable("Blogposts", (string)null);
+                    b.ToTable("Blogposts");
                 });
 
             modelBuilder.Entity("backend.Models.Entity.GenericFile", b =>
@@ -540,14 +545,15 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Files", (string)null);
+                    b.ToTable("Files");
                 });
 
             modelBuilder.Entity("backend.Models.Entity.Image", b =>
@@ -587,14 +593,15 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Images", (string)null);
+                    b.ToTable("Images");
                 });
 
             modelBuilder.Entity("backend.Models.Entity.LongVideo", b =>
@@ -634,8 +641,9 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<Guid?>("ThumbnailId")
                         .HasColumnType("uuid");
@@ -646,7 +654,7 @@ namespace backend.Migrations
 
                     b.HasIndex("ThumbnailId");
 
-                    b.ToTable("LongVideos", (string)null);
+                    b.ToTable("LongVideos");
                 });
 
             modelBuilder.Entity("backend.Models.Entity.Reel", b =>
@@ -686,8 +694,9 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<Guid?>("ThumbnailId")
                         .HasColumnType("uuid");
@@ -698,7 +707,7 @@ namespace backend.Migrations
 
                     b.HasIndex("ThumbnailId");
 
-                    b.ToTable("Reels", (string)null);
+                    b.ToTable("Reels");
                 });
 
             modelBuilder.Entity("backend.Models.Entity.Thumbnail", b =>
@@ -732,14 +741,15 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Thumbnails", (string)null);
+                    b.ToTable("Thumbnails");
                 });
 
             modelBuilder.Entity("DiscordUserMessage", b =>
@@ -840,20 +850,20 @@ namespace backend.Migrations
                         .WithMany("Embeds")
                         .HasForeignKey("MessageId");
 
-                    b.OwnsOne("backend.Models.Discord.Embed.Author#backend.Models.Discord.EmbedAuthor", "Author", b1 =>
+                    b.OwnsOne("backend.Models.Discord.EmbedAuthor", "Author", b1 =>
                         {
                             b1.Property<Guid>("EmbedId")
                                 .HasColumnType("uuid");
 
                             b1.HasKey("EmbedId");
 
-                            b1.ToTable("DiscordEmbeds", (string)null);
+                            b1.ToTable("DiscordEmbeds");
 
                             b1.WithOwner()
                                 .HasForeignKey("EmbedId");
                         });
 
-                    b.OwnsOne("backend.Models.Discord.Embed.EmbedVideo#backend.Models.Discord.EmbedVideo", "EmbedVideo", b1 =>
+                    b.OwnsOne("backend.Models.Discord.EmbedThumbnail", "Thumbnail", b1 =>
                         {
                             b1.Property<Guid>("EmbedId")
                                 .HasColumnType("uuid");
@@ -870,13 +880,13 @@ namespace backend.Migrations
 
                             b1.HasKey("EmbedId");
 
-                            b1.ToTable("DiscordEmbeds", (string)null);
+                            b1.ToTable("DiscordEmbeds");
 
                             b1.WithOwner()
                                 .HasForeignKey("EmbedId");
                         });
 
-                    b.OwnsOne("backend.Models.Discord.Embed.Thumbnail#backend.Models.Discord.EmbedThumbnail", "Thumbnail", b1 =>
+                    b.OwnsOne("backend.Models.Discord.EmbedVideo", "EmbedVideo", b1 =>
                         {
                             b1.Property<Guid>("EmbedId")
                                 .HasColumnType("uuid");
@@ -893,7 +903,7 @@ namespace backend.Migrations
 
                             b1.HasKey("EmbedId");
 
-                            b1.ToTable("DiscordEmbeds", (string)null);
+                            b1.ToTable("DiscordEmbeds");
 
                             b1.WithOwner()
                                 .HasForeignKey("EmbedId");
@@ -919,7 +929,7 @@ namespace backend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsMany("backend.Models.Discord.Message.Reactions#backend.Models.Discord.Reaction", "Reactions", b1 =>
+                    b.OwnsMany("backend.Models.Discord.Reaction", "Reactions", b1 =>
                         {
                             b1.Property<string>("MessageId")
                                 .HasColumnType("text");
@@ -935,12 +945,12 @@ namespace backend.Migrations
 
                             b1.HasKey("MessageId", "Id");
 
-                            b1.ToTable("Reaction", (string)null);
+                            b1.ToTable("Reaction");
 
                             b1.WithOwner()
                                 .HasForeignKey("MessageId");
 
-                            b1.OwnsOne("backend.Models.Discord.Message.Reactions#backend.Models.Discord.Reaction.Emoji#backend.Models.Discord.Emoji", "Emoji", b2 =>
+                            b1.OwnsOne("backend.Models.Discord.Emoji", "Emoji", b2 =>
                                 {
                                     b2.Property<string>("ReactionMessageId")
                                         .HasColumnType("text");
@@ -969,7 +979,7 @@ namespace backend.Migrations
 
                                     b2.HasKey("ReactionMessageId", "ReactionId");
 
-                                    b2.ToTable("Reaction", (string)null);
+                                    b2.ToTable("Reaction");
 
                                     b2.WithOwner()
                                         .HasForeignKey("ReactionMessageId", "ReactionId");

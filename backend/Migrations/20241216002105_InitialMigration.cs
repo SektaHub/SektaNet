@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -8,7 +9,7 @@ using Pgvector;
 namespace backend.Migrations
 {
     /// <inheritdoc />
-    public partial class NewInitialMigrationForGuids : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -53,6 +54,52 @@ namespace backend.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DiscordChannels",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: false),
+                    CategoryId = table.Column<string>(type: "text", nullable: true),
+                    Category = table.Column<string>(type: "text", nullable: true),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Topic = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DiscordChannels", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DiscordGuilds",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    IconUrl = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DiscordGuilds", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DiscordUsers",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Discriminator = table.Column<string>(type: "text", nullable: true),
+                    NickName = table.Column<string>(type: "text", nullable: true),
+                    Color = table.Column<string>(type: "text", nullable: true),
+                    IsBot = table.Column<bool>(type: "boolean", nullable: false),
+                    AvatarUrl = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DiscordUsers", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -170,10 +217,11 @@ namespace backend.Migrations
                     ContentId = table.Column<string>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     FileExtension = table.Column<string>(type: "text", nullable: false),
-                    Tags = table.Column<string>(type: "text", nullable: true),
+                    Tags = table.Column<List<string>>(type: "text[]", nullable: false),
                     DateUploaded = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    isPrivate = table.Column<bool>(type: "boolean", nullable: false),
-                    OwnerId = table.Column<string>(type: "text", nullable: true)
+                    OwnerId = table.Column<string>(type: "text", nullable: true),
+                    AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
+                    OriginalSource = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -186,6 +234,28 @@ namespace backend.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Blogposts",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    Tags = table.Column<List<string>>(type: "text[]", nullable: false),
+                    AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    PublisherId = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Blogposts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Blogposts_AspNetUsers_PublisherId",
+                        column: x => x.PublisherId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Files",
                 columns: table => new
                 {
@@ -193,10 +263,11 @@ namespace backend.Migrations
                     ContentId = table.Column<string>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     FileExtension = table.Column<string>(type: "text", nullable: false),
-                    Tags = table.Column<string>(type: "text", nullable: true),
+                    Tags = table.Column<List<string>>(type: "text[]", nullable: false),
                     DateUploaded = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    isPrivate = table.Column<bool>(type: "boolean", nullable: false),
-                    OwnerId = table.Column<string>(type: "text", nullable: true)
+                    OwnerId = table.Column<string>(type: "text", nullable: true),
+                    AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
+                    OriginalSource = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -218,10 +289,11 @@ namespace backend.Migrations
                     ContentId = table.Column<string>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     FileExtension = table.Column<string>(type: "text", nullable: false),
-                    Tags = table.Column<string>(type: "text", nullable: true),
+                    Tags = table.Column<List<string>>(type: "text[]", nullable: false),
                     DateUploaded = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    isPrivate = table.Column<bool>(type: "boolean", nullable: false),
-                    OwnerId = table.Column<string>(type: "text", nullable: true)
+                    OwnerId = table.Column<string>(type: "text", nullable: true),
+                    AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
+                    OriginalSource = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -241,10 +313,11 @@ namespace backend.Migrations
                     ContentId = table.Column<string>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     FileExtension = table.Column<string>(type: "text", nullable: false),
-                    Tags = table.Column<string>(type: "text", nullable: true),
+                    Tags = table.Column<List<string>>(type: "text[]", nullable: false),
                     DateUploaded = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    isPrivate = table.Column<bool>(type: "boolean", nullable: false),
-                    OwnerId = table.Column<string>(type: "text", nullable: true)
+                    OwnerId = table.Column<string>(type: "text", nullable: true),
+                    AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
+                    OriginalSource = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -257,6 +330,32 @@ namespace backend.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DiscordChannelExports",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    GuildId = table.Column<string>(type: "text", nullable: false),
+                    ChannelId = table.Column<string>(type: "text", nullable: false),
+                    ExportedAt = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DiscordChannelExports", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DiscordChannelExports_DiscordChannels_ChannelId",
+                        column: x => x.ChannelId,
+                        principalTable: "DiscordChannels",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_DiscordChannelExports_DiscordGuilds_GuildId",
+                        column: x => x.GuildId,
+                        principalTable: "DiscordGuilds",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "LongVideos",
                 columns: table => new
                 {
@@ -264,10 +363,11 @@ namespace backend.Migrations
                     ContentId = table.Column<string>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     FileExtension = table.Column<string>(type: "text", nullable: false),
-                    Tags = table.Column<string>(type: "text", nullable: true),
+                    Tags = table.Column<List<string>>(type: "text[]", nullable: false),
                     DateUploaded = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    isPrivate = table.Column<bool>(type: "boolean", nullable: false),
                     OwnerId = table.Column<string>(type: "text", nullable: true),
+                    AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
+                    OriginalSource = table.Column<string>(type: "text", nullable: true),
                     AudioTranscription = table.Column<string>(type: "text", nullable: true),
                     Duration = table.Column<int>(type: "integer", nullable: false),
                     ThumbnailId = table.Column<Guid>(type: "uuid", nullable: true)
@@ -295,10 +395,11 @@ namespace backend.Migrations
                     ContentId = table.Column<string>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     FileExtension = table.Column<string>(type: "text", nullable: false),
-                    Tags = table.Column<string>(type: "text", nullable: true),
+                    Tags = table.Column<List<string>>(type: "text[]", nullable: false),
                     DateUploaded = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    isPrivate = table.Column<bool>(type: "boolean", nullable: false),
                     OwnerId = table.Column<string>(type: "text", nullable: true),
+                    AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
+                    OriginalSource = table.Column<string>(type: "text", nullable: true),
                     AudioTranscription = table.Column<string>(type: "text", nullable: true),
                     Duration = table.Column<int>(type: "integer", nullable: false),
                     ThumbnailId = table.Column<Guid>(type: "uuid", nullable: true)
@@ -316,6 +417,133 @@ namespace backend.Migrations
                         column: x => x.ThumbnailId,
                         principalTable: "Thumbnails",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DiscordMessages",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampEdited = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CallEndedTimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsPinned = table.Column<bool>(type: "boolean", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    AuthorId = table.Column<string>(type: "text", nullable: true),
+                    DiscordServerId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DiscordMessages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DiscordMessages_DiscordChannelExports_DiscordServerId",
+                        column: x => x.DiscordServerId,
+                        principalTable: "DiscordChannelExports",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_DiscordMessages_DiscordUsers_AuthorId",
+                        column: x => x.AuthorId,
+                        principalTable: "DiscordUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DiscordAttachments",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Url = table.Column<string>(type: "text", nullable: false),
+                    FileName = table.Column<string>(type: "text", nullable: false),
+                    FileSizeBytes = table.Column<int>(type: "integer", nullable: false),
+                    MessageId = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DiscordAttachments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DiscordAttachments_DiscordMessages_MessageId",
+                        column: x => x.MessageId,
+                        principalTable: "DiscordMessages",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DiscordEmbeds",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: true),
+                    Url = table.Column<string>(type: "text", nullable: true),
+                    TimeStamp = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    Thumbnail_Url = table.Column<string>(type: "text", nullable: true),
+                    Thumbnail_Width = table.Column<int>(type: "integer", nullable: true),
+                    Thumbnail_Height = table.Column<int>(type: "integer", nullable: true),
+                    EmbedVideo_Url = table.Column<string>(type: "text", nullable: true),
+                    EmbedVideo_Width = table.Column<int>(type: "integer", nullable: true),
+                    EmbedVideo_Height = table.Column<int>(type: "integer", nullable: true),
+                    MessageId = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DiscordEmbeds", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DiscordEmbeds_DiscordMessages_MessageId",
+                        column: x => x.MessageId,
+                        principalTable: "DiscordMessages",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MessageMentions",
+                columns: table => new
+                {
+                    MentionsId = table.Column<string>(type: "text", nullable: false),
+                    MessageId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MessageMentions", x => new { x.MentionsId, x.MessageId });
+                    table.ForeignKey(
+                        name: "FK_MessageMentions_DiscordMessages_MessageId",
+                        column: x => x.MessageId,
+                        principalTable: "DiscordMessages",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_MessageMentions_DiscordUsers_MentionsId",
+                        column: x => x.MentionsId,
+                        principalTable: "DiscordUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Reaction",
+                columns: table => new
+                {
+                    MessageId = table.Column<string>(type: "text", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Emoji_Id = table.Column<string>(type: "text", nullable: false),
+                    Emoji_Name = table.Column<string>(type: "text", nullable: false),
+                    Emoji_Code = table.Column<string>(type: "text", nullable: false),
+                    Emoji_IsAnimated = table.Column<bool>(type: "boolean", nullable: false),
+                    Emoji_ImageUrl = table.Column<string>(type: "text", nullable: false),
+                    Count = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reaction", x => new { x.MessageId, x.Id });
+                    table.ForeignKey(
+                        name: "FK_Reaction_DiscordMessages_MessageId",
+                        column: x => x.MessageId,
+                        principalTable: "DiscordMessages",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -361,18 +589,44 @@ namespace backend.Migrations
                 column: "OwnerId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Blogposts_PublisherId",
+                table: "Blogposts",
+                column: "PublisherId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DiscordAttachments_MessageId",
+                table: "DiscordAttachments",
+                column: "MessageId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DiscordChannelExports_ChannelId",
+                table: "DiscordChannelExports",
+                column: "ChannelId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DiscordChannelExports_GuildId",
+                table: "DiscordChannelExports",
+                column: "GuildId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DiscordEmbeds_MessageId",
+                table: "DiscordEmbeds",
+                column: "MessageId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DiscordMessages_AuthorId",
+                table: "DiscordMessages",
+                column: "AuthorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DiscordMessages_DiscordServerId",
+                table: "DiscordMessages",
+                column: "DiscordServerId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Files_OwnerId",
                 table: "Files",
                 column: "OwnerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Images_ClipEmbedding",
-                table: "Images",
-                column: "ClipEmbedding")
-                .Annotation("Npgsql:IndexMethod", "hnsw")
-                .Annotation("Npgsql:IndexOperators", new[] { "vector_l2_ops" })
-                .Annotation("Npgsql:StorageParameter:ef_construction", 64)
-                .Annotation("Npgsql:StorageParameter:m", 16);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Images_OwnerId",
@@ -388,6 +642,11 @@ namespace backend.Migrations
                 name: "IX_LongVideos_ThumbnailId",
                 table: "LongVideos",
                 column: "ThumbnailId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MessageMentions_MessageId",
+                table: "MessageMentions",
+                column: "MessageId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reels_OwnerId",
@@ -427,6 +686,15 @@ namespace backend.Migrations
                 name: "Audio");
 
             migrationBuilder.DropTable(
+                name: "Blogposts");
+
+            migrationBuilder.DropTable(
+                name: "DiscordAttachments");
+
+            migrationBuilder.DropTable(
+                name: "DiscordEmbeds");
+
+            migrationBuilder.DropTable(
                 name: "Files");
 
             migrationBuilder.DropTable(
@@ -436,16 +704,37 @@ namespace backend.Migrations
                 name: "LongVideos");
 
             migrationBuilder.DropTable(
+                name: "MessageMentions");
+
+            migrationBuilder.DropTable(
+                name: "Reaction");
+
+            migrationBuilder.DropTable(
                 name: "Reels");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
+                name: "DiscordMessages");
+
+            migrationBuilder.DropTable(
                 name: "Thumbnails");
 
             migrationBuilder.DropTable(
+                name: "DiscordChannelExports");
+
+            migrationBuilder.DropTable(
+                name: "DiscordUsers");
+
+            migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "DiscordChannels");
+
+            migrationBuilder.DropTable(
+                name: "DiscordGuilds");
         }
     }
 }

@@ -8,7 +8,7 @@ namespace backend.Models.Common
         public required string ContentId { get; set; }
         public required string Name { get; set; }
         public required string FileExtension { get; set; }
-        public string? Tags { get; set; }
+        public List<string> Tags { get; set; } = new List<string>();
         public DateTime DateUploaded { get; set; }
         public bool isPrivate { get; set; }
         public ApplicationUser? Owner { get; set; }
