@@ -44,6 +44,22 @@ namespace backend.Repo
                 //return StatusCode(500, "An error occurred while uploading the video.");
             }
 
+
+            DateTime lastModifiedDate = DateTime.UtcNow;
+            long fileSize = file.Length;
+
+            // Try to retrieve from headers if available
+            if (file.Headers.TryGetValue("X-File-LastModified", out var lastModifiedHeader))
+            {
+                if (DateTime.TryParse(lastModifiedHeader, out DateTime parsedDate))
+                {
+                    // Ensure the date is converted to UTC
+                    lastModifiedDate = parsedDate.Kind == DateTimeKind.Utc
+                        ? parsedDate
+                        : parsedDate.ToUniversalTime();
+                }
+            }
+
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             int dur = await _ffmpegService.GetVideoDuration(file);
 
@@ -55,6 +71,8 @@ namespace backend.Repo
                 Id = RandomBytesGenerator.GenerateGuid(),
                 ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
+                FileSize = fileSize,
+                ModifiedDate = lastModifiedDate,
                 AudioTranscription = null,
                 Duration = dur, // Will be set after getting duration
                 Tags = tags,
@@ -91,6 +109,21 @@ namespace backend.Repo
                 //return StatusCode(500, "An error occurred while uploading the video.");
             }
 
+            DateTime lastModifiedDate = DateTime.UtcNow;
+            long fileSize = file.Length;
+
+            // Try to retrieve from headers if available
+            if (file.Headers.TryGetValue("X-File-LastModified", out var lastModifiedHeader))
+            {
+                if (DateTime.TryParse(lastModifiedHeader, out DateTime parsedDate))
+                {
+                    // Ensure the date is converted to UTC
+                    lastModifiedDate = parsedDate.Kind == DateTimeKind.Utc
+                        ? parsedDate
+                        : parsedDate.ToUniversalTime();
+                }
+            }
+
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             int dur = await _ffmpegService.GetVideoDuration(file);
@@ -104,6 +137,8 @@ namespace backend.Repo
                 ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
                 AudioTranscription = null,
+                ModifiedDate = lastModifiedDate,
+                FileSize = fileSize,
                 Duration = dur, // Will be set after getting duration
                 Tags = tags,
                 Name = file.FileName,
@@ -184,6 +219,26 @@ namespace backend.Repo
                 //return StatusCode(500, "An error occurred while uploading the video.");
             }
 
+            DateTime lastModifiedDate = DateTime.UtcNow;
+            long fileSize = file.Length;
+
+            // Try to retrieve from headers if available
+            if (file.Headers.TryGetValue("X-File-LastModified", out var lastModifiedHeader))
+            {
+                if (DateTime.TryParse(lastModifiedHeader, out DateTime parsedDate))
+                {
+                    // Ensure the date is converted to UTC
+                    lastModifiedDate = parsedDate.Kind == DateTimeKind.Utc
+                        ? parsedDate
+                        : parsedDate.ToUniversalTime();
+                }
+            }
+
+            if (file.Headers.TryGetValue("X-File-Size", out var fileSizeHeader))
+            {
+                long.TryParse(fileSizeHeader, out fileSize);
+            }
+
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             Image image = new Image
@@ -191,6 +246,8 @@ namespace backend.Repo
                 Id = RandomBytesGenerator.GenerateGuid(),
                 ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
+                ModifiedDate = lastModifiedDate,
+                FileSize = fileSize,
                 GeneratedCaption = null,
                 ClipEmbedding = null,
                 Tags = tags,
@@ -260,6 +317,22 @@ namespace backend.Repo
                 //return StatusCode(500, "An error occurred while uploading the video.");
             }
 
+
+            DateTime lastModifiedDate = DateTime.UtcNow;
+            long fileSize = file.Length;
+
+            // Try to retrieve from headers if available
+            if (file.Headers.TryGetValue("X-File-LastModified", out var lastModifiedHeader))
+            {
+                if (DateTime.TryParse(lastModifiedHeader, out DateTime parsedDate))
+                {
+                    // Ensure the date is converted to UTC
+                    lastModifiedDate = parsedDate.Kind == DateTimeKind.Utc
+                        ? parsedDate
+                        : parsedDate.ToUniversalTime();
+                }
+            }
+
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             Audio audio = new Audio
@@ -270,6 +343,8 @@ namespace backend.Repo
                 Tags = tags,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
+                ModifiedDate = lastModifiedDate,
+                FileSize = fileSize,
                 AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
                 OriginalSource = originalSource,
@@ -299,6 +374,21 @@ namespace backend.Repo
                 //return StatusCode(500, "An error occurred while uploading the video.");
             }
 
+            DateTime lastModifiedDate = DateTime.UtcNow;
+            long fileSize = file.Length;
+
+            // Try to retrieve from headers if available
+            if (file.Headers.TryGetValue("X-File-LastModified", out var lastModifiedHeader))
+            {
+                if (DateTime.TryParse(lastModifiedHeader, out DateTime parsedDate))
+                {
+                    // Ensure the date is converted to UTC
+                    lastModifiedDate = parsedDate.Kind == DateTimeKind.Utc
+                        ? parsedDate
+                        : parsedDate.ToUniversalTime();
+                }
+            }
+
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             GenericFile fil = new GenericFile
@@ -309,6 +399,8 @@ namespace backend.Repo
                 Tags = tags,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
+                ModifiedDate = lastModifiedDate,
+                FileSize = fileSize,
                 AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
                 OriginalSource = originalSource,

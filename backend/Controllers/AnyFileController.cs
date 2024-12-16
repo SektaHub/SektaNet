@@ -166,21 +166,14 @@ namespace backend.Controllers
 
         [RequestSizeLimit(536_870_912_000)]
         [HttpPost("upload-from-directory")]
-        [Authorize("Admin")]
+        //[Authorize("Admin")]
         public async Task<IActionResult> UploadFromDirectory(string directory, string? tags, string? authorizedRoles, bool addOriginalSource = false)
         {
             try
             {
-                List<string> tagList;
-
-                if (string.IsNullOrEmpty(tags))
-                {
-                    tagList = new List<string>();
-                }
-                else
-                {
-                    tagList = tags.Split(' ').Select(tag => tag.Trim()).ToList();
-                }
+                List<string> tagList = string.IsNullOrEmpty(tags)
+                    ? new List<string>()
+                    : tags.Split(' ').Select(tag => tag.Trim()).ToList();
 
                 List<string> authorizedRolesList = string.IsNullOrEmpty(authorizedRoles)
                     ? new List<string>()
@@ -199,9 +192,20 @@ namespace backend.Controllers
                     var fileType = MimeMapping.MimeUtility.GetMimeMapping(fileName).Split('/')[0];
                     var fileContent = await System.IO.File.ReadAllBytesAsync(filePath);
                     var stream = new MemoryStream(fileContent);
+
+                    // Get file metadata
+                    var fileInfo = new FileInfo(filePath);
+                    DateTime lastModifiedDate = fileInfo.LastWriteTimeUtc;
+                    long fileSize = fileInfo.Length;
+
                     var formFile = new FormFile(stream, 0, fileContent.Length, fileName, fileName)
                     {
-                        Headers = new HeaderDictionary(),
+                        Headers = new HeaderDictionary
+                {
+                    // Add metadata to headers
+                    { "X-File-LastModified", lastModifiedDate.ToString("O") },
+                    { "X-File-Size", fileSize.ToString() }
+                },
                         ContentType = MimeMapping.MimeUtility.GetMimeMapping(fileName)
                     };
 
