@@ -26,12 +26,12 @@ namespace backend
             base.OnModelCreating(modelBuilder);
             modelBuilder.HasPostgresExtension("vector");
 
-            //modelBuilder.Entity<Image>()
-            //    .HasIndex(i => i.ClipEmbedding)
-            //    .HasMethod("hnsw")
-            //    .HasOperators("vector_l2_ops")
-            //    .HasStorageParameter("m", 16)
-            //    .HasStorageParameter("ef_construction", 64);
+            modelBuilder.Entity<Image>()
+                .HasIndex(i => i.ClipEmbedding)
+                .HasMethod("hnsw")
+                .HasOperators("vector_ip_ops")
+                .HasStorageParameter("m", 16)
+                .HasStorageParameter("ef_construction", 64);
 
             modelBuilder.Entity<Message>()
             .HasOne(m => m.Author)
