@@ -22,6 +22,8 @@ using MongoDB.Bson;
 using backend.Repo;
 using backend.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace backend.Services.Common
 {
@@ -119,10 +121,32 @@ namespace backend.Services.Common
             {
                 // Entity with the specified ID was not found
                 //throw new EntityNotFoundException($"Entity with ID '{id}' not found.");
+                throw new Exception($"Entity with ID '{id}' not found.");
             }
 
             return entity;
         }
+
+        public TEntity GetById(Guid id, params Expression<Func<TEntity, object>>[] includeProperties)
+        {
+            var query = _dbContext.Set<TEntity>().AsQueryable();
+
+            // Include related entities if any are specified
+            foreach (var includeProperty in includeProperties)
+            {
+                query = query.Include(includeProperty);
+            }
+
+            var entity = query.FirstOrDefault(e => e.Id == id);
+
+            if (entity == null)
+            {
+                throw new Exception($"Entity with ID '{id}' not found.");
+            }
+
+            return entity;
+        }
+
 
         public TDto GetMetaData(Guid id)
         {

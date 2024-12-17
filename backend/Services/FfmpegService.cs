@@ -193,21 +193,38 @@ namespace backend.Services
         private async Task<string> GetVideoRotation(string filePath)
         {
             string output, rotation = "0";
+
             using (var process = new Process())
             {
-                //process.StartInfo.FileName = "ffmpeg";
-                process.StartInfo.FileName = "/app/wwwroot/FFmpeg/ffmpeg";
+                // Determine the FFmpeg path based on the operating system
+                if (OperatingSystem.IsWindows())
+                {
+                    //string baseDirectory = AppContext.BaseDirectory;
+                    //process.StartInfo.FileName = Path.Combine(baseDirectory, "wwwroot", "FFmpeg", "ffmpeg.exe");
+                    process.StartInfo.FileName = "C:\\Users\\borja\\Documents\\GitHub\\SektaGram\\backend\\wwwroot\\FFmpeg\\ffmpeg.exe";
+                }
+                else if (OperatingSystem.IsLinux())
+                {
+                    process.StartInfo.FileName = "/app/wwwroot/FFmpeg/ffmpeg";
+                }
+                else
+                {
+                    process.StartInfo.FileName = "/app/wwwroot/FFmpeg/ffmpeg";
+                    //throw new PlatformNotSupportedException("This platform is not supported.");
+                }
+
                 process.StartInfo.Arguments = $"-i \"{filePath}\"";
                 process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.RedirectStandardError = true; // FFmpeg writes to stderr
                 process.StartInfo.CreateNoWindow = true;
-                process.Start();
 
+                // Start the process and read output
+                process.Start();
                 output = await process.StandardError.ReadToEndAsync();
                 process.WaitForExit();
             }
 
-            // Assuming the rotation is output in the line containing "rotate"
+            // Extract rotation value from FFmpeg output
             Match match = Regex.Match(output, "rotate\\s*:\\s*(\\d+)");
             if (match.Success)
             {

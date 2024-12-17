@@ -129,7 +129,7 @@ namespace backend.Controllers
 
             try
             {
-                var reelEntity = _fileConentService.GetById(id);
+                var reelEntity = _fileConentService.GetById(id, x => x.Thumbnail);
 
                 string? thumbnailId = reelEntity.Thumbnail.ContentId;
 
