@@ -221,7 +221,9 @@ namespace backend.Migrations
                     DateUploaded = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     OwnerId = table.Column<string>(type: "text", nullable: true),
                     AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
-                    OriginalSource = table.Column<string>(type: "text", nullable: true)
+                    OriginalSource = table.Column<string>(type: "text", nullable: true),
+                    FileSize = table.Column<long>(type: "bigint", nullable: true),
+                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -240,6 +242,7 @@ namespace backend.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: false),
                     Content = table.Column<string>(type: "text", nullable: false),
+                    ThumbnailId = table.Column<Guid>(type: "uuid", nullable: true),
                     Tags = table.Column<List<string>>(type: "text[]", nullable: false),
                     AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -267,7 +270,9 @@ namespace backend.Migrations
                     DateUploaded = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     OwnerId = table.Column<string>(type: "text", nullable: true),
                     AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
-                    OriginalSource = table.Column<string>(type: "text", nullable: true)
+                    OriginalSource = table.Column<string>(type: "text", nullable: true),
+                    FileSize = table.Column<long>(type: "bigint", nullable: true),
+                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -293,7 +298,9 @@ namespace backend.Migrations
                     DateUploaded = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     OwnerId = table.Column<string>(type: "text", nullable: true),
                     AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
-                    OriginalSource = table.Column<string>(type: "text", nullable: true)
+                    OriginalSource = table.Column<string>(type: "text", nullable: true),
+                    FileSize = table.Column<long>(type: "bigint", nullable: true),
+                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -317,7 +324,9 @@ namespace backend.Migrations
                     DateUploaded = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     OwnerId = table.Column<string>(type: "text", nullable: true),
                     AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
-                    OriginalSource = table.Column<string>(type: "text", nullable: true)
+                    OriginalSource = table.Column<string>(type: "text", nullable: true),
+                    FileSize = table.Column<long>(type: "bigint", nullable: true),
+                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -368,6 +377,8 @@ namespace backend.Migrations
                     OwnerId = table.Column<string>(type: "text", nullable: true),
                     AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
                     OriginalSource = table.Column<string>(type: "text", nullable: true),
+                    FileSize = table.Column<long>(type: "bigint", nullable: true),
+                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     AudioTranscription = table.Column<string>(type: "text", nullable: true),
                     Duration = table.Column<int>(type: "integer", nullable: false),
                     ThumbnailId = table.Column<Guid>(type: "uuid", nullable: true)
@@ -400,6 +411,8 @@ namespace backend.Migrations
                     OwnerId = table.Column<string>(type: "text", nullable: true),
                     AuthorizedRoles = table.Column<List<string>>(type: "text[]", nullable: false),
                     OriginalSource = table.Column<string>(type: "text", nullable: true),
+                    FileSize = table.Column<long>(type: "bigint", nullable: true),
+                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     AudioTranscription = table.Column<string>(type: "text", nullable: true),
                     Duration = table.Column<int>(type: "integer", nullable: false),
                     ThumbnailId = table.Column<Guid>(type: "uuid", nullable: true)
@@ -627,6 +640,15 @@ namespace backend.Migrations
                 name: "IX_Files_OwnerId",
                 table: "Files",
                 column: "OwnerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Images_ClipEmbedding",
+                table: "Images",
+                column: "ClipEmbedding")
+                .Annotation("Npgsql:IndexMethod", "hnsw")
+                .Annotation("Npgsql:IndexOperators", new[] { "vector_ip_ops" })
+                .Annotation("Npgsql:StorageParameter:ef_construction", 64)
+                .Annotation("Npgsql:StorageParameter:m", 16);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Images_OwnerId",
