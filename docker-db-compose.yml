@@ -7,24 +7,26 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
-      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - /INTENSO/postgres_data:/var/lib/postgresql/data
+      - /INTENSO/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     environment: 
       POSTGRES_PASSWORD: "sektaadmin"
     networks:
       - sekta_network
+
   mongodb:
     container_name: "mongo"
     image: mongo:latest
     ports:
       - "27017:27017"
     volumes:
-      - ./mongodb_data:/data/db
+      - /INTENSO/mongodb_data:/data/db
     environment:
       MONGO_INITDB_ROOT_USERNAME: "admin"
       MONGO_INITDB_ROOT_PASSWORD: "admin123"
     networks:
       - sekta_network
+
 networks:
   sekta_network:
     external: true
