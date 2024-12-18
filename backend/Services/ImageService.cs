@@ -26,12 +26,14 @@ namespace backend.Services
     {
 
         private readonly AIService _aiService;
+        private readonly string _imageEndpoint;
 
-        public ImageService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager, IdentityService identityService, IHttpContextAccessor httpContextAccessor, AIService aiService)
+        public ImageService(IWebHostEnvironment env, IMapper mapper, ApplicationDbContext dbContext, MongoDBRepository mongoRepo, AnyFileRepository anyFileRepository, UserManager<ApplicationUser> userManager, IdentityService identityService, IHttpContextAccessor httpContextAccessor, AIService aiService, IConfiguration configuration)
         : base(env, mapper, dbContext, mongoRepo, anyFileRepository, userManager, identityService, httpContextAccessor)
         {
             // Assign the AIService to the field
             _aiService = aiService ?? throw new ArgumentNullException(nameof(aiService));
+            _imageEndpoint = configuration.GetSection("SektaNetAI")["BackendImageEndpoint"]!;
         }
 
         public async Task<PaginatedResponseDto<ImageDto>> GetPaginated(int page, int pageSize, string? captionSearch)
@@ -259,7 +261,9 @@ namespace backend.Services
                 }
 
                 // Build image URLs
-                var imageUrls = imageIds.Select(id => $"http://127.0.0.1:8081/api/Image/{id}/Content").ToList();
+                //FIX THIS
+                var imageUrls = imageIds.Select(id => $"{_imageEndpoint}{id}/Content").ToList();
+            
 
                 // Call the AI service to embed images
                 var embeddings = await _aiService.EmbedImagesAsync(imageUrls);

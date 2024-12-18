@@ -26,7 +26,7 @@ namespace backend.Repo
             _ffmpegService = ffmpegService;
         }
 
-        public async Task<Guid> SaveReel(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource = null)
+        public async Task<Guid> SaveReel(HttpContext httpContext, IFormFile file, List<string> tags, List<string> authorizedRoles, string? originalSource = null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -44,20 +44,38 @@ namespace backend.Repo
                 //return StatusCode(500, "An error occurred while uploading the video.");
             }
 
+
+            DateTime lastModifiedDate = DateTime.UtcNow;
+            long fileSize = file.Length;
+
+            // Try to retrieve from headers if available
+            if (file.Headers.TryGetValue("X-File-LastModified", out var lastModifiedHeader))
+            {
+                if (DateTime.TryParse(lastModifiedHeader, out DateTime parsedDate))
+                {
+                    // Ensure the date is converted to UTC
+                    lastModifiedDate = parsedDate.Kind == DateTimeKind.Utc
+                        ? parsedDate
+                        : parsedDate.ToUniversalTime();
+                }
+            }
+
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             int dur = await _ffmpegService.GetVideoDuration(file);
 
             byte[] thumb = await _ffmpegService.GenerateThumbnail(file);
-            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag, authorizedRoles);
+            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tags, authorizedRoles);
 
             Reel reel = new Reel
             {
                 Id = RandomBytesGenerator.GenerateGuid(),
                 ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
+                FileSize = fileSize,
+                ModifiedDate = lastModifiedDate,
                 AudioTranscription = null,
                 Duration = dur, // Will be set after getting duration
-                Tags = tag,
+                Tags = tags,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 AuthorizedRoles = authorizedRoles,
@@ -73,7 +91,7 @@ namespace backend.Repo
             return reel.Id;
         }
 
-        public async Task<Guid> SaveLongVideo(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource = null)
+        public async Task<Guid> SaveLongVideo(HttpContext httpContext, IFormFile file, List<string> tags, List<string> authorizedRoles, string? originalSource = null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -91,12 +109,27 @@ namespace backend.Repo
                 //return StatusCode(500, "An error occurred while uploading the video.");
             }
 
+            DateTime lastModifiedDate = DateTime.UtcNow;
+            long fileSize = file.Length;
+
+            // Try to retrieve from headers if available
+            if (file.Headers.TryGetValue("X-File-LastModified", out var lastModifiedHeader))
+            {
+                if (DateTime.TryParse(lastModifiedHeader, out DateTime parsedDate))
+                {
+                    // Ensure the date is converted to UTC
+                    lastModifiedDate = parsedDate.Kind == DateTimeKind.Utc
+                        ? parsedDate
+                        : parsedDate.ToUniversalTime();
+                }
+            }
+
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             int dur = await _ffmpegService.GetVideoDuration(file);
 
             byte[] thumb = await _ffmpegService.GenerateThumbnail(file);
-            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tag, authorizedRoles);
+            Guid thubnailId = await SaveThumbnail(httpContext, thumb, file.FileName, tags, authorizedRoles);
 
             LongVideo video = new LongVideo
             {
@@ -104,8 +137,10 @@ namespace backend.Repo
                 ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
                 AudioTranscription = null,
+                ModifiedDate = lastModifiedDate,
+                FileSize = fileSize,
                 Duration = dur, // Will be set after getting duration
-                Tags = tag,
+                Tags = tags,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 AuthorizedRoles = authorizedRoles,
@@ -166,7 +201,7 @@ namespace backend.Repo
             }
         }
 
-        public async Task<Guid> SaveImage(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource =null)
+        public async Task<Guid> SaveImage(HttpContext httpContext, IFormFile file, List<string> tags, List<string> authorizedRoles, string? originalSource =null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -184,6 +219,26 @@ namespace backend.Repo
                 //return StatusCode(500, "An error occurred while uploading the video.");
             }
 
+            DateTime lastModifiedDate = DateTime.UtcNow;
+            long fileSize = file.Length;
+
+            // Try to retrieve from headers if available
+            if (file.Headers.TryGetValue("X-File-LastModified", out var lastModifiedHeader))
+            {
+                if (DateTime.TryParse(lastModifiedHeader, out DateTime parsedDate))
+                {
+                    // Ensure the date is converted to UTC
+                    lastModifiedDate = parsedDate.Kind == DateTimeKind.Utc
+                        ? parsedDate
+                        : parsedDate.ToUniversalTime();
+                }
+            }
+
+            if (file.Headers.TryGetValue("X-File-Size", out var fileSizeHeader))
+            {
+                long.TryParse(fileSizeHeader, out fileSize);
+            }
+
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             Image image = new Image
@@ -191,9 +246,11 @@ namespace backend.Repo
                 Id = RandomBytesGenerator.GenerateGuid(),
                 ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
+                ModifiedDate = lastModifiedDate,
+                FileSize = fileSize,
                 GeneratedCaption = null,
                 ClipEmbedding = null,
-                Tags = tag,
+                Tags = tags,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 AuthorizedRoles = authorizedRoles,
@@ -207,7 +264,7 @@ namespace backend.Repo
             return image.Id;
         }
 
-        public async Task<Guid> SaveThumbnail(HttpContext httpContext, byte[] thumbnailBytes, string fileName, string tag, List<string> authorizedRoles)
+        public async Task<Guid> SaveThumbnail(HttpContext httpContext, byte[] thumbnailBytes, string fileName, List<string> tags, List<string> authorizedRoles)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -229,7 +286,7 @@ namespace backend.Repo
                 Id = RandomBytesGenerator.GenerateGuid(),
                 ContentId = fileId.ToString(),
                 FileExtension = Path.GetExtension(fileName).TrimStart('.'),
-                Tags = tag,
+                Tags = tags,
                 Name = fileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
                 AuthorizedRoles = authorizedRoles,
@@ -242,7 +299,7 @@ namespace backend.Repo
             return image.Id;
         }
 
-        public async Task<Guid> SaveAudio(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource = null)
+        public async Task<Guid> SaveAudio(HttpContext httpContext, IFormFile file, List<string> tags, List<string> authorizedRoles, string? originalSource = null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -260,6 +317,22 @@ namespace backend.Repo
                 //return StatusCode(500, "An error occurred while uploading the video.");
             }
 
+
+            DateTime lastModifiedDate = DateTime.UtcNow;
+            long fileSize = file.Length;
+
+            // Try to retrieve from headers if available
+            if (file.Headers.TryGetValue("X-File-LastModified", out var lastModifiedHeader))
+            {
+                if (DateTime.TryParse(lastModifiedHeader, out DateTime parsedDate))
+                {
+                    // Ensure the date is converted to UTC
+                    lastModifiedDate = parsedDate.Kind == DateTimeKind.Utc
+                        ? parsedDate
+                        : parsedDate.ToUniversalTime();
+                }
+            }
+
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             Audio audio = new Audio
@@ -267,9 +340,11 @@ namespace backend.Repo
                 Id = RandomBytesGenerator.GenerateGuid(),
                 ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
-                Tags = tag,
+                Tags = tags,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
+                ModifiedDate = lastModifiedDate,
+                FileSize = fileSize,
                 AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
                 OriginalSource = originalSource,
@@ -281,7 +356,7 @@ namespace backend.Repo
             return audio.Id;
         }
 
-        public async Task<Guid> SaveGenericFile(HttpContext httpContext, IFormFile file, string tag, List<string> authorizedRoles, string? originalSource = null)
+        public async Task<Guid> SaveGenericFile(HttpContext httpContext, IFormFile file, List<string> tags, List<string> authorizedRoles, string? originalSource = null)
         {
             ObjectId fileId = ObjectId.Empty;
 
@@ -299,6 +374,21 @@ namespace backend.Repo
                 //return StatusCode(500, "An error occurred while uploading the video.");
             }
 
+            DateTime lastModifiedDate = DateTime.UtcNow;
+            long fileSize = file.Length;
+
+            // Try to retrieve from headers if available
+            if (file.Headers.TryGetValue("X-File-LastModified", out var lastModifiedHeader))
+            {
+                if (DateTime.TryParse(lastModifiedHeader, out DateTime parsedDate))
+                {
+                    // Ensure the date is converted to UTC
+                    lastModifiedDate = parsedDate.Kind == DateTimeKind.Utc
+                        ? parsedDate
+                        : parsedDate.ToUniversalTime();
+                }
+            }
+
             string? currentUserId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             GenericFile fil = new GenericFile
@@ -306,9 +396,11 @@ namespace backend.Repo
                 Id = Guid.NewGuid(),
                 ContentId = fileId.ToString(),
                 FileExtension = file.ContentType.Split('/')[1],
-                Tags = tag,
+                Tags = tags,
                 Name = file.FileName,
                 DateUploaded = DateTime.Now.ToUniversalTime(),
+                ModifiedDate = lastModifiedDate,
+                FileSize = fileSize,
                 AuthorizedRoles = authorizedRoles,
                 OwnerId = currentUserId,
                 OriginalSource = originalSource,

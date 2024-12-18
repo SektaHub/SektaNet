@@ -13,11 +13,12 @@ namespace backend.Services
     public class AIService
     {
         private readonly HttpClient _httpClient;
-        private const string AI_ENDPOINT = "http://localhost:8000/clip/embed/";
+        private readonly string _aiEndpoint;
 
-        public AIService()
+        public AIService(HttpClient httpClient, IConfiguration configuration)
         {
-            _httpClient = new HttpClient();
+            _httpClient = httpClient;
+            _aiEndpoint = configuration.GetSection("SektaNetAI")["Endpoint"];
         }
 
         public class EmbeddingResponse
@@ -51,7 +52,7 @@ namespace backend.Services
                 //Console.WriteLine("Request Body: " + jsonRequest);
 
                 // Send the HTTP request to the AI service
-                var response = await _httpClient.PostAsync(AI_ENDPOINT, content);
+                var response = await _httpClient.PostAsync(_aiEndpoint+"clip/embed/", content);
 
                 // Log the response for debugging purposes
                 //Console.WriteLine("AI_RESPONSE Status Code: " + response.StatusCode);
@@ -126,7 +127,7 @@ namespace backend.Services
                 var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
                 // Send the HTTP request to the AI service
-                var response = await _httpClient.PostAsync(AI_ENDPOINT, content);
+                var response = await _httpClient.PostAsync(_aiEndpoint + "clip/embed/", content);
 
                 // Log the response for debugging
                 var responseContent = await response.Content.ReadAsStringAsync();

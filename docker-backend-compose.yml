@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+    backend:
+        container_name: "backend"
+        build:
+          context: ./backend
+          dockerfile: Dockerfile
+        image: sekta-backend:latest
+        ports:
+          - "8081:8081"
+        networks:
+          - sekta_network
+networks:
+  sekta_network:
+    external: true

@@ -3,18 +3,16 @@ version: '3.8'
 services:
   database:
     container_name: "baza"
-    image: 'sektahub/pgvector'
+    image: 'pgvector/pgvector:pg17'
     ports:
       - "5433:5432"
     volumes:
+      - ./postgres_data:/var/lib/postgresql/data
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
-    # networks: 
-      # sektanetwork:
-        # ipv4_address: "172.24.0.3"
     environment: 
       POSTGRES_PASSWORD: "sektaadmin"
-    # Custom command or entrypoint if needed
-    #command: /docker-entrypoint-initdb.d/install-pgvector.sh
+    networks:
+      - sekta_network
   mongodb:
     container_name: "mongo"
     image: mongo:latest
@@ -25,3 +23,8 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: "admin"
       MONGO_INITDB_ROOT_PASSWORD: "admin123"
+    networks:
+      - sekta_network
+networks:
+  sekta_network:
+    external: true

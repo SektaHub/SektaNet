@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using Microsoft.IdentityModel.Tokens;
+using System.Diagnostics;
 
 namespace backend.Controllers
 {
@@ -38,9 +40,17 @@ namespace backend.Controllers
         {
             try
             {
-                if(tags == null)
-                    tags = "";
+                List<string> tagList;
                 List<string> authorizedRolesList;
+
+                if (string.IsNullOrEmpty(tags))
+                {
+                    tagList = new List<string>();
+                }
+                else
+                {
+                    tagList = tags.Split(' ').Select(tag => tag.Trim()).ToList();
+                }
 
                 if (string.IsNullOrEmpty(authorizedRoles))
                 {
@@ -48,7 +58,7 @@ namespace backend.Controllers
                 }
                 else
                 {
-                    authorizedRolesList = authorizedRoles.Split(',').Select(role => role.Trim()).ToList();
+                    authorizedRolesList = authorizedRoles.Split(' ').Select(role => role.Trim()).ToList();
                 }
                 foreach (var file in files)
                 {
@@ -58,19 +68,19 @@ namespace backend.Controllers
                     switch (fileType.ToLower())
                     {
                         case "image":
-                            await _fileRepository.SaveImage(HttpContext, file, tags, authorizedRolesList);
+                            await _fileRepository.SaveImage(HttpContext, file, tagList, authorizedRolesList);
                             break;
                         case "video":
                             if(await _ffmpegService.Is9_16AspectRatio(file))
-                                await _fileRepository.SaveReel(HttpContext, file, tags, authorizedRolesList);
+                                await _fileRepository.SaveReel(HttpContext, file, tagList, authorizedRolesList);
                             else
-                                await _fileRepository.SaveLongVideo(HttpContext, file, tags, authorizedRolesList);
+                                await _fileRepository.SaveLongVideo(HttpContext, file, tagList, authorizedRolesList);
                             break;
                         case "audio":
-                            await _fileRepository.SaveAudio(HttpContext, file, tags, authorizedRolesList);
+                            await _fileRepository.SaveAudio(HttpContext, file, tagList, authorizedRolesList);
                             break;
                         default:
-                            await _fileRepository.SaveGenericFile(HttpContext, file, tags, authorizedRolesList);
+                            await _fileRepository.SaveGenericFile(HttpContext, file, tagList, authorizedRolesList);
                             break;
                     }
                 }
@@ -92,8 +102,16 @@ namespace backend.Controllers
         {
             try
             {
-                if (tags == null)
-                    tags = "";
+                List<string> tagList;
+
+                if (string.IsNullOrEmpty(tags))
+                {
+                    tagList = new List<string>();
+                }
+                else
+                {
+                    tagList = tags.Split(' ').Select(tag => tag.Trim()).ToList();
+                }
 
                 List<string> authorizedRolesList = string.IsNullOrEmpty(authorizedRoles)
                     ? new List<string>()
@@ -120,19 +138,19 @@ namespace backend.Controllers
                     switch (fileType.ToLower())
                     {
                         case "image":
-                            await _fileRepository.SaveImage(HttpContext, formFile, tags, authorizedRolesList, url);
+                            await _fileRepository.SaveImage(HttpContext, formFile, tagList, authorizedRolesList, url);
                             break;
                         case "video":
                             if (await _ffmpegService.Is9_16AspectRatio(formFile))
-                                await _fileRepository.SaveReel(HttpContext, formFile, tags, authorizedRolesList, url);
+                                await _fileRepository.SaveReel(HttpContext, formFile, tagList, authorizedRolesList, url);
                             else
-                                await _fileRepository.SaveLongVideo(HttpContext, formFile, tags, authorizedRolesList, url);
+                                await _fileRepository.SaveLongVideo(HttpContext, formFile, tagList, authorizedRolesList, url);
                             break;
                         case "audio":
-                            await _fileRepository.SaveAudio(HttpContext, formFile, tags, authorizedRolesList, url);
+                            await _fileRepository.SaveAudio(HttpContext, formFile, tagList, authorizedRolesList, url);
                             break;
                         default:
-                            await _fileRepository.SaveGenericFile(HttpContext, formFile, tags, authorizedRolesList, url);
+                            await _fileRepository.SaveGenericFile(HttpContext, formFile, tagList, authorizedRolesList, url);
                             break;
                     }
                 }
@@ -148,13 +166,14 @@ namespace backend.Controllers
 
         [RequestSizeLimit(536_870_912_000)]
         [HttpPost("upload-from-directory")]
-        [Authorize("Admin")]
+        //[Authorize("Admin")]
         public async Task<IActionResult> UploadFromDirectory(string directory, string? tags, string? authorizedRoles, bool addOriginalSource = false)
         {
             try
             {
-                if (tags == null)
-                    tags = "";
+                List<string> tagList = string.IsNullOrEmpty(tags)
+                    ? new List<string>()
+                    : tags.Split(' ').Select(tag => tag.Trim()).ToList();
 
                 List<string> authorizedRolesList = string.IsNullOrEmpty(authorizedRoles)
                     ? new List<string>()
@@ -173,9 +192,20 @@ namespace backend.Controllers
                     var fileType = MimeMapping.MimeUtility.GetMimeMapping(fileName).Split('/')[0];
                     var fileContent = await System.IO.File.ReadAllBytesAsync(filePath);
                     var stream = new MemoryStream(fileContent);
+
+                    // Get file metadata
+                    var fileInfo = new FileInfo(filePath);
+                    DateTime lastModifiedDate = fileInfo.LastWriteTimeUtc;
+                    long fileSize = fileInfo.Length;
+
                     var formFile = new FormFile(stream, 0, fileContent.Length, fileName, fileName)
                     {
-                        Headers = new HeaderDictionary(),
+                        Headers = new HeaderDictionary
+                {
+                    // Add metadata to headers
+                    { "X-File-LastModified", lastModifiedDate.ToString("O") },
+                    { "X-File-Size", fileSize.ToString() }
+                },
                         ContentType = MimeMapping.MimeUtility.GetMimeMapping(fileName)
                     };
 
@@ -184,19 +214,19 @@ namespace backend.Controllers
                     switch (fileType.ToLower())
                     {
                         case "image":
-                            await _fileRepository.SaveImage(HttpContext, formFile, tags, authorizedRolesList, originalSource);
+                            await _fileRepository.SaveImage(HttpContext, formFile, tagList, authorizedRolesList, originalSource);
                             break;
                         case "video":
                             if (await _ffmpegService.Is9_16AspectRatio(formFile))
-                                await _fileRepository.SaveReel(HttpContext, formFile, tags, authorizedRolesList, originalSource);
+                                await _fileRepository.SaveReel(HttpContext, formFile, tagList, authorizedRolesList, originalSource);
                             else
-                                await _fileRepository.SaveLongVideo(HttpContext, formFile, tags, authorizedRolesList, originalSource);
+                                await _fileRepository.SaveLongVideo(HttpContext, formFile, tagList, authorizedRolesList, originalSource);
                             break;
                         case "audio":
-                            await _fileRepository.SaveAudio(HttpContext, formFile, tags, authorizedRolesList, originalSource);
+                            await _fileRepository.SaveAudio(HttpContext, formFile, tagList, authorizedRolesList, originalSource);
                             break;
                         default:
-                            await _fileRepository.SaveGenericFile(HttpContext, formFile, tags, authorizedRolesList, originalSource);
+                            await _fileRepository.SaveGenericFile(HttpContext, formFile, tagList, authorizedRolesList, originalSource);
                             break;
                     }
                 }

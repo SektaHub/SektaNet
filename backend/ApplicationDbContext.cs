@@ -26,12 +26,12 @@ namespace backend
             base.OnModelCreating(modelBuilder);
             modelBuilder.HasPostgresExtension("vector");
 
-            //modelBuilder.Entity<Image>()
-            //    .HasIndex(i => i.ClipEmbedding)
-            //    .HasMethod("hnsw")
-            //    .HasOperators("vector_l2_ops")
-            //    .HasStorageParameter("m", 16)
-            //    .HasStorageParameter("ef_construction", 64);
+            modelBuilder.Entity<Image>()
+                .HasIndex(i => i.ClipEmbedding)
+                .HasMethod("hnsw")
+                .HasOperators("vector_ip_ops")
+                .HasStorageParameter("m", 16)
+                .HasStorageParameter("ef_construction", 64);
 
             modelBuilder.Entity<Message>()
             .HasOne(m => m.Author)
@@ -67,6 +67,7 @@ namespace backend
         public DbSet<Audio> Audio { get; set; }
         public DbSet<GenericFile> Files { get; set; }
         public DbSet<Thumbnail> Thumbnails { get; set; }
+        public DbSet<Blogpost> Blogposts { get; set; }
 
         //Discord
         public DbSet<DiscordChannelExport> DiscordChannelExports { get; set; }

@@ -14,8 +14,8 @@ using backend;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241118221451_NoIndex")]
-    partial class NoIndex
+    [Migration("20241216234311_FileSize")]
+    partial class FileSize
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -292,7 +292,7 @@ namespace backend.Migrations
                     b.ToTable("DiscordChannels");
                 });
 
-            modelBuilder.Entity("backend.Models.Discord.DiscordServer", b =>
+            modelBuilder.Entity("backend.Models.Discord.DiscordChannelExport", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -316,7 +316,7 @@ namespace backend.Migrations
 
                     b.HasIndex("GuildId");
 
-                    b.ToTable("DiscordServers");
+                    b.ToTable("DiscordChannelExports");
                 });
 
             modelBuilder.Entity("backend.Models.Discord.DiscordUser", b =>
@@ -458,6 +458,12 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<long?>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -468,14 +474,53 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Audio");
+                });
+
+            modelBuilder.Entity("backend.Models.Entity.Blogpost", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<List<string>>("AuthorizedRoles")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PublisherId")
+                        .HasColumnType("text");
+
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<Guid?>("ThumbnailId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PublisherId");
+
+                    b.ToTable("Blogposts");
                 });
 
             modelBuilder.Entity("backend.Models.Entity.GenericFile", b =>
@@ -499,6 +544,12 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<long?>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -509,8 +560,9 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
@@ -543,8 +595,14 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<long?>("FileSize")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("GeneratedCaption")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -556,8 +614,9 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
@@ -593,6 +652,12 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<long?>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -603,8 +668,9 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<Guid?>("ThumbnailId")
                         .HasColumnType("uuid");
@@ -645,6 +711,12 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<long?>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -655,8 +727,9 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<Guid?>("ThumbnailId")
                         .HasColumnType("uuid");
@@ -691,6 +764,12 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<long?>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -701,8 +780,9 @@ namespace backend.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
@@ -784,7 +864,7 @@ namespace backend.Migrations
                         .HasForeignKey("MessageId");
                 });
 
-            modelBuilder.Entity("backend.Models.Discord.DiscordServer", b =>
+            modelBuilder.Entity("backend.Models.Discord.DiscordChannelExport", b =>
                 {
                     b.HasOne("backend.Models.Discord.Channel", "Channel")
                         .WithMany()
@@ -882,7 +962,7 @@ namespace backend.Migrations
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("backend.Models.Discord.DiscordServer", "DiscordServer")
+                    b.HasOne("backend.Models.Discord.DiscordChannelExport", "DiscordServer")
                         .WithMany("Messages")
                         .HasForeignKey("DiscordServerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -964,6 +1044,15 @@ namespace backend.Migrations
                     b.Navigation("Owner");
                 });
 
+            modelBuilder.Entity("backend.Models.Entity.Blogpost", b =>
+                {
+                    b.HasOne("backend.Models.ApplicationUser", "Publisher")
+                        .WithMany()
+                        .HasForeignKey("PublisherId");
+
+                    b.Navigation("Publisher");
+                });
+
             modelBuilder.Entity("backend.Models.Entity.GenericFile", b =>
                 {
                     b.HasOne("backend.Models.ApplicationUser", "Owner")
@@ -1021,7 +1110,7 @@ namespace backend.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("backend.Models.Discord.DiscordServer", b =>
+            modelBuilder.Entity("backend.Models.Discord.DiscordChannelExport", b =>
                 {
                     b.Navigation("Messages");
                 });
