@@ -92,7 +92,7 @@ namespace backend.Services
                 }
 
                 allowedEntities = allowedEntities.Where(image => image.ClipEmbedding != null)
-                                .OrderBy(image => image.ClipEmbedding!.CosineDistance(queryVector));
+                                .OrderBy(image => image.ClipEmbedding!.MaxInnerProduct(queryVector));
             }
 
             // Get the total count of filtered entities
@@ -245,26 +245,23 @@ namespace backend.Services
         {
             try
             {
-                // Select the first 'count' image IDs from the database
-                List<string> imageIds = await _dbContext.Set<Image>()
+                // Select the first 'count' images with necessary filters and order
+                var images = await _dbContext.Set<Image>()
                                      .Where(image => image.ClipEmbedding == null)
                                      .Where(image => new[] { "jpeg", "jpg", "png" }.Contains(image.FileExtension.ToLower())) // Filter by file extension
                                      .Where(image => image.ContentId != "000000000000000000000000") // Filter by ContentId
                                      .Take(count)
-                                     .Select(image => image.Id.ToString())
                                      .ToListAsync();
 
-                // Check if the imageIds list is empty or null
-                if (imageIds == null || !imageIds.Any())
+                // Check if the images list is empty or null
+                if (images == null || !images.Any())
                 {
-                    Console.WriteLine("No image IDs found.");
-                    return null;  // Return early if no image IDs are found.
+                    Console.WriteLine("No images found.");
+                    return null;  // Return early if no images are found.
                 }
 
-                // Build image URLs
-                //FIX THIS
-                var imageUrls = imageIds.Select(id => $"{_imageEndpoint}{id}/Content").ToList();
-            
+                // Build image URLs from the image IDs
+                var imageUrls = images.Select(image => $"{_imageEndpoint}{image.Id}/Content").ToList();
 
                 // Call the AI service to embed images
                 var embeddings = await _aiService.EmbedImagesAsync(imageUrls);
@@ -276,11 +273,7 @@ namespace backend.Services
                     return null;  // Handle the case where embeddings are not returned.
                 }
 
-                // Retrieve the images from the database by their IDs
-                var images = await _dbContext.Set<Image>()
-                                              .Where(image => imageIds.Contains(image.Id.ToString()))
-                                              .ToListAsync();
-
+                // Ensure the number of images and embeddings match
                 if (images.Count != embeddings.Count)
                 {
                     Console.WriteLine("Mismatch between the number of images and embeddings.");

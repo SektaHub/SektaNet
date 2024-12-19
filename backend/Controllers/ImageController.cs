@@ -221,5 +221,40 @@ namespace backend.Controllers
             }
         }
 
+        [HttpPost("/embed2")]
+        [AllowAnonymous]
+        public async Task<IActionResult> EmbedImagesBatch(int batch = 100, int count = 1)
+        {
+            if (batch <= 0 || count <= 0)
+            {
+                return BadRequest("Batch and count must be positive integers.");
+            }
+
+            List<Vector> resultingList = new List<Vector>();
+            try
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    List<Vector> result = await _fileConentService.ProcessAndEmbedImages(batch);
+
+                    if (result == null || !result.Any())
+                    {
+                        _logger.LogWarning($"Batch {i + 1}/{count}: No embeddings generated.");
+                        continue;
+                    }
+
+                    resultingList.AddRange(result);
+                }
+
+                _logger.LogInformation($"Successfully embedded {resultingList.Count} images in {count} batches.");
+                return Ok($"Embedded {resultingList.Count} images successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred while embedding images: {ex.Message}", ex);
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
+        }
+
     }
 }
