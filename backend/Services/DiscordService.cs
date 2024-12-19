@@ -180,6 +180,8 @@ public class DiscordService
 
         var messagesQuery = _dbContext.DiscordMessages
          .Include(m => m.Author)
+         .Include(m => m.Embeds)
+         .Include(m => m.Attachments)
          .Where(m => m.DiscordServerId == server.Id);
 
         if (!includeAttachments)
@@ -224,7 +226,7 @@ public class DiscordService
                 messageContent.Append("\n");
 
                 // Process attachments
-                if (includeAttachments)
+                if (includeAttachments)// && message.Attachments != null)
                 {
                     foreach (var attachment in message.Attachments)
                     {
@@ -241,14 +243,18 @@ public class DiscordService
                 }
 
                 // Process embeds
-                if (includeEmbeds)
+                if (includeEmbeds )//&& message.Embeds != null)
                 {
                     foreach (var embed in message.Embeds)
                     {
                         if (string.IsNullOrEmpty(embed.Title) || string.IsNullOrEmpty(embed.Description))
-                            messageContent.AppendLine($"<Embed>EMBED_ERROR</Embed>");
+                        {
+                            //messageContent.AppendLine($"<Embed>EMBED_ERROR</Embed>");
+                        }
                         else
+                        {
                             messageContent.AppendLine($"<Embed>\n{embed.Title}\n{embed.Description}\n</Embed>");
+                        }
 
                         if (embed.Thumbnail != null && !string.IsNullOrEmpty(embed.Thumbnail.Url))
                         {
