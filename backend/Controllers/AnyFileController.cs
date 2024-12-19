@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.IdentityModel.Tokens;
 using System.Diagnostics;
+using SystemFile = System.IO.File;
 
 namespace backend.Controllers
 {
@@ -167,7 +168,7 @@ namespace backend.Controllers
         [RequestSizeLimit(536_870_912_000)]
         [HttpPost("upload-from-directory")]
         //[Authorize("Admin")]
-        public async Task<IActionResult> UploadFromDirectory(string directory, string? tags, string? authorizedRoles, bool addOriginalSource = false)
+        public async Task<IActionResult> UploadFromDirectory(string directory, string? tags, string? authorizedRoles, bool addOriginalSource = false, bool checkExists = false)
         {
             try
             {
@@ -189,6 +190,12 @@ namespace backend.Controllers
                     if (string.IsNullOrEmpty(filePath)) continue;
 
                     var fileName = Path.GetFileName(filePath);
+                    string originalSource = addOriginalSource ? Path.Combine(directory, fileName).Replace('\\', '/') : null;
+
+                    // Check if the file already exists in the database
+                    if (checkExists && await _fileRepository.FileExistsAsync(fileName, originalSource))
+                        continue; // Skip this file if it already exists
+
                     var fileType = MimeMapping.MimeUtility.GetMimeMapping(fileName).Split('/')[0];
                     var fileContent = await System.IO.File.ReadAllBytesAsync(filePath);
                     var stream = new MemoryStream(fileContent);
@@ -209,18 +216,28 @@ namespace backend.Controllers
                         ContentType = MimeMapping.MimeUtility.GetMimeMapping(fileName)
                     };
 
-                    string originalSource = addOriginalSource ? Path.Combine(directory, fileName) : null;
-
                     switch (fileType.ToLower())
                     {
                         case "image":
                             await _fileRepository.SaveImage(HttpContext, formFile, tagList, authorizedRolesList, originalSource);
                             break;
                         case "video":
-                            if (await _ffmpegService.Is9_16AspectRatio(formFile))
-                                await _fileRepository.SaveReel(HttpContext, formFile, tagList, authorizedRolesList, originalSource);
-                            else
-                                await _fileRepository.SaveLongVideo(HttpContext, formFile, tagList, authorizedRolesList, originalSource);
+                            try
+                            {
+                                bool isAspectRatioValid = await _ffmpegService.Is9_16AspectRatio(filePath);
+
+                                if (isAspectRatioValid)
+                                    await _fileRepository.SaveReel(HttpContext, formFile, tagList, authorizedRolesList, originalSource);
+                                else
+                                    await _fileRepository.SaveLongVideo(HttpContext, formFile, tagList, authorizedRolesList, originalSource);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Log the error for this specific file
+                                _logger.LogError($"Error processing video file {filePath}: {ex.Message}");
+                                // Continue with the next file
+                                continue;
+                            }
                             break;
                         case "audio":
                             await _fileRepository.SaveAudio(HttpContext, formFile, tagList, authorizedRolesList, originalSource);

@@ -190,6 +190,64 @@ namespace backend.Services
             }
         }
 
+        public async Task<bool> Is9_16AspectRatio(string filePath)
+        {
+            try
+            {
+                // Validate file exists and is not empty
+                if (!System.IO.File.Exists(filePath))
+                {
+                    _logger.LogWarning($"File not found: {filePath}");
+                    return false;
+                }
+
+                // Check file size to avoid processing extremely small or zero-byte files
+                var fileInfo = new FileInfo(filePath);
+                if (fileInfo.Length == 0)
+                {
+                    _logger.LogWarning($"Empty file skipped: {filePath}");
+                    return false;
+                }
+
+                // Use FFmpeg to get the video information including rotation
+                string rotationOutput = await GetVideoRotation(filePath);
+                int rotation = 0;
+                if (int.TryParse(rotationOutput, out int parsedRotation))
+                {
+                    rotation = parsedRotation;
+                }
+
+                // Get media info from the file
+                var mediaInfo = await FFmpeg.GetMediaInfo(filePath);
+
+                var videoStream = mediaInfo.VideoStreams.FirstOrDefault();
+
+                if (videoStream != null)
+                {
+                    bool isRotated90or270 = rotation == 90 || rotation == 270;
+                    int effectiveWidth = isRotated90or270 ? videoStream.Height : videoStream.Width;
+                    int effectiveHeight = isRotated90or270 ? videoStream.Width : videoStream.Height;
+
+                    // Calculate aspect ratio considering rotation
+                    double aspectRatio = (double)effectiveWidth / (double)effectiveHeight;
+
+                    // Check if aspect ratio is approximately 9:16
+                    return Math.Abs(aspectRatio - (9.0 / 16.0)) < 0.05;
+                }
+                else
+                {
+                    _logger.LogWarning($"No video stream found in file: {filePath}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Unexpected error checking aspect ratio for {filePath}: {ex.Message}");
+                return false;
+            }
+        }
+
+
         private async Task<string> GetVideoRotation(string filePath)
         {
             string output, rotation = "0";

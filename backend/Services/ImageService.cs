@@ -247,11 +247,12 @@ namespace backend.Services
             {
                 // Select the first 'count' image IDs from the database
                 List<string> imageIds = await _dbContext.Set<Image>()
-                                             .Where(image => image.ClipEmbedding == null)
-                                             .Where(image => new[] { "jpeg", "jpg", "png" }.Contains(image.FileExtension.ToLower())) // Filter by file extension
-                                             .Take(count)
-                                             .Select(image => image.Id.ToString())
-                                             .ToListAsync();
+                                     .Where(image => image.ClipEmbedding == null)
+                                     .Where(image => new[] { "jpeg", "jpg", "png" }.Contains(image.FileExtension.ToLower())) // Filter by file extension
+                                     .Where(image => image.ContentId != "000000000000000000000000") // Filter by ContentId
+                                     .Take(count)
+                                     .Select(image => image.Id.ToString())
+                                     .ToListAsync();
 
                 // Check if the imageIds list is empty or null
                 if (imageIds == null || !imageIds.Any())

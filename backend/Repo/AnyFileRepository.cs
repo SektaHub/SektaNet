@@ -4,6 +4,7 @@ using backend.Models.Entity;
 using backend.Services;
 using backend.Util;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using MongoDB.Bson;
 using System.Net.Http;
 using System.Security.Claims;
@@ -410,6 +411,24 @@ namespace backend.Repo
             _dbContext.SaveChanges();
 
             return fil.Id;
+        }
+
+
+        public async Task<bool> FileExistsAsync(string fileName, string originalSource)
+        {
+            if (string.IsNullOrWhiteSpace(fileName) || string.IsNullOrWhiteSpace(originalSource))
+            {
+                throw new ArgumentException("File name and original source must not be null or empty.");
+            }
+
+            // Check across all DbSet properties
+            var fileExists = await _dbContext.Reels.AnyAsync(f => f.Name == fileName && f.OriginalSource == originalSource)
+                || await _dbContext.LongVideos.AnyAsync(f => f.Name == fileName && f.OriginalSource == originalSource)
+                || await _dbContext.Images.AnyAsync(f => f.Name == fileName && f.OriginalSource == originalSource)
+                || await _dbContext.Audio.AnyAsync(f => f.Name == fileName && f.OriginalSource == originalSource)
+                || await _dbContext.Files.AnyAsync(f => f.Name == fileName && f.OriginalSource == originalSource);
+
+            return fileExists;
         }
 
 
