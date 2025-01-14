@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using backend.Controllers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Pgvector;
@@ -14,11 +15,13 @@ namespace backend.Services
     {
         private readonly HttpClient _httpClient;
         private readonly string _aiEndpoint;
+        protected readonly ILogger<AnyFileController> _logger;
 
-        public AIService(HttpClient httpClient, IConfiguration configuration)
+        public AIService(HttpClient httpClient, ILogger<AnyFileController> logger, IConfiguration configuration)
         {
             _httpClient = httpClient;
             _aiEndpoint = configuration.GetSection("SektaNetAI")["Endpoint"];
+            _logger = logger;
         }
 
         public class EmbeddingResponse
@@ -52,7 +55,7 @@ namespace backend.Services
                 //Console.WriteLine("Request Body: " + jsonRequest);
 
                 // Send the HTTP request to the AI service
-                var response = await _httpClient.PostAsync(_aiEndpoint+"clip/embed/", content);
+                var response = await _httpClient.PostAsync(_aiEndpoint+ "embed/clip-l/", content);
 
                 // Log the response for debugging purposes
                 //Console.WriteLine("AI_RESPONSE Status Code: " + response.StatusCode);
@@ -127,7 +130,7 @@ namespace backend.Services
                 var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
                 // Send the HTTP request to the AI service
-                var response = await _httpClient.PostAsync(_aiEndpoint + "clip/embed/", content);
+                var response = await _httpClient.PostAsync(_aiEndpoint + "embed/clip-l/", content);
 
                 // Log the response for debugging
                 var responseContent = await response.Content.ReadAsStringAsync();
@@ -174,7 +177,61 @@ namespace backend.Services
             }
         }
 
+        public async Task<List<string>> GetImageCaptionsAsync(List<string> imageUris)
+        {
+            try
+            {
+                var requestBody = new CaptionRequestSchema { ImageUris = imageUris };
+                var jsonRequest = JsonConvert.SerializeObject(requestBody);
+                var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
+                var response = await _httpClient.PostAsync(_aiEndpoint + "caption/florence2-l/", content);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError($"AI Service Error: {response.StatusCode} - {response.ReasonPhrase}");
+                    throw new HttpRequestException($"AI service returned error: {response.StatusCode}");
+                }
+
+                if (string.IsNullOrEmpty(responseContent))
+                {
+                    _logger.LogWarning("Empty response content from AI service.");
+                    return new List<string>();
+                }
+
+                var captionResponse = JsonConvert.DeserializeObject<CaptionResponse>(responseContent);
+                if (captionResponse?.Captions == null || captionResponse.Captions.Count == 0)
+                {
+                    _logger.LogWarning("No captions found in the AI response.");
+                    return new List<string>();
+                }
+
+                return captionResponse.Captions;
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError($"HTTP Request Exception: {httpEx.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Exception in AIService: {ex.Message}");
+                throw;
+            }
+        }
+
+        public class CaptionRequestSchema
+        {
+            [JsonProperty("image_uris")]
+            public List<string> ImageUris { get; set; }
+        }
+
+        public class CaptionResponse
+        {
+            [JsonProperty("captions")]
+            public List<string> Captions { get; set; }
+        }
 
 
     }

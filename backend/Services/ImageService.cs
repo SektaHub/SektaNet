@@ -74,6 +74,8 @@ namespace backend.Services
 
             // Use GetAllowed to get the queryable list of allowed entities
             var allowedEntities = GetAllowed();
+            //Filer out images with missing data
+            allowedEntities = allowedEntities.Where(image => image.ContentId != "000000000000000000000000");
 
             // Apply additional filtering based on query parameters
             if (!string.IsNullOrEmpty(captionSearch))
@@ -92,7 +94,7 @@ namespace backend.Services
                 }
 
                 allowedEntities = allowedEntities.Where(image => image.ClipEmbedding != null)
-                                .OrderBy(image => image.ClipEmbedding!.MaxInnerProduct(queryVector));
+                                .OrderBy(image => image.ClipEmbedding!.CosineDistance(queryVector));
             }
 
             // Get the total count of filtered entities
@@ -210,8 +212,8 @@ namespace backend.Services
             // Filter out the current image and order by similarity
             var similarEntities = await allowedEntities
                 .Where(x => x.Id != id)
-                .OrderBy(x => x.ClipEmbedding!.L2Distance(entity.ClipEmbedding))
-                .Take(4)
+                .OrderBy(x => x.ClipEmbedding!.CosineDistance(entity.ClipEmbedding))
+                .Take(8)
                 .ToListAsync();
 
             // Map List<Image> to List<ImageDto>
@@ -299,6 +301,64 @@ namespace backend.Services
             }
         }
 
+
+        public async Task<List<string>> ProcessAndCaptionImages(int count = 100)
+        {
+            try
+            {
+                // Select the first 'count' images with necessary filters and order
+                var images = await _dbContext.Set<Image>()
+                                     .Where(image => image.GeneratedCaption == null) // Filter out images that already have captions
+                                     .Where(image => new[] { "jpeg", "jpg", "png" }.Contains(image.FileExtension.ToLower())) // Filter by file extension
+                                     .Where(image => image.ContentId != "000000000000000000000000") // Filter by ContentId
+                                     .Take(count)
+                                     .ToListAsync();
+
+                // Check if the images list is empty or null
+                if (images == null || !images.Any())
+                {
+                    Console.WriteLine("No images found.");
+                    return null;  // Return early if no images are found.
+                }
+
+                // Build image URLs from the image IDs
+                var imageUrls = images.Select(image => $"{_imageEndpoint}{image.Id}/Content").ToList();
+
+                // Call the AI service to generate captions
+                var captions = await _aiService.GetImageCaptionsAsync(imageUrls);
+
+                // Check if the captions are null or empty
+                if (captions == null || !captions.Any())
+                {
+                    Console.WriteLine("No captions returned.");
+                    return null;  // Handle the case where captions are not returned.
+                }
+
+                // Ensure the number of images and captions match
+                if (images.Count != captions.Count)
+                {
+                    Console.WriteLine("Mismatch between the number of images and captions.");
+                    return null;  // Ensure that the number of images matches the number of captions
+                }
+
+                // Update each image's Caption field with the corresponding caption
+                for (int i = 0; i < images.Count; i++)
+                {
+                    images[i].GeneratedCaption = captions[i];
+                }
+
+                // Save the changes to the database
+                await _dbContext.SaveChangesAsync();
+
+                // Return the captions (or perform additional logic as needed)
+                return captions;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in ImageService: {ex.Message}");
+                return null;
+            }
+        }
 
 
     }

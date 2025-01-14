@@ -256,5 +256,41 @@ namespace backend.Controllers
             }
         }
 
+        [HttpPost("/caption")]
+        [AllowAnonymous]
+        public async Task<IActionResult> CaptionImagesBatch(int batch = 100, int count = 1)
+        {
+            if (batch <= 0 || count <= 0)
+            {
+                return BadRequest("Batch and count must be positive integers.");
+            }
+
+            List<string> resultingCaptions = new List<string>();
+            try
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    List<string> result = await _fileConentService.ProcessAndCaptionImages(batch);
+
+                    if (result == null || !result.Any())
+                    {
+                        _logger.LogWarning($"Batch {i + 1}/{count}: No captions generated.");
+                        continue;
+                    }
+
+                    resultingCaptions.AddRange(result);
+                }
+
+                _logger.LogInformation($"Successfully generated captions for {resultingCaptions.Count} images in {count} batches.");
+                return Ok($"Generated captions for {resultingCaptions.Count} images successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred while generating captions: {ex.Message}", ex);
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
+        }
+
+
     }
 }
