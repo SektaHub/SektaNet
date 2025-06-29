@@ -221,7 +221,7 @@ public class DiscordService
                 if (message.Embeds == null || !message.Embeds.Any())
                 {
                     if (!string.IsNullOrEmpty(message.Content))
-                        messageContent.AppendLine(message.Content);
+                        messageContent.AppendLine(message.GetFormattedContent());
                 }
                 messageContent.Append("\n");
 
@@ -304,11 +304,13 @@ public class DiscordService
                 result.AppendLine($"  {{\"text\": {JsonConvert.SerializeObject(standardizedContent)}}},");
             }
             // Remove the last comma and close the JSON array
-            if (result.Length > 2)
+            var newlineLength = Environment.NewLine.Length;   // 2 on Windows, 1 elsewhere
+            if (result.Length >= newlineLength + 1)           // +1 for the comma
             {
-                result.Length -= 2;
+                result.Length -= newlineLength + 1;
             }
-            result.AppendLine("\n]");
+            result.AppendLine();     // keep the final newline if you want pretty output
+            result.Append(']');
             File.WriteAllText(filePath, result.ToString());
             fileNames.Add(fileName);
         }
